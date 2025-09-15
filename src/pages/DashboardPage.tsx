@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-container">
           {/* Stats Cards */}
           <div className="stats-grid">
-            <div className="stat-card">
+            <div className="stat-card" onClick={() => navigate('/jobs')} style={{ cursor: 'pointer' }}>
               <div className="stat-icon">📊</div>
               <div className="stat-content">
                 <h3>Total Jobs</h3>
@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
                 <span className="stat-change">+2 this week</span>
               </div>
             </div>
-            <div className="stat-card">
+            <div className="stat-card" onClick={() => navigate('/jobs')} style={{ cursor: 'pointer' }}>
               <div className="stat-icon">✅</div>
               <div className="stat-content">
                 <h3>Active Jobs</h3>
@@ -126,7 +126,7 @@ const Dashboard: React.FC = () => {
               <Button
                 variant="primary"
                 size="large"
-                onClick={() => navigate('/jobs/create')}
+                onClick={() => navigate('/create-job')}
               >
                 + Create New Job
               </Button>
@@ -151,7 +151,7 @@ const Dashboard: React.FC = () => {
           <div className="jobs-section">
             <div className="section-header">
               <h2>Recent Jobs</h2>
-              <Button variant="outline" onClick={() => console.log('View all jobs')}>
+              <Button variant="outline" onClick={() => navigate('/jobs')}>
                 View All
               </Button>
             </div>

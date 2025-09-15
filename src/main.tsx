@@ -8,6 +8,7 @@ import Login from './Login'
 import Signup from './Signup'
 import DashboardPage from './pages/DashboardPage'
 import { JobWizard } from './features/create-job/JobWizard'
+import { ViewJobsPage } from './features/jobs/ViewJobsPage'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -32,7 +33,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 
           {/* Job Management Routes */}
           <Route
-            path="/jobs/create"
+            path="/create-job"
             element={
               <ProtectedRoute>
                 <JobWizard />
@@ -41,13 +42,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           />
 
           <Route
-            path="/jobs/*"
+            path="/jobs"
             element={
               <ProtectedRoute>
-                <div className="coming-soon-page">
-                  <h2>🚧 Job Management</h2>
-                  <p>Job listing, editing, and monitoring features coming soon!</p>
-                </div>
+                <ViewJobsPage />
               </ProtectedRoute>
             }
           />

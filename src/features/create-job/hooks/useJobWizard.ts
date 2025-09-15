@@ -166,6 +166,25 @@ export const useJobWizard = () => {
 
   // Step 2: Connect to Salesforce Orgs
   const connectToOrg = useCallback(async (type: 'source' | 'target', connectionData: Omit<ConnectionData, 'isConnected'>) => {
+    // If this is a reset operation (no username/password), just update the state
+    if (!connectionData.username && !connectionData.password) {
+      const resetConnection: ConnectionData = {
+        username: '',
+        password: '',
+        securityToken: '',
+        environment: connectionData.environment || (type === 'source' ? 'production' : 'sandbox'),
+        isConnected: false
+      };
+
+      const updates = type === 'source'
+        ? { sourceConnection: resetConnection }
+        : { targetConnection: resetConnection };
+
+      updateJobData(updates);
+      markStepCompleted(2, true); // Mark as having errors since we need both connections
+      return;
+    }
+
     setLoading(true);
     setError(null);
 

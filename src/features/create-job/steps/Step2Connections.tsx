@@ -1,5 +1,5 @@
 // Step 2: Salesforce Connections Component
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '../../../components/common/Input';
 import { Button } from '../../../components/common/Button';
 import { ConnectionData, Environment, ENVIRONMENT_OPTIONS } from '../types';
@@ -30,21 +30,40 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
   isLoading,
   error
 }) => {
-  const [sourceForm, setSourceForm] = useState<ConnectionFormData>({
+  const [sourceForm, setSourceForm] = useState<ConnectionFormData>(() => ({
     username: sourceConnection.username || '',
     password: sourceConnection.password || '',
     securityToken: sourceConnection.securityToken || '',
     environment: sourceConnection.environment || 'production'
-  });
+  }));
 
-  const [targetForm, setTargetForm] = useState<ConnectionFormData>({
+  const [targetForm, setTargetForm] = useState<ConnectionFormData>(() => ({
     username: targetConnection.username || '',
     password: targetConnection.password || '',
     securityToken: targetConnection.securityToken || '',
     environment: targetConnection.environment || 'sandbox'
-  });
+  }));
 
   const [testingConnection, setTestingConnection] = useState<'source' | 'target' | null>(null);
+
+  // Sync local form state with props when connections are reset
+  useEffect(() => {
+    setSourceForm({
+      username: sourceConnection.username || '',
+      password: sourceConnection.password || '',
+      securityToken: sourceConnection.securityToken || '',
+      environment: sourceConnection.environment || 'production'
+    });
+  }, [sourceConnection.username, sourceConnection.password, sourceConnection.securityToken, sourceConnection.environment, sourceConnection.isConnected]);
+
+  useEffect(() => {
+    setTargetForm({
+      username: targetConnection.username || '',
+      password: targetConnection.password || '',
+      securityToken: targetConnection.securityToken || '',
+      environment: targetConnection.environment || 'sandbox'
+    });
+  }, [targetConnection.username, targetConnection.password, targetConnection.securityToken, targetConnection.environment, targetConnection.isConnected]);
 
   const handleSourceChange = (field: keyof ConnectionFormData, value: string) => {
     setSourceForm(prev => ({ ...prev, [field]: value }));
@@ -122,9 +141,14 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
             variant="outline"
             size="small"
             onClick={() => {
-              // Reset connection to allow re-testing
-              const resetForm = type === 'source' ? setSourceForm : setTargetForm;
-              resetForm(prev => ({ ...prev }));
+              // Reset connection by calling onConnect with empty credentials
+              // This will trigger the reset logic in the hook
+              onConnect(type, {
+                username: '',
+                password: '',
+                securityToken: '',
+                environment: connection.environment
+              });
             }}
           >
             Change Connection
