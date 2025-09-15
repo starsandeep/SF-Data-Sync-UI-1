@@ -279,7 +279,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           disabled={!canProceed || isLoading}
           loading={isLoading}
         >
-          Continue to Validation
+          Continue to Test & Schedule
         </Button>
       </div>
     </div>

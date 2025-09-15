@@ -29,7 +29,6 @@ export const JobWizard: React.FC = () => {
     connectToOrg,
     selectObject,
     updateFieldMappings,
-    validateFields,
     testJob,
     updateSchedule,
     createJob,
@@ -112,31 +111,6 @@ export const JobWizard: React.FC = () => {
         );
 
       case 5:
-        // TODO: Implement Step5Validation
-        return (
-          <div className="step-container">
-            <div className="step-header">
-              <h4 className="step-title">Field Validation</h4>
-              <p className="step-description">Validate field compatibility and mappings</p>
-            </div>
-            <div className="coming-soon-content">
-              <p>🚧 Step 5: Field Validation & Compatibility</p>
-              <p>This step will include:</p>
-              <ul>
-                <li>Field type compatibility checking</li>
-                <li>Validation results display</li>
-                <li>Error resolution suggestions</li>
-                <li>Re-validation capabilities</li>
-              </ul>
-            </div>
-            <div className="step-actions">
-              <Button variant="outline" onClick={previousStep}>Previous</Button>
-              <Button variant="primary" onClick={nextStep}>Continue to Testing</Button>
-            </div>
-          </div>
-        );
-
-      case 6:
         return (
           <Step6TestSchedule
             jobData={jobData}
