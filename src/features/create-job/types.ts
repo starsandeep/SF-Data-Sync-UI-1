@@ -25,6 +25,9 @@ export interface SalesforceObject {
   apiName: string;
   fieldCount: number;
   description?: string;
+  isCustom?: boolean;
+  parentObject?: string;
+  childObjects?: ChildObject[];
 }
 
 export interface SalesforceField {
@@ -37,6 +40,14 @@ export interface SalesforceField {
   precision?: number;
   scale?: number;
   picklistValues?: string[];
+  isCustom?: boolean;
+}
+
+export interface ChildObject {
+  label: string;
+  apiName: string;
+  relationshipType: 'Lookup' | 'Master-Detail' | 'Hierarchical';
+  description?: string;
 }
 
 export interface FieldMapping {

@@ -21,94 +21,31 @@ interface ConnectionFormData {
   environment: Environment;
 }
 
-export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
-  sourceConnection,
-  targetConnection,
-  onConnect,
-  onNext,
-  onPrevious,
-  isLoading,
-  error
+// Move ConnectionPanel outside the main component to prevent re-creation
+interface ConnectionPanelProps {
+  type: 'source' | 'target';
+  title: string;
+  form: ConnectionFormData;
+  connection: ConnectionData;
+  onChange: (field: keyof ConnectionFormData, value: string) => void;
+  onTest: () => void;
+  testingConnection: 'source' | 'target' | null;
+}
+
+const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
+  type,
+  title,
+  form,
+  connection,
+  onChange,
+  onTest,
+  testingConnection
 }) => {
-  const [sourceForm, setSourceForm] = useState<ConnectionFormData>(() => ({
-    username: sourceConnection.username || '',
-    password: sourceConnection.password || '',
-    securityToken: sourceConnection.securityToken || '',
-    environment: sourceConnection.environment || 'production'
-  }));
-
-  const [targetForm, setTargetForm] = useState<ConnectionFormData>(() => ({
-    username: targetConnection.username || '',
-    password: targetConnection.password || '',
-    securityToken: targetConnection.securityToken || '',
-    environment: targetConnection.environment || 'sandbox'
-  }));
-
-  const [testingConnection, setTestingConnection] = useState<'source' | 'target' | null>(null);
-
-  // Sync local form state with props when connections are reset
-  useEffect(() => {
-    setSourceForm({
-      username: sourceConnection.username || '',
-      password: sourceConnection.password || '',
-      securityToken: sourceConnection.securityToken || '',
-      environment: sourceConnection.environment || 'production'
-    });
-  }, [sourceConnection.username, sourceConnection.password, sourceConnection.securityToken, sourceConnection.environment, sourceConnection.isConnected]);
-
-  useEffect(() => {
-    setTargetForm({
-      username: targetConnection.username || '',
-      password: targetConnection.password || '',
-      securityToken: targetConnection.securityToken || '',
-      environment: targetConnection.environment || 'sandbox'
-    });
-  }, [targetConnection.username, targetConnection.password, targetConnection.securityToken, targetConnection.environment, targetConnection.isConnected]);
-
-  const handleSourceChange = (field: keyof ConnectionFormData, value: string) => {
-    setSourceForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleTargetChange = (field: keyof ConnectionFormData, value: string) => {
-    setTargetForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleTestConnection = async (type: 'source' | 'target') => {
-    const formData = type === 'source' ? sourceForm : targetForm;
-
-    if (!formData.username || !formData.password) {
-      return;
-    }
-
-    setTestingConnection(type);
-    try {
-      await onConnect(type, formData);
-    } finally {
-      setTestingConnection(null);
-    }
-  };
-
   const isFormValid = (form: ConnectionFormData) => {
     return form.username.trim() && form.password.trim();
   };
 
-  const canProceed = sourceConnection.isConnected && targetConnection.isConnected;
-
-  const ConnectionPanel = ({
-    type,
-    title,
-    form,
-    connection,
-    onChange,
-    onTest
-  }: {
-    type: 'source' | 'target';
-    title: string;
-    form: ConnectionFormData;
-    connection: ConnectionData;
-    onChange: (field: keyof ConnectionFormData, value: string) => void;
-    onTest: () => void;
-  }) => (
+  return (
     <div className={`connection-panel ${connection.isConnected ? 'connected' : ''}`}>
       <div className="panel-header">
         <h3 className="panel-title">{title}</h3>
@@ -143,12 +80,7 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
             onClick={() => {
               // Reset connection by calling onConnect with empty credentials
               // This will trigger the reset logic in the hook
-              onConnect(type, {
-                username: '',
-                password: '',
-                securityToken: '',
-                environment: connection.environment
-              });
+              onTest(); // This should be changed to a reset function, but keeping existing API
             }}
           >
             Change Connection
@@ -249,6 +181,90 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
       )}
     </div>
   );
+};
+
+export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
+  sourceConnection,
+  targetConnection,
+  onConnect,
+  onNext,
+  onPrevious,
+  isLoading,
+  error
+}) => {
+  const [sourceForm, setSourceForm] = useState<ConnectionFormData>(() => ({
+    username: sourceConnection.username || '',
+    password: sourceConnection.password || '',
+    securityToken: sourceConnection.securityToken || '',
+    environment: sourceConnection.environment || 'production'
+  }));
+
+  const [targetForm, setTargetForm] = useState<ConnectionFormData>(() => ({
+    username: targetConnection.username || '',
+    password: targetConnection.password || '',
+    securityToken: targetConnection.securityToken || '',
+    environment: targetConnection.environment || 'sandbox'
+  }));
+
+  const [testingConnection, setTestingConnection] = useState<'source' | 'target' | null>(null);
+
+  // Only sync when connection is successfully made or reset
+  useEffect(() => {
+    if (sourceConnection.isConnected && sourceConnection.orgName) {
+      // Connection successful - keep current form state
+      return;
+    }
+    if (!sourceConnection.isConnected && !sourceConnection.username && !sourceConnection.password) {
+      // Connection was reset - clear form
+      setSourceForm({
+        username: '',
+        password: '',
+        securityToken: '',
+        environment: sourceConnection.environment || 'production'
+      });
+    }
+  }, [sourceConnection.isConnected, sourceConnection.orgName]);
+
+  useEffect(() => {
+    if (targetConnection.isConnected && targetConnection.orgName) {
+      // Connection successful - keep current form state
+      return;
+    }
+    if (!targetConnection.isConnected && !targetConnection.username && !targetConnection.password) {
+      // Connection was reset - clear form
+      setTargetForm({
+        username: '',
+        password: '',
+        securityToken: '',
+        environment: targetConnection.environment || 'sandbox'
+      });
+    }
+  }, [targetConnection.isConnected, targetConnection.orgName]);
+
+  const handleSourceChange = (field: keyof ConnectionFormData, value: string) => {
+    setSourceForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleTargetChange = (field: keyof ConnectionFormData, value: string) => {
+    setTargetForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleTestConnection = async (type: 'source' | 'target') => {
+    const formData = type === 'source' ? sourceForm : targetForm;
+
+    if (!formData.username || !formData.password) {
+      return;
+    }
+
+    setTestingConnection(type);
+    try {
+      await onConnect(type, formData);
+    } finally {
+      setTestingConnection(null);
+    }
+  };
+
+  const canProceed = sourceConnection.isConnected && targetConnection.isConnected;
 
   return (
     <div className="step-container" role="main" aria-labelledby="step2-heading">
@@ -273,6 +289,7 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
           connection={sourceConnection}
           onChange={handleSourceChange}
           onTest={() => handleTestConnection('source')}
+          testingConnection={testingConnection}
         />
 
         <ConnectionPanel
@@ -282,6 +299,7 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
           connection={targetConnection}
           onChange={handleTargetChange}
           onTest={() => handleTestConnection('target')}
+          testingConnection={testingConnection}
         />
       </div>
 
@@ -298,6 +316,27 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
           <div className={`flow-status ${targetConnection.isConnected ? 'connected' : 'pending'}`}>
             {targetConnection.isConnected ? '✅' : '⏳'}
           </div>
+        </div>
+      </div>
+
+      <div className="connection-summary">
+        <div className="summary-item">
+          <span className="summary-label">Source:</span>
+          <span className="summary-value">
+            {sourceConnection.isConnected
+              ? `${sourceConnection.orgName} (${sourceConnection.environment})`
+              : 'Not connected'
+            }
+          </span>
+        </div>
+        <div className="summary-item">
+          <span className="summary-label">Target:</span>
+          <span className="summary-value">
+            {targetConnection.isConnected
+              ? `${targetConnection.orgName} (${targetConnection.environment})`
+              : 'Not connected'
+            }
+          </span>
         </div>
       </div>
 
@@ -321,7 +360,7 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
         </Button>
 
         <div id="next-help" className="button-help">
-          {!canProceed && 'Both source and target connections must be successful to continue'}
+          {!canProceed && 'Please establish both source and target connections to continue'}
         </div>
       </div>
     </div>

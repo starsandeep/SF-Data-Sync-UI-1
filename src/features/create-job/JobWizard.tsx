@@ -7,9 +7,9 @@ import { useJobWizard } from './hooks/useJobWizard';
 import { Step1Details } from './steps/Step1Details';
 import { Step2Connections } from './steps/Step2Connections';
 import { Step3ObjectSelection } from './steps/Step3ObjectSelection';
+import { Step4FieldMapping } from './steps/Step4FieldMapping';
 import { Step6TestSchedule } from './steps/Step6TestSchedule';
 // TODO: Import remaining steps when created
-// import { Step4FieldMapping } from './steps/Step4FieldMapping';
 // import { Step5Validation } from './steps/Step5Validation';
 import '../../App.css';
 
@@ -99,28 +99,16 @@ export const JobWizard: React.FC = () => {
         );
 
       case 4:
-        // TODO: Implement Step4FieldMapping
         return (
-          <div className="step-container">
-            <div className="step-header">
-              <h4 className="step-title">Field Mapping</h4>
-              <p className="step-description">Configure field mappings and transformations</p>
-            </div>
-            <div className="coming-soon-content">
-              <p>🚧 Step 4: Field Mapping & Configuration</p>
-              <p>This step will include:</p>
-              <ul>
-                <li>Sync All Fields vs Select Fields mode</li>
-                <li>Field mapping interface</li>
-                <li>Transformation options</li>
-                <li>Bulk mapping tools</li>
-              </ul>
-            </div>
-            <div className="step-actions">
-              <Button variant="outline" onClick={previousStep}>Previous</Button>
-              <Button variant="primary" onClick={nextStep}>Continue to Validation</Button>
-            </div>
-          </div>
+          <Step4FieldMapping
+            fieldMappings={jobData.fieldMappings}
+            selectedFields={jobData.selectedFields}
+            syncAllFields={jobData.syncAllFields}
+            onUpdateMappings={updateFieldMappings}
+            onNext={nextStep}
+            onPrevious={previousStep}
+            isLoading={isLoading}
+          />
         );
 
       case 5:
