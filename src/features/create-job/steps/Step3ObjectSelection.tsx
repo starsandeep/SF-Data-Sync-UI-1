@@ -34,9 +34,19 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
       setError(null);
 
       try {
-        // Using mock data instead of API call due to CORS issues
-        // TODO: Replace with actual API call once CORS is resolved
-        const data = MOCK_SFDC_OBJECTS_RESPONSE;
+        // Make API call to get SFDC objects
+        const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
 
         // Transform the API response to match our SalesforceObject interface
         const transformedObjects = data.sobjects?.map((sobject: any) => ({
@@ -48,14 +58,28 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
           isCustom: sobject.custom || false
         })) || [];
 
-        // Simulate network delay for realistic UX
-        await new Promise(resolve => setTimeout(resolve, 1000));
         setObjects(transformedObjects);
       } catch (err) {
         console.error('Error loading objects:', err);
-        setError('Failed to load Salesforce objects');
-        // Set empty objects as fallback
-        setObjects([]);
+        setError(`Failed to load Salesforce objects: ${err instanceof Error ? err.message : 'Unknown error'}`);
+
+        // Fallback to mock data if API call fails
+        try {
+          const transformedMockObjects = MOCK_SFDC_OBJECTS_RESPONSE.sobjects?.map((sobject: any) => ({
+            name: sobject.name,
+            label: sobject.label || sobject.name,
+            apiName: sobject.name,
+            fieldCount: 0,
+            description: sobject.labelPlural ? `${sobject.labelPlural} - ${sobject.name}` : `Standard Salesforce object: ${sobject.name}`,
+            isCustom: sobject.custom || false
+          })) || [];
+
+          setObjects(transformedMockObjects);
+          setError('Using offline data - API connection failed');
+        } catch (mockErr) {
+          console.error('Error loading mock data:', mockErr);
+          setObjects([]);
+        }
       } finally {
         setLoadingObjects(false);
       }
@@ -151,107 +175,117 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
       </div>
 
       {error && (
-        <div className="error-banner" role="alert">
+        <div className={`error-banner ${error.includes('offline') ? 'warning' : 'error'}`} role="alert">
+          <span className="error-icon">{error.includes('offline') ? '⚠️' : '❌'}</span>
           {error}
+          {error.includes('offline') && (
+            <div className="error-details">
+              The application will continue using cached data. Please check your network connection.
+            </div>
+          )}
         </div>
       )}
 
       <div className="object-selection-container">
 
         <div className="objects-grid-container">
-            {/* Source Objects Section */}
-            <div className="objects-section">
-              <div className="search-section">
-                <h5 className="section-title">Source Objects</h5>
-                <Input
-                  type="text"
-                  id="source-object-search"
-                  name="sourceSearch"
-                  label="Search Source Objects"
-                  value={sourceSearchTerm}
-                  onChange={setSourceSearchTerm}
-                  placeholder="Search source objects..."
-                  aria-describedby="source-search-help"
-                />
+          {/* Source Objects Section */}
+          <div className="objects-section">
+            <div className="search-section">
+              <h5 className="section-title">
+                Source Objects
                 <div id="source-search-help" className="field-help">
                   Found {filteredSourceObjects.length} object{filteredSourceObjects.length !== 1 ? 's' : ''}
                   {sourceSearchTerm && ` matching "${sourceSearchTerm}"`}
                 </div>
-              </div>
-              <div className="objects-list" role="radiogroup" aria-labelledby="step3-heading">
-                {filteredSourceObjects.length === 0 ? (
-                  <div className="no-objects">
-                    <p>No source objects found matching your search criteria.</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setSourceSearchTerm('')}
-                    >
-                      Clear Search
-                    </Button>
-                  </div>
-                ) : (
-                  filteredSourceObjects.map((object) => (
-                    <ExpandableObjectCard
-                      key={`source-${object.name}`}
-                      object={object}
-                      isSelected={selectedObject === object.name}
-                      isExpanded={expandedObjects.has(object.name)}
-                      onSelect={handleObjectSelect}
-                      onToggleExpand={toggleObjectExpansion}
-                      onKeyDown={handleKeyDown}
-                      isTarget={false}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
+              </h5>
+              <Input
+                type="text"
+                id="source-object-search"
+                name="sourceSearch"
+                label="Search Source Objects"
+                value={sourceSearchTerm}
+                onChange={setSourceSearchTerm}
+                placeholder="Search source objects..."
+                aria-describedby="source-search-help"
+              />
 
-            {/* Target Objects Section */}
-            <div className="objects-section">
-              <div className="search-section">
-                <h5 className="section-title">Target Objects</h5>
-                <Input
-                  type="text"
-                  id="target-object-search"
-                  name="targetSearch"
-                  label="Search Target Objects"
-                  value={targetSearchTerm}
-                  onChange={setTargetSearchTerm}
-                  placeholder="Search target objects..."
-                  aria-describedby="target-search-help"
-                />
+            </div>
+            <div className="objects-list" role="radiogroup" aria-labelledby="step3-heading">
+              {filteredSourceObjects.length === 0 ? (
+                <div className="no-objects">
+                  <p>No source objects found matching your search criteria.</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSourceSearchTerm('')}
+                  >
+                    Clear Search
+                  </Button>
+                </div>
+              ) : (
+                filteredSourceObjects.map((object) => (
+                  <ExpandableObjectCard
+                    key={`source-${object.name}`}
+                    object={object}
+                    isSelected={selectedObject === object.name}
+                    isExpanded={expandedObjects.has(object.name)}
+                    onSelect={handleObjectSelect}
+                    onToggleExpand={toggleObjectExpansion}
+                    onKeyDown={handleKeyDown}
+                    isTarget={false}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Target Objects Section */}
+          <div className="objects-section">
+            <div className="search-section">
+              <h5 className="section-title">Target Objects
                 <div id="target-search-help" className="field-help">
                   Found {filteredTargetObjects.length} object{filteredTargetObjects.length !== 1 ? 's' : ''}
                   {targetSearchTerm && ` matching "${targetSearchTerm}"`}
                 </div>
-              </div>
-              <div className="objects-list" role="radiogroup" aria-labelledby="step3-heading">
-                {filteredTargetObjects.length === 0 ? (
-                  <div className="no-objects">
-                    <p>No target objects found matching your search criteria.</p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setTargetSearchTerm('')}
-                    >
-                      Clear Search
-                    </Button>
-                  </div>
-                ) : (
-                  filteredTargetObjects.map((object) => (
-                    <ExpandableObjectCard
-                      key={`target-${object.name}`}
-                      object={object}
-                      isSelected={selectedObject === object.name}
-                      isExpanded={expandedObjects.has(object.name)}
-                      onSelect={handleObjectSelect}
-                      onToggleExpand={toggleObjectExpansion}
-                      onKeyDown={handleKeyDown}
-                      isTarget={true}
-                    />
-                  ))
-                )}
-              </div>
+              </h5>
+              <Input
+                type="text"
+                id="target-object-search"
+                name="targetSearch"
+                label="Search Target Objects"
+                value={targetSearchTerm}
+                onChange={setTargetSearchTerm}
+                placeholder="Search target objects..."
+                aria-describedby="target-search-help"
+              />
             </div>
+            <div className="objects-list" role="radiogroup" aria-labelledby="step3-heading">
+              {filteredTargetObjects.length === 0 ? (
+                <div className="no-objects">
+                  <p>No target objects found matching your search criteria.</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => setTargetSearchTerm('')}
+                  >
+                    Clear Search
+                  </Button>
+                </div>
+              ) : (
+                filteredTargetObjects.map((object) => (
+                  <ExpandableObjectCard
+                    key={`target-${object.name}`}
+                    object={object}
+                    isSelected={selectedObject === object.name}
+                    isExpanded={expandedObjects.has(object.name)}
+                    onSelect={handleObjectSelect}
+                    onToggleExpand={toggleObjectExpansion}
+                    onKeyDown={handleKeyDown}
+                    isTarget={true}
+                  />
+                ))
+              )}
+            </div>
+          </div>
 
         </div>
       </div>
