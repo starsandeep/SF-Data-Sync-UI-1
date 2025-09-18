@@ -74,7 +74,7 @@ function Signup() {
     <div className="App">
       <header className="App-header">
         <div className="header-left">
-          <h1>SF Data Sync Pro</h1>
+          <h1>Salesforce Data Synchronization Platform</h1>
           <p>Create your account</p>
         </div>
         <div className="header-buttons">

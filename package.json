@@ -1,7 +1,7 @@
 {
   "name": "sf-data-sync-pro",
   "version": "1.0.0",
-  "description": "SF Data Sync Pro - A React application for Salesforce data synchronization",
+  "description": "Salesforce Data Synchronization Platform - A React application for Salesforce data synchronization",
   "main": "index.js",
   "scripts": {
     "dev": "vite",

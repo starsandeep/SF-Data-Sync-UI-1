@@ -1,5 +1,5 @@
 // Step 3: Salesforce Object Selection Component
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Button } from '../../../components/common/Button';
 import { Input } from '../../../components/common/Input';
 import { SalesforceObject } from '../types';
@@ -28,8 +28,12 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
   const [loadingObjects, setLoadingObjects] = useState(true);
   const [sourceSearchTerm, setSourceSearchTerm] = useState('');
   const [targetSearchTerm, setTargetSearchTerm] = useState('');
-  const [expandedObjects, setExpandedObjects] = useState<Set<string>>(new Set());
+  const [expandedSourceObjects, setExpandedSourceObjects] = useState<Set<string>>(new Set());
+  const [expandedTargetObjects, setExpandedTargetObjects] = useState<Set<string>>(new Set());
+  const [objectFields, setObjectFields] = useState<Record<string, any[]>>({});
+  const [loadingFields, setLoadingFields] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const fetchingRef = useRef<Set<string>>(new Set());
 
   // Load Salesforce objects on mount
   useEffect(() => {
@@ -92,6 +96,52 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
     loadObjects();
   }, []);
 
+  // Fetch object fields when object is expanded
+  const fetchObjectFields = useCallback(async (objectName: string) => {
+    // Check if already loaded or currently fetching
+    if (objectFields[objectName] || fetchingRef.current.has(objectName)) {
+      return;
+    }
+
+    // Add to fetching ref to prevent duplicate calls
+    fetchingRef.current.add(objectName);
+
+    setLoadingFields(prev => new Set(prev).add(objectName));
+
+    try {
+      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects?objectName=${objectName}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      if (data.fields && Array.isArray(data.fields)) {
+        setObjectFields(prev => ({
+          ...prev,
+          [objectName]: data.fields
+        }));
+      }
+    } catch (err) {
+      console.error(`Error loading fields for ${objectName}:`, err);
+      // Don't show error for field loading failures, just log them
+    } finally {
+      // Remove from both fetching ref and loading state
+      fetchingRef.current.delete(objectName);
+      setLoadingFields(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(objectName);
+        return newSet;
+      });
+    }
+  }, [objectFields]);
+
 
   // Filter source objects based on search term
   const filteredSourceObjects = useMemo(() => {
@@ -122,17 +172,21 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
   }, [objects, targetSearchTerm]);
 
   // Handle object expansion toggle
-  const toggleObjectExpansion = useCallback((objectName: string) => {
+  const toggleObjectExpansion = useCallback((objectName: string, type: 'source' | 'target') => {
+    const setExpandedObjects = type === 'source' ? setExpandedSourceObjects : setExpandedTargetObjects;
+
     setExpandedObjects(prev => {
       const newSet = new Set(prev);
       if (newSet.has(objectName)) {
         newSet.delete(objectName);
       } else {
         newSet.add(objectName);
+        // Fetch fields when expanding
+        fetchObjectFields(objectName);
       }
       return newSet;
     });
-  }, []);
+  }, [fetchObjectFields]);
 
   const handleObjectSelect = useCallback((objectName: string, type: 'source' | 'target') => {
     onSelectObject(objectName, type);
@@ -207,7 +261,6 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
                 type="text"
                 id="source-object-search"
                 name="sourceSearch"
-                label="Search Source Objects"
                 value={sourceSearchTerm}
                 onChange={setSourceSearchTerm}
                 placeholder="Search source objects..."
@@ -232,11 +285,13 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
                     key={`source-${object.name}`}
                     object={object}
                     isSelected={sourceObject === object.name}
-                    isExpanded={expandedObjects.has(object.name)}
+                    isExpanded={expandedSourceObjects.has(object.name)}
                     onSelect={(objectName) => handleObjectSelect(objectName, 'source')}
-                    onToggleExpand={toggleObjectExpansion}
+                    onToggleExpand={(objectName) => toggleObjectExpansion(objectName, 'source')}
                     onKeyDown={(event, objectName) => handleKeyDown(event, objectName, 'source')}
                     isTarget={false}
+                    fields={objectFields[object.name]}
+                    isLoadingFields={loadingFields.has(object.name)}
                   />
                 ))
               )}
@@ -256,7 +311,6 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
                 type="text"
                 id="target-object-search"
                 name="targetSearch"
-                label="Search Target Objects"
                 value={targetSearchTerm}
                 onChange={setTargetSearchTerm}
                 placeholder="Search target objects..."
@@ -280,11 +334,13 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
                     key={`target-${object.name}`}
                     object={object}
                     isSelected={targetObject === object.name}
-                    isExpanded={expandedObjects.has(object.name)}
+                    isExpanded={expandedTargetObjects.has(object.name)}
                     onSelect={(objectName) => handleObjectSelect(objectName, 'target')}
-                    onToggleExpand={toggleObjectExpansion}
+                    onToggleExpand={(objectName) => toggleObjectExpansion(objectName, 'target')}
                     onKeyDown={(event, objectName) => handleKeyDown(event, objectName, 'target')}
                     isTarget={true}
+                    fields={objectFields[object.name]}
+                    isLoadingFields={loadingFields.has(object.name)}
                   />
                 ))
               )}
@@ -331,6 +387,8 @@ interface ExpandableObjectCardProps {
   onToggleExpand: (objectName: string) => void;
   onKeyDown: (event: React.KeyboardEvent, objectName: string) => void;
   isTarget?: boolean;
+  fields?: any[];
+  isLoadingFields?: boolean;
 }
 
 const ExpandableObjectCard: React.FC<ExpandableObjectCardProps> = ({
@@ -340,7 +398,9 @@ const ExpandableObjectCard: React.FC<ExpandableObjectCardProps> = ({
   onSelect,
   onToggleExpand,
   onKeyDown,
-  isTarget = false
+  isTarget = false,
+  fields,
+  isLoadingFields = false
 }) => {
   const handleExpandToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -411,6 +471,50 @@ const ExpandableObjectCard: React.FC<ExpandableObjectCardProps> = ({
               <span className="metadata-label">Queryable:</span>
               <span className="metadata-value">Yes</span>
             </div>
+          </div>
+
+          <div className="fields-section">
+            <h4 className="fields-title">Fields</h4>
+            {isLoadingFields ? (
+              <div className="fields-loading">
+                <div className="loading-spinner-small">
+                  <svg className="spinner-small" viewBox="0 0 24 24">
+                    <circle
+                      className="spinner-circle"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      fill="none"
+                      strokeWidth="2"
+                    />
+                  </svg>
+                </div>
+                <span>Loading fields...</span>
+              </div>
+            ) : fields && fields.length > 0 ? (
+              <div className="fields-table-container">
+                <table className="fields-table fields-table-fixed">
+                  <thead>
+                    <tr>
+                      <th className="field-column-header">Label</th>
+                      <th className="field-column-header">Name</th>
+                      <th className="field-column-header">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fields.map((field, index) => (
+                      <tr key={field.name || index}>
+                        <td className="field-label field-column">{field.label}</td>
+                        <td className="field-name field-column">{field.name}</td>
+                        <td className="field-type field-column">{field.type}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="no-fields">No fields available</div>
+            )}
           </div>
         </div>
       )}

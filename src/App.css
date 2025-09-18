@@ -2882,6 +2882,7 @@
 
 /* Responsive Design for Field Mapping */
 @media (max-width: 768px) {
+
   .field-mapping-table .table-header,
   .mapping-row {
     grid-template-columns: 1fr;
@@ -2904,4 +2905,14 @@
   .edit-actions {
     flex-direction: column;
   }
+}
+
+.fields-table-fixed {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.field-column-header,
+.field-column {
+  width: 33.33%;
 }
