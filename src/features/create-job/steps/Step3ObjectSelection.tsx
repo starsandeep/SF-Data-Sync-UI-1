@@ -492,26 +492,24 @@ const ExpandableObjectCard: React.FC<ExpandableObjectCardProps> = ({
                 <span>Loading fields...</span>
               </div>
             ) : fields && fields.length > 0 ? (
-              <div className="fields-table-container">
-                <table className="fields-table fields-table-fixed">
-                  <thead>
-                    <tr>
-                      <th className="field-column-header">Label</th>
-                      <th className="field-column-header">Name</th>
-                      <th className="field-column-header">Type</th>
+              <table className="table-dark">
+                <thead>
+                  <tr>
+                    <th>Label</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fields.map((field, index) => (
+                    <tr key={field.name || index}>
+                      <td>{field.label}</td>
+                      <td>{field.name}</td>
+                      <td>{field.type}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {fields.map((field, index) => (
-                      <tr key={field.name || index}>
-                        <td className="field-label field-column">{field.label}</td>
-                        <td className="field-name field-column">{field.name}</td>
-                        <td className="field-type field-column">{field.type}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <div className="no-fields">No fields available</div>
             )}
