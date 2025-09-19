@@ -298,7 +298,7 @@ export const useJobWizard = () => {
   }, [updateJobData, markStepCompleted]);
 
   // Step 5: Test Job
-  const testJob = useCallback(async (sampleSize: number = 100) => {
+  const testJob = useCallback(async (sampleSize: number = 100, testStartDate?: string, testStartTime?: string, testEndDate?: string, testEndTime?: string) => {
     setLoading(true);
     setError(null);
 
@@ -310,7 +310,15 @@ export const useJobWizard = () => {
       });
 
       if (response.success) {
-        updateJobData({ testResult: response.result, tested: true });
+        updateJobData({
+          testResult: response.result,
+          tested: true,
+          sampleSize,
+          testStartDate,
+          testStartTime,
+          testEndDate,
+          testEndTime
+        });
         markStepCompleted(5, !response.result.success);
 
         trackEvent('wizard.job_tested', {
@@ -337,11 +345,13 @@ export const useJobWizard = () => {
   }, [state.jobData, updateJobData, markStepCompleted, setLoading, setError]);
 
   // Step 5: Update Schedule
-  const updateSchedule = useCallback((schedule: ScheduleOption, startDate?: string, startTime?: string, customCron?: string) => {
+  const updateSchedule = useCallback((schedule: ScheduleOption, startDate?: string, startTime?: string, customCron?: string, endDate?: string, endTime?: string) => {
     updateJobData({
       schedule,
       startDate,
       startTime,
+      endDate,
+      endTime,
       customCron
     });
     markStepCompleted(5, false);

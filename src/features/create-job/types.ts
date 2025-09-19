@@ -98,12 +98,24 @@ export interface JobData {
   selectedFields: string[];
   fieldMappings: FieldMapping;
   transformations: Record<string, Transformation>;
+
+  // Test Job Schedule
+  testStartDate?: string;
+  testStartTime?: string;
+  testEndDate?: string;
+  testEndTime?: string;
+  sampleSize?: number;
+  tested: boolean;
+  testResult?: TestResult;
+
+  // Main Job Schedule
   schedule: ScheduleOption;
   customCron?: string;
   startDate?: string;
   startTime?: string;
-  tested: boolean;
-  testResult?: TestResult;
+  endDate?: string;
+  endTime?: string;
+
   validationResults?: FieldValidationResult[];
 }
 

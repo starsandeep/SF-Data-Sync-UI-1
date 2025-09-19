@@ -8,7 +8,7 @@ import { Step1Details } from './steps/Step1Details';
 import { Step2Connections } from './steps/Step2Connections';
 import { Step3ObjectSelection } from './steps/Step3ObjectSelection';
 import { Step4FieldMapping } from './steps/Step4FieldMapping';
-import { Step6TestSchedule } from './steps/Step6TestSchedule';
+import { Step5TestSchedule } from './steps/Step5TestSchedule';
 // TODO: Import remaining steps when created
 // import { Step5Validation } from './steps/Step5Validation';
 import '../../App.css';
@@ -114,7 +114,7 @@ export const JobWizard: React.FC = () => {
 
       case 5:
         return (
-          <Step6TestSchedule
+          <Step5TestSchedule
             jobData={jobData}
             onTest={testJob}
             onUpdateSchedule={updateSchedule}
