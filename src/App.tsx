@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
+import { ThemeToggle } from './components/common/ThemeToggle'
 import './App.css'
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
           <h1>Salesforce Data Synchronization Platform</h1>
         </div>
         <div className="header-buttons">
+          <ThemeToggle />
           <button className="btn btn-secondary" onClick={handleLogin}>Login</button>
           <button className="btn" onClick={handleSignup}>Sign Up</button>
         </div>

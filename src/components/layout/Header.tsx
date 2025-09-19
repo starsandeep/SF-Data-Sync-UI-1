@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../common/Button';
+import { ThemeToggle } from '../common/ThemeToggle';
 
 interface HeaderProps {
   title?: string;
@@ -39,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
         </p>
       </div>
       <div className="header-buttons">
+        <ThemeToggle />
         <Button variant="outline" onClick={handleSettingsClick}>
           Settings
         </Button>

@@ -55,7 +55,7 @@ export const JobWizard: React.FC = () => {
     const currentStepData = steps[currentStep - 1];
 
     if (targetStep.isCompleted || stepNumber === currentStep ||
-        (stepNumber === currentStep + 1 && currentStepData.isCompleted)) {
+      (stepNumber === currentStep + 1 && currentStepData.isCompleted)) {
       goToStep(stepNumber);
     }
   };
@@ -146,30 +146,7 @@ export const JobWizard: React.FC = () => {
         subtitle="Create a new data synchronization job"
       />
 
-      <div className="scrollable-content">
-        {/* Wizard Header */}
-        <header className="wizard-header">
-          <h3 id="wizard-heading">Create Sync Job</h3>
-          <div className="header-actions">
-            <Button
-              variant="outline"
-              onClick={saveAsDraft}
-              disabled={!isDirty}
-              aria-label="Save current progress as draft"
-            >
-              Save Draft
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={handleExit}
-              aria-label="Exit wizard and return to dashboard"
-            >
-              Exit
-            </Button>
-          </div>
-        </header>
-
-        <div className="wizard-main">
+      <div className="wizard-main">
         {/* Sidebar with Progress Stepper */}
         <aside className="wizard-sidebar" aria-label="Job creation progress">
           <nav className="progress-stepper" role="navigation" aria-label="Wizard steps">
@@ -177,9 +154,8 @@ export const JobWizard: React.FC = () => {
               {steps.map((step) => (
                 <li
                   key={step.id}
-                  className={`stepper-item ${step.isActive ? 'active' : ''} ${
-                    step.isCompleted ? 'completed' : ''
-                  } ${step.hasErrors ? 'has-errors' : ''}`}
+                  className={`stepper-item ${step.isActive ? 'active' : ''} ${step.isCompleted ? 'completed' : ''
+                    } ${step.hasErrors ? 'has-errors' : ''}`}
                   role="presentation"
                 >
                   <button
@@ -191,9 +167,8 @@ export const JobWizard: React.FC = () => {
                       step.id !== currentStep + 1
                     }
                     aria-current={step.isActive ? 'step' : undefined}
-                    aria-label={`Step ${step.id}: ${step.title}${
-                      step.isCompleted ? ' (completed)' : ''
-                    }${step.hasErrors ? ' (has errors)' : ''}`}
+                    aria-label={`Step ${step.id}: ${step.title}${step.isCompleted ? ' (completed)' : ''
+                      }${step.hasErrors ? ' (has errors)' : ''}`}
                   >
                     {step.isCompleted ? '✓' : step.id}
                   </button>
@@ -231,6 +206,28 @@ export const JobWizard: React.FC = () => {
 
         {/* Main Content */}
         <main className="wizard-content">
+          {/* Wizard Header moved inside content */}
+          <header className="wizard-header">
+            <h3 id="wizard-heading">Create Sync Job</h3>
+            <div className="header-actions">
+              <Button
+                variant="outline"
+                onClick={saveAsDraft}
+                disabled={!isDirty}
+                aria-label="Save current progress as draft"
+              >
+                Save Draft
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleExit}
+                aria-label="Exit wizard and return to dashboard"
+              >
+                Exit
+              </Button>
+            </div>
+          </header>
+
           {error && (
             <div className="error-banner" role="alert" aria-live="assertive">
               <button
@@ -246,7 +243,6 @@ export const JobWizard: React.FC = () => {
 
           {renderCurrentStep()}
         </main>
-        </div>
       </div>
     </div>
   );
