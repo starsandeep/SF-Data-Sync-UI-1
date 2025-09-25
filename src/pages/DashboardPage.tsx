@@ -87,8 +87,8 @@ const Dashboard: React.FC = () => {
             <div className="stat-card">
               <div className="stat-icon">⚠️</div>
               <div className="stat-content">
-                <h3>Failed Jobs</h3>
-                <p className="stat-number">1</p>
+                <h3>Inactive Jobs</h3>
+                <p className="stat-number">4</p>
                 <span className="stat-change">Needs attention</span>
               </div>
             </div>
@@ -120,6 +120,14 @@ const Dashboard: React.FC = () => {
                 onClick={() => console.log('View reports')}
               >
                 View Reports
+              </Button>
+
+              <Button
+                variant="outline"
+                size="large"
+                onClick={() => navigate('/data-cleansing')}
+              >
+                Data Cleansing
               </Button>
             </div>
           </div>

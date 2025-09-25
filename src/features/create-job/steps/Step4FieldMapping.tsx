@@ -147,6 +147,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       <div className="step-header">
         <h4 className="step-title">Opportunity Field Mapping</h4>
         <p className="step-description">
+          This is AI-driven field mapping. It automatically maps fields based on names and provide autosuggestions.
           Configure how Account Engagement fields map to Salesforce Opportunity fields.
           Some default mappings are pre-configured to get you started.
         </p>

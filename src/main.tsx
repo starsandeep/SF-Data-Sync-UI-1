@@ -8,6 +8,7 @@ import App from './App'
 import Login from './Login'
 import Signup from './Signup'
 import DashboardPage from './pages/DashboardPage'
+import DataCleansingPage from './pages/DataCleansingPage'
 import { JobWizard } from './features/create-job/JobWizard'
 import { ViewJobsPage } from './features/jobs/ViewJobsPage'
 import './index.css'
@@ -48,6 +49,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             element={
               <ProtectedRoute>
                 <ViewJobsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/data-cleansing"
+            element={
+              <ProtectedRoute>
+                <DataCleansingPage />
               </ProtectedRoute>
             }
           />
