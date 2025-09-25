@@ -74,7 +74,14 @@ function Signup() {
     <div className="auth-page-layout">
       <header className="App-header fixed-header">
         <div className="header-left">
-          <h1>R-Data-X</h1>
+          <div className="header-brand">
+            <img
+              src="/Relanto.png"
+              alt="Relanto Logo"
+              className="header-logo"
+            />
+            <h1>R-Data-X</h1>
+          </div>
           <p>Create your account</p>
         </div>
         <div className="header-buttons">

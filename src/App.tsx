@@ -27,7 +27,14 @@ function App() {
     <div className="App">
       <header className="App-header">
         <div className="header-left">
-          <h1>R-Data-X</h1>
+          <div className="header-brand">
+            <img
+              src="/Relanto.png"
+              alt="Relanto Logo"
+              className="header-logo"
+            />
+            <h1>R-Data-X</h1>
+          </div>
         </div>
         <div className="header-buttons">
           <ThemeToggle />

@@ -620,6 +620,27 @@
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.header-brand:hover {
+  opacity: 0.8;
+}
+
+.header-logo {
+  height: 32px;
+  width: auto;
+  transition: transform 0.2s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
+}
+
 .dashboard-header h1,
 .header-title {
   font-size: 24px;
@@ -2189,14 +2210,52 @@
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
-  overflow: auto;
   margin: 0 2rem;
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  overflow: hidden;
 }
 
 .jobs-table {
   width: 100%;
   border-collapse: collapse;
+  display: block;
+}
+
+.jobs-table thead {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.jobs-table tbody {
+  display: block;
+  max-height: calc(100vh - 365px);
+  overflow-y: auto;
+  width: 100%;
+}
+
+.jobs-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Custom scrollbar for jobs table tbody */
+.jobs-table tbody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.jobs-table tbody::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+.jobs-table tbody::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 4px;
+}
+
+.jobs-table tbody::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
 }
 
 .jobs-table th {
@@ -2860,7 +2919,7 @@
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   margin-bottom: 1rem;
-  max-height: calc(100vh - 445px);
+  max-height: calc(100vh - 480px);
   overflow: auto;
 }
 

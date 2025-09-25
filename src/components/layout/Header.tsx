@@ -27,14 +27,20 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="dashboard-header fixed-header">
       <div className="header-left">
-        <h1
-          className="header-title clickable"
-          onClick={handleTitleClick}
-          style={{ cursor: 'pointer' }}
-          title="Go to Dashboard"
-        >
-          {title}
-        </h1>
+        <div className="header-brand" onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+          <img
+            src="/Relanto.png"
+            alt="Relanto Logo"
+            className="header-logo"
+            title="Go to Dashboard"
+          />
+          <h1
+            className="header-title clickable"
+            title="Go to Dashboard"
+          >
+            {title}
+          </h1>
+        </div>
         <p className="header-subtitle">
           {subtitle || `Welcome back, ${user?.fullName}`}
         </p>
