@@ -34,7 +34,7 @@ const meta: Meta<typeof JobWizard> = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Complete 6-step job creation wizard for Salesforce data synchronization.',
+        component: 'Complete 5-Step job creation wizard for Salesforce data synchronization.',
       },
     },
   },

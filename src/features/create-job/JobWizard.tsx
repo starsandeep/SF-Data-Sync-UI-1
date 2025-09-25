@@ -142,7 +142,7 @@ export const JobWizard: React.FC = () => {
   return (
     <div className="wizard-layout" role="main" aria-labelledby="wizard-heading">
       <Header
-        title="Salesforce Data Synchronization Platform"
+        title="R-Data-X"
         subtitle="Create a new data synchronization job"
       />
 

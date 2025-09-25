@@ -72,7 +72,7 @@ function Login() {
     <div className="auth-page-layout">
       <header className="App-header fixed-header">
         <div className="header-left">
-          <h1>Salesforce Data Synchronization Platform</h1>
+          <h1>R-Data-X</h1>
           <p>Login to your account</p>
         </div>
         <div className="header-buttons">

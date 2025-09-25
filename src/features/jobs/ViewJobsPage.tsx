@@ -223,7 +223,7 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = () => {
   return (
     <div className="jobs-page-layout">
       <Header
-        title="Salesforce Data Synchronization Platform"
+        title="R-Data-X"
         subtitle="Manage and monitor your data synchronization jobs"
       />
       <div className="scrollable-content">

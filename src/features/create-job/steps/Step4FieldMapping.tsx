@@ -20,32 +20,43 @@ interface MappingRow {
   isEditing: boolean;
 }
 
-// Available Salesforce Opportunity fields for mapping
-const SALESFORCE_OPPORTUNITY_FIELDS = [
-  { value: 'CloseDate', label: 'CloseDate' },
-  { value: 'CreatedDate', label: 'CreatedDate' },
-  { value: 'IsDeleted', label: 'IsDeleted' },
+// Available Salesforce fields for mapping
+const SALESFORCE_FIELDS = [
+  { value: 'AccountId__c', label: 'AccountId__c' },
   { value: 'Name', label: 'Name' },
-  { value: 'Probability', label: 'Probability' },
-  { value: 'StageName', label: 'StageName' },
-  { value: 'Type', label: 'Type' },
-  { value: 'LastModifiedDate', label: 'LastModifiedDate' },
-  { value: 'Amount', label: 'Amount' },
+  { value: 'CreatedById', label: 'CreatedById' },
+  { value: 'Dept__c', label: 'Dept__c' },
+  { value: 'Desc__c', label: 'Desc__c' },
+  { value: 'First_Name__c', label: 'First_Name__c' },
+  { value: 'Last_Name__c', label: 'Last_Name__c' },
+  { value: 'MailCity__c', label: 'MailCity__c' },
+  { value: 'MailingCountry__c', label: 'MailingCountry__c' },
+  { value: 'MailingState__c', label: 'MailingState__c' },
+  { value: 'OwnerId', label: 'OwnerId' },
+  { value: 'Phone__c', label: 'Phone__c' },
+  { value: 'Title__c', label: 'Title__c' },
+  { value: 'LastModifiedById', label: 'LastModifiedById' },
+  { value: 'extid__c', label: 'extid__c' },
   { value: '', label: '-- (Unmapped)' }
 ];
 
-// Default field mappings for Account Engagement to Salesforce Opportunity
+// Default field mappings
 const DEFAULT_MAPPINGS: MappingRow[] = [
-  { sourceField: 'Close Date', sourceLabel: 'Close Date', targetField: 'CloseDate', isEditing: false },
-  { sourceField: 'Created', sourceLabel: 'Created', targetField: 'CreatedDate', isEditing: false },
-  { sourceField: 'Deleted', sourceLabel: 'Deleted', targetField: 'IsDeleted', isEditing: false },
-  { sourceField: 'Opportunity Name', sourceLabel: 'Opportunity Name', targetField: 'Name', isEditing: false },
-  { sourceField: 'Probability', sourceLabel: 'Probability', targetField: 'Probability', isEditing: false },
-  { sourceField: 'Stage', sourceLabel: 'Stage', targetField: 'StageName', isEditing: false },
-  { sourceField: 'Status', sourceLabel: 'Status', targetField: '', isEditing: false },
-  { sourceField: 'Type', sourceLabel: 'Type', targetField: 'Type', isEditing: false },
-  { sourceField: 'Updated At', sourceLabel: 'Updated At', targetField: 'LastModifiedDate', isEditing: false },
-  { sourceField: 'Value', sourceLabel: 'Value', targetField: 'Amount', isEditing: false }
+  { sourceField: 'AccountId', sourceLabel: 'AccountId', targetField: 'AccountId__c', isEditing: false },
+  { sourceField: 'Name', sourceLabel: 'Name', targetField: 'Name', isEditing: false },
+  { sourceField: 'CreatedById', sourceLabel: 'CreatedById', targetField: 'CreatedById', isEditing: false },
+  { sourceField: 'Department', sourceLabel: 'Department', targetField: 'Dept__c', isEditing: false },
+  { sourceField: 'Description', sourceLabel: 'Description', targetField: 'Desc__c', isEditing: false },
+  { sourceField: 'FirstName', sourceLabel: 'FirstName', targetField: 'First_Name__c', isEditing: false },
+  { sourceField: 'LastName', sourceLabel: 'LastName', targetField: 'Last_Name__c', isEditing: false },
+  { sourceField: 'MailingCity', sourceLabel: 'MailingCity', targetField: 'MailCity__c', isEditing: false },
+  { sourceField: 'MailingCountry', sourceLabel: 'MailingCountry', targetField: 'MailingCountry__c', isEditing: false },
+  { sourceField: 'MailingState', sourceLabel: 'MailingState', targetField: 'MailingState__c', isEditing: false },
+  { sourceField: 'OwnerId', sourceLabel: 'OwnerId', targetField: 'OwnerId', isEditing: false },
+  { sourceField: 'Phone', sourceLabel: 'Phone', targetField: 'Phone__c', isEditing: false },
+  { sourceField: 'Title', sourceLabel: 'Title', targetField: 'Title__c', isEditing: false },
+  { sourceField: 'LastModifiedById', sourceLabel: 'LastModifiedById', targetField: 'LastModifiedById', isEditing: false },
+  { sourceField: 'Id', sourceLabel: 'Id', targetField: 'extid__c', isEditing: false }
 ];
 
 export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
@@ -117,6 +128,10 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     setTempTargetField('');
   }, []);
 
+  const handleDelete = useCallback((sourceField: string) => {
+    setMappingRows(prev => prev.filter(row => row.sourceField !== sourceField));
+  }, []);
+
   const handleSaveMappings = useCallback(() => {
     const newMappings: FieldMapping = {};
     const newSelectedFields: string[] = [];
@@ -145,10 +160,10 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   return (
     <div className="step-container">
       <div className="step-header">
-        <h4 className="step-title">Opportunity Field Mapping</h4>
+        <h4 className="step-title">Field Mapping</h4>
         <p className="step-description">
           This is AI-driven field mapping. It automatically maps fields based on names and provide autosuggestions.
-          Configure how Account Engagement fields map to Salesforce Opportunity fields.
+          Configure how source fields map to target Salesforce fields.
           Some default mappings are pre-configured to get you started.
         </p>
       </div>
@@ -159,8 +174,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
       <div className="field-mapping-table">
         <div className="table-header">
-          <div className="column-header">Source Field (Account Engagement)</div>
-          <div className="column-header">Target Field (Salesforce Opportunity)</div>
+          <div className="column-header">Source Field</div>
+          <div className="column-header">Target Field (Salesforce)</div>
           <div className="column-header">Actions</div>
         </div>
 
@@ -185,7 +200,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                       className={`field-select ${isDuplicate ? 'error' : ''}`}
                       autoFocus
                     >
-                      {SALESFORCE_OPPORTUNITY_FIELDS.map((field) => (
+                      {SALESFORCE_FIELDS.map((field) => (
                         <option key={field.value} value={field.value}>
                           {field.label}
                         </option>
@@ -234,13 +249,22 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    variant="outline"
-                    size="small"
-                    onClick={() => handleEditStart(row.sourceField, row.targetField)}
-                  >
-                    Edit
-                  </Button>
+                  <div className="row-actions edit-actions">
+                    <Button
+                      variant="outline"
+                      size="small"
+                      onClick={() => handleEditStart(row.sourceField, row.targetField)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="small"
+                      onClick={() => handleDelete(row.sourceField)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>

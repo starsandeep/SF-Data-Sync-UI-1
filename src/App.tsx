@@ -27,7 +27,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <div className="header-left">
-          <h1>Salesforce Data Synchronization Platform</h1>
+          <h1>R-Data-X</h1>
         </div>
         <div className="header-buttons">
           <ThemeToggle />

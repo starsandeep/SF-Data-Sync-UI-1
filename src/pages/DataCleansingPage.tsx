@@ -19,7 +19,7 @@ interface DataIssue {
   suggestedFix?: string;
 }
 
-type WorkflowStage = 'audit' | 'cleansing' | 'validation';
+type WorkflowStage = 'cleansing' | 'audit' | 'validation';
 type CleansingTab = 'missing' | 'inconsistencies' | 'outliers';
 type ImputationMethod = 'remove' | 'mean' | 'median' | 'mode' | 'custom';
 type OutlierAction = 'keep' | 'remove' | 'median';
@@ -52,7 +52,7 @@ const mockIssues: Record<string, DataIssue[]> = {
 };
 
 const DataCleansingPage: React.FC = () => {
-  const [currentStage, setCurrentStage] = useState<WorkflowStage>('audit');
+  const [currentStage, setCurrentStage] = useState<WorkflowStage>('cleansing');
   const [activeTab, setActiveTab] = useState<CleansingTab>('missing');
   const [selectedColumn, setSelectedColumn] = useState<string>('');
   const [selectedIssues, setSelectedIssues] = useState<string[]>([]);
@@ -127,9 +127,9 @@ const DataCleansingPage: React.FC = () => {
           <Button
             variant="primary"
             size="large"
-            onClick={() => setCurrentStage('cleansing')}
+            onClick={() => setCurrentStage('validation')}
           >
-            Start Cleansing
+            Continue to Validation
           </Button>
         </div>
       </div>
@@ -335,13 +335,13 @@ const DataCleansingPage: React.FC = () => {
           variant="outline"
           onClick={() => setCurrentStage('audit')}
         >
-          ← Back to Audit
+          Continue to Data Audit →
         </Button>
         <Button
           variant="primary"
           onClick={() => setCurrentStage('validation')}
         >
-          Continue to Validation →
+          Skip to Validation →
         </Button>
       </div>
     </div>
@@ -404,14 +404,14 @@ const DataCleansingPage: React.FC = () => {
         <div className="stage-navigation">
           <Button
             variant="outline"
-            onClick={() => setCurrentStage('cleansing')}
+            onClick={() => setCurrentStage('audit')}
           >
-            ← Back to Cleansing
+            ← Back to Data Audit
           </Button>
           <Button
             variant="success"
             onClick={() => {
-              setCurrentStage('audit');
+              setCurrentStage('cleansing');
               // Reset state for new cleansing workflow
               setSelectedColumn('');
               setSelectedIssues([]);
@@ -427,13 +427,13 @@ const DataCleansingPage: React.FC = () => {
 
   const renderStageIndicator = () => (
     <div className="stage-indicator">
-      <div className={`stage-step ${currentStage === 'audit' ? 'active' : currentStage === 'cleansing' || currentStage === 'validation' ? 'completed' : ''}`}>
+      <div className={`stage-step ${currentStage === 'cleansing' ? 'active' : currentStage === 'audit' || currentStage === 'validation' ? 'completed' : ''}`}>
         <span className="step-number">1</span>
-        <span className="step-label">Data Audit</span>
-      </div>
-      <div className={`stage-step ${currentStage === 'cleansing' ? 'active' : currentStage === 'validation' ? 'completed' : ''}`}>
-        <span className="step-number">2</span>
         <span className="step-label">Cleansing Workflow</span>
+      </div>
+      <div className={`stage-step ${currentStage === 'audit' ? 'active' : currentStage === 'validation' ? 'completed' : ''}`}>
+        <span className="step-number">2</span>
+        <span className="step-label">Data Audit</span>
       </div>
       <div className={`stage-step ${currentStage === 'validation' ? 'active' : ''}`}>
         <span className="step-number">3</span>
@@ -472,8 +472,8 @@ const DataCleansingPage: React.FC = () => {
 
         .cleansing-header-section h1 {
           color: var(--text-primary);
-          margin-bottom: 2rem;
-        }
+
+          }
 
         .stage-indicator {
           display: flex;

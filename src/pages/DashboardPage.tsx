@@ -194,7 +194,7 @@ const Dashboard: React.FC = () => {
             <h3>🚀 Coming Soon</h3>
             <div className="feature-preview">
               <ul>
-                <li>6-Step Job Creation Wizard</li>
+                <li>5-Step Job Creation Wizard</li>
                 <li>Real-time Job Monitoring</li>
                 <li>Salesforce Connection Management</li>
                 <li>Advanced Field Mapping</li>

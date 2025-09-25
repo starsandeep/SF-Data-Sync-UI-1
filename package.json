@@ -1,7 +1,7 @@
 {
-  "name": "sf-data-sync-pro",
+  "name": "r-data-x",
   "version": "1.0.0",
-  "description": "Salesforce Data Synchronization Platform - A React application for Salesforce data synchronization",
+  "description": "R-Data-X - A React application for data management and synchronization",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -28,7 +28,7 @@
   },
   "keywords": [
     "react",
-    "salesforce",
+    "data-management",
     "data-sync",
     "typescript"
   ],

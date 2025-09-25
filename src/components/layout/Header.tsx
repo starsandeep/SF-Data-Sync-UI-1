@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = "Salesforce Data Synchronization Platform",
+  title = "R-Data-X",
   subtitle
 }) => {
   const { user, logout } = useAuth();
