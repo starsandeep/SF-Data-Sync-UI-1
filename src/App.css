@@ -176,7 +176,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #0a0a0a;
+  background-color: var(--bg-primary);
 }
 
 .feature-grid {
@@ -3883,19 +3883,21 @@
     align-items: center;
     gap: 0.75rem;
     padding: 1rem 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-accent);
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-secondary);
     color: var(--text-primary);
     font-weight: 500;
     transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
 }
 
 .feature-point:hover {
     transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: var(--bg-secondary);
+    border-color: var(--border-primary);
+    box-shadow: var(--shadow-md);
 }
 
 .feature-icon {
@@ -3924,7 +3926,7 @@
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-secondary);
 }
 
 .action-btn::before {
@@ -3934,7 +3936,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, var(--bg-accent), transparent);
     transition: left 0.6s ease;
 }
 
@@ -3955,15 +3957,17 @@
 }
 
 .secondary-action {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    background: var(--bg-card);
     color: var(--text-primary);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-primary);
 }
 
 .secondary-action:hover {
     transform: translateY(-4px);
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-focus);
 }
 
 .btn-icon {
@@ -4040,6 +4044,76 @@
     50% {
         transform: translateY(-20px) rotate(180deg);
     }
+}
+
+/* Theme-specific adjustments for landing page */
+[data-theme="dark"] .floating-element {
+    opacity: 0.1;
+}
+
+[data-theme="light"] .floating-element {
+    opacity: 0.05;
+}
+
+[data-theme="light"] .main-title {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--bg-button) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+[data-theme="dark"] .main-title {
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--bg-button) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Light theme specific enhancements */
+[data-theme="light"] .feature-point {
+    background: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .feature-point:hover {
+    background: var(--bg-accent);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .secondary-action {
+    background: var(--bg-card);
+    border: 2px solid var(--border-primary);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .secondary-action:hover {
+    background: var(--bg-accent);
+    border-color: var(--bg-button);
+    box-shadow: 0 8px 32px rgba(0, 123, 255, 0.1);
+}
+
+/* Dark theme specific enhancements */
+[data-theme="dark"] .feature-point {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .feature-point:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .secondary-action {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .secondary-action:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
 }
 
 /* Responsive Design for Landing Page */
