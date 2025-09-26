@@ -2105,7 +2105,6 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0;
-  min-height: calc(100vh - 160px);
 }
 
 .page-header {
@@ -2249,7 +2248,7 @@
 .processing-container {
   text-align: center;
   max-width: 600px;
-  padding: 3rem;
+  padding: 1.5rem;
   background: var(--bg-card);
   border-radius: 20px;
   box-shadow: var(--shadow-lg);
@@ -2299,13 +2298,13 @@
 
 .processing-container p {
   color: var(--text-secondary);
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   font-size: 1.1rem;
   line-height: 1.6;
 }
 
 .progress-container {
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   padding: 2rem;
   background: var(--bg-secondary);
   border-radius: 16px;
@@ -2349,7 +2348,7 @@
 
 .processing-step {
   color: var(--text-secondary);
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2405,8 +2404,8 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 3rem;
-  padding: 2rem;
+  margin-bottom: 1rem;
+  padding: 1.5rem;
   background: var(--bg-card);
   border-radius: 16px;
   border: 1px solid var(--border-primary);
@@ -2433,13 +2432,13 @@
 
 /* Quality Score Section */
 .quality-score-section {
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
 
 .score-card {
   background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-accent) 100%);
   border-radius: 20px;
-  padding: 3rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
   gap: 3rem;
@@ -2516,12 +2515,12 @@
 
 /* Issues Summary */
 .issues-summary {
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
 
 .issues-summary h3 {
   color: var(--text-primary);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   font-size: 1.8rem;
   font-weight: 600;
   text-align: center;
@@ -2574,12 +2573,12 @@
 
 /* Detailed Issues */
 .detailed-issues {
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
 
 .detailed-issues h3 {
   color: var(--text-primary);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   font-size: 1.8rem;
   font-weight: 600;
   text-align: center;
@@ -2588,7 +2587,7 @@
 .issue-category {
   background: var(--bg-card);
   border-radius: 16px;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-primary);
@@ -2718,7 +2717,7 @@
 .action-panel {
   background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-accent) 100%);
   border-radius: 20px;
-  padding: 3rem;
+  padding: 1.5rem;
   text-align: center;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-primary);
@@ -2739,6 +2738,7 @@
 .panel-content h3 {
   color: var(--text-primary);
   margin-bottom: 1rem;
+  margin-top: 0;
   font-size: 2rem;
   font-weight: 700;
 }
@@ -2924,7 +2924,7 @@
   }
 
   .score-card {
-    padding: 2rem;
+    padding: 1rem;
   }
 
   .score-value {
@@ -2932,7 +2932,7 @@
   }
 
   .action-panel {
-    padding: 2rem;
+    padding: 1rem;
   }
 
   .panel-content h3 {
@@ -3122,7 +3122,7 @@
 
 .jobs-table tbody {
   display: block;
-  max-height: calc(100vh - 365px);
+  max-height: calc(100vh - 452px);
   overflow-y: auto;
   width: 100%;
 }
@@ -4827,7 +4827,7 @@
     display: flex;
     justify-content: center;
     gap: 2rem;
-    margin-bottom: 3rem;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
 }
 

@@ -186,7 +186,7 @@ const DataCleansingPage: React.FC = () => {
       <div className="object-selection-screen">
         <div className="selection-header">
           <h2>Select Data Object</h2>
-          <p>Choose which data object you'd like to analyze for quality issues</p>
+          <p>AI-powered data cleansing and quality analysis. Choose which data object you'd like to analyze for quality issues.</p>
         </div>
 
         <div className="objects-grid">
@@ -389,11 +389,6 @@ const DataCleansingPage: React.FC = () => {
   return (
     <main className="scrollable-content">
       <div className="data-cleansing-page">
-        <div className="page-header">
-          <h1>🧹 Data Quality Manager</h1>
-          <p>AI-powered data cleansing and quality analysis</p>
-        </div>
-
         {stage === 'object-selection' && renderObjectSelection()}
         {stage === 'processing' && renderProcessing()}
         {stage === 'results' && renderResults()}
