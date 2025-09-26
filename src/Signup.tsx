@@ -80,7 +80,7 @@ function Signup() {
               alt="Relanto Logo"
               className="header-logo"
             />
-            <h1>R-Data-X</h1>
+            <h1>R-DataX</h1>
           </div>
           <p>Create your account</p>
         </div>

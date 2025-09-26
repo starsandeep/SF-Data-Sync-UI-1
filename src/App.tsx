@@ -33,7 +33,7 @@ function App() {
               alt="Relanto Logo"
               className="header-logo"
             />
-            <h1>R-Data-X</h1>
+            <h1>R-DataX</h1>
           </div>
         </div>
         <div className="header-buttons">
@@ -48,7 +48,7 @@ function App() {
             <div className="app-description">
               <h2 className="main-title">Transform Your Data Management</h2>
               <p className="description-text">
-                R-Data-X is your comprehensive solution for data excellence. Our platform enables
+                R-DataX is your comprehensive solution for data excellence. Our platform enables
                 thorough data quality assessment, resolves data inconsistency issues, and helps
                 synchronize data across your systems seamlessly.
               </p>

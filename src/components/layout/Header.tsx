@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = "R-Data-X",
+  title = "R-DataX",
   subtitle
 }) => {
   const { user, logout } = useAuth();
