@@ -31,7 +31,7 @@ const StyledTabs = styled(Tabs)(({ theme }) => ({
   },
   '& .MuiTabs-flexContainer': {
     maxWidth: '1200px',
-    margin: '0 auto',
+    justifyContent: 'flex-start',
   },
 }));
 
@@ -52,7 +52,8 @@ const StyledTab = styled(Tab)(({ theme }) => ({
     fontWeight: 600,
   },
   '& .MuiTab-iconWrapper': {
-    marginBottom: '4px',
+    marginBottom: 0,
+    marginRight: '8px',
   },
   [theme.breakpoints.down('md')]: {
     minWidth: 100,
@@ -62,7 +63,8 @@ const StyledTab = styled(Tab)(({ theme }) => ({
     minWidth: 80,
     fontSize: '0.85rem',
     '& .MuiTab-iconWrapper': {
-      marginBottom: '2px',
+      marginBottom: 0,
+      marginRight: '6px',
     },
   },
 }));
@@ -71,6 +73,7 @@ const TabContainer = styled(Box)(({ theme }) => ({
   backgroundColor: theme.palette.background.paper,
   position: 'sticky',
   top: '80px',
+  
   zIndex: 100,
   boxShadow: theme.shadows[1],
   [theme.breakpoints.down('sm')]: {
@@ -130,7 +133,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ className = '' }) 
       <Box sx={{
         px: { xs: 1, sm: 2, md: 3 },
         display: 'flex',
-        justifyContent: 'center'
+        justifyContent: 'flex-start'
       }}>
         <StyledTabs
           value={getCurrentTabIndex()}
@@ -147,7 +150,7 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ className = '' }) 
               label={tab.label}
               id={`tab-${tab.id}`}
               aria-controls={`tabpanel-${tab.id}`}
-              iconPosition="top"
+              iconPosition="start"
             />
           ))}
         </StyledTabs>

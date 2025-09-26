@@ -88,11 +88,11 @@
 
 .App {
   text-align: center;
-  min-height: 100vh;
+  /* min-height: 100vh; */
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  display: flex;
-  flex-direction: column;
+  /* display: flex; */
+  /* flex-direction: column; */
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -946,7 +946,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  /* min-height: 100vh; */
   background-color: #0a0a0a;
   color: var(--text-primary);
   gap: 1rem;
@@ -2053,19 +2053,58 @@
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
+  transition: background-color 0.3s ease;
 }
 
+/* Main Navigation */
+.main-navigation {
+  position: sticky;
+  top: 80px;
+  z-index: 100;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-primary);
+  transition: all 0.3s ease;
+}
+
+/* Dark theme support for main navigation */
+[data-theme='dark'] .main-navigation {
+  background: var(--bg-header);
+  border-bottom-color: var(--border-primary);
+}
+
+/* Tab Content Area */
+.tab-content-area {
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-primary);
+  transition: background-color 0.3s ease;
+}
+
+.content-container {
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+/* Page Content */
 .page-content {
   flex: 1;
   min-height: 0;
   background: var(--bg-primary);
 }
 
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .main-navigation {
+    top: 70px;
+  }
+}
+
 /* Data Cleansing Page Styles */
 .data-cleansing-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0;
   min-height: calc(100vh - 160px);
 }
 
@@ -2078,8 +2117,7 @@
 
 .page-header h1 {
   color: var(--text-primary);
-  margin-bottom: 0.75rem;
-  margin-top: 0;
+  margin: 0;
   font-size: 2.5rem;
   font-weight: 700;
 }
@@ -2103,8 +2141,7 @@
 
 .selection-header h2 {
   color: var(--text-primary);
-  margin-bottom: 1rem;
-  margin-top: 0;
+  margin: 0;
   font-size: 2rem;
   font-weight: 600;
 }
@@ -2112,14 +2149,13 @@
 .selection-header p {
   color: var(--text-secondary);
   font-size: 1.1rem;
-  max-width: 500px;
   margin: 0 auto;
 }
 
 .objects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2rem;
+  gap: 1rem;
   margin: 0 auto;
   max-width: 1000px;
 }
@@ -2765,10 +2801,6 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .data-cleansing-page {
-    padding: 1.5rem;
-  }
-
   .objects-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
@@ -2786,9 +2818,6 @@
 }
 
 @media (max-width: 768px) {
-  .data-cleansing-page {
-    padding: 1rem;
-  }
 
   .page-header h1 {
     font-size: 2rem;
@@ -2862,10 +2891,6 @@
 }
 
 @media (max-width: 480px) {
-  .data-cleansing-page {
-    padding: 0.5rem;
-  }
-
   .page-header {
     margin-bottom: 2rem;
     padding-bottom: 1rem;
@@ -3787,7 +3812,7 @@
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   margin-bottom: 1rem;
-  max-height: calc(100vh - 480px);
+  max-height: calc(100vh - 575px);
   overflow: auto;
 }
 
@@ -4629,6 +4654,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    height: calc(100vh - 172px);
     padding: 1rem;
     background-color: var(--bg-primary);
     transition: background-color 0.3s ease;
@@ -4671,13 +4697,13 @@
 .dashboard-layout {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(100vh - 172px);
 }
 
 .wizard-layout {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(100vh - 172px);
 }
 
 .wizard-layout .scrollable-content {
@@ -4749,7 +4775,7 @@
 .jobs-page-layout {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    height: calc(100vh - 172px);
 }
 
 /* Modern Landing Page Styles */
