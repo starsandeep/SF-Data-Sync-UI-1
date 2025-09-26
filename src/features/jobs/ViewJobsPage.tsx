@@ -4,7 +4,6 @@ import { jobsAPI, JobListItem } from '../../api/jobsAPI';
 import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
-import { Header } from '../../components/layout/Header';
 
 interface ViewJobsPageProps {}
 
@@ -222,10 +221,6 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = () => {
 
   return (
     <div className="jobs-page-layout">
-      <Header
-        title="R-Data-X"
-        subtitle="Manage and monitor your data synchronization jobs"
-      />
       <div className="scrollable-content">
         <div className="jobs-header">
         <div className="header-content">

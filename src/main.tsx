@@ -11,6 +11,7 @@ import DashboardPage from './pages/DashboardPage'
 import DataCleansingPage from './pages/DataCleansingPage'
 import { JobWizard } from './features/create-job/JobWizard'
 import { ViewJobsPage } from './features/jobs/ViewJobsPage'
+import LandingPageLayout from './components/layout/LandingPageLayout'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -24,12 +25,14 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
 
-          {/* Protected routes */}
+          {/* Protected routes with tab navigation */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <LandingPageLayout>
+                  <DashboardPage />
+                </LandingPageLayout>
               </ProtectedRoute>
             }
           />
@@ -39,7 +42,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             path="/create-job"
             element={
               <ProtectedRoute>
-                <JobWizard />
+                <LandingPageLayout title="Data Sync" subtitle="Create and manage data synchronization jobs">
+                  <JobWizard />
+                </LandingPageLayout>
               </ProtectedRoute>
             }
           />
@@ -48,7 +53,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             path="/jobs"
             element={
               <ProtectedRoute>
-                <ViewJobsPage />
+                <LandingPageLayout title="Job Details" subtitle="View and manage all synchronization jobs">
+                  <ViewJobsPage />
+                </LandingPageLayout>
               </ProtectedRoute>
             }
           />
@@ -57,7 +64,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             path="/data-cleansing"
             element={
               <ProtectedRoute>
-                <DataCleansingPage />
+                <LandingPageLayout title="Data Quality" subtitle="AI-powered data cleansing and quality analysis">
+                  <DataCleansingPage />
+                </LandingPageLayout>
               </ProtectedRoute>
             }
           />

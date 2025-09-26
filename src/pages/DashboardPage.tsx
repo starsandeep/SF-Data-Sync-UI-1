@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
-import { Header } from '../components/layout/Header';
 import '../App.css';
 
 // Mock data for demonstration
@@ -61,9 +60,6 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard-layout">
-      <Header />
-
       <main className="scrollable-content">
         <div className="dashboard-container">
           {/* Stats Cards */}
@@ -205,7 +201,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
-    </div>
   );
 };
 

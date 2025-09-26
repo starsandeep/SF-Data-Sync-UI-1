@@ -2,7 +2,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
-import { Header } from '../../components/layout/Header';
 import { useJobWizard } from './hooks/useJobWizard';
 import { Step1Details } from './steps/Step1Details';
 import { Step2Connections } from './steps/Step2Connections';
@@ -141,11 +140,6 @@ export const JobWizard: React.FC = () => {
 
   return (
     <div className="wizard-layout" role="main" aria-labelledby="wizard-heading">
-      <Header
-        title="R-Data-X"
-        subtitle="Create a new data synchronization job"
-      />
-
       <div className="wizard-main">
         {/* Sidebar with Progress Stepper */}
         <aside className="wizard-sidebar" aria-label="Job creation progress">
