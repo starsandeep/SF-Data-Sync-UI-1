@@ -10,8 +10,8 @@ import Login from './Login'
 import Signup from './Signup'
 import HomePage from './pages/HomePage'
 import DashboardPage from './pages/DashboardPage'
+import DataSyncPage from './pages/DataSyncPage'
 import DataCleansingPage from './pages/DataCleansingPage'
-import { JobWizard } from './features/create-job/JobWizard'
 import { ViewJobsPage } from './features/jobs/ViewJobsPage'
 import LandingPageLayout from './components/layout/LandingPageLayout'
 import './index.css'
@@ -56,8 +56,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             path="/create-job"
             element={
               <ProtectedRoute>
-                <LandingPageLayout title="R-DataX" subtitle="Create and manage data synchronization jobs">
-                  <JobWizard />
+                <LandingPageLayout title="R-DataX" subtitle="Data Synchronization Service">
+                  <DataSyncPage />
                 </LandingPageLayout>
               </ProtectedRoute>
             }

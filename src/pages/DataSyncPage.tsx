@@ -1,0 +1,144 @@
+import React, { useState } from 'react';
+import { JobWizard } from '../features/create-job/JobWizard';
+import { ViewJobsPage } from '../features/jobs/ViewJobsPage';
+
+// Define the different views available in the DataSync page
+type DataSyncView = 'dashboard' | 'create-job' | 'job-details';
+
+interface StatCardProps {
+  icon: string;
+  title: string;
+  number: string;
+  change: string;
+  onClick?: () => void;
+  clickable?: boolean;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ icon, title, number, change, onClick, clickable = false }) => (
+  <div
+    className={`ds-stat-card ${clickable ? 'ds-clickable' : ''}`}
+    onClick={onClick}
+    style={{ cursor: clickable ? 'pointer' : 'default' }}
+  >
+    <div className="ds-stat-icon">{icon}</div>
+    <div className="ds-stat-content">
+      <h3>{title}</h3>
+      <p className="ds-stat-number">{number}</p>
+      <span className="ds-stat-change">{change}</span>
+    </div>
+  </div>
+);
+
+const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> = ({ onNavigate }) => {
+  return (
+    <div className="ds-dashboard">
+      {/* Professional Introduction */}
+      <div className="ds-service-introduction">
+        <h2 className="ds-main-title">Data Synchronization Service</h2>
+        <p className="ds-description-text">
+          Our Data Synchronization Service is engineered to provide robust data migration and protection solutions.
+          It ensures the integrity and accessibility of your critical assets by facilitating secure, high-speed transfers.
+          All data in transit is protected through industry-standard encryption and rigorously validated upon completion,
+          guaranteeing both confidentiality and accuracy.
+        </p>
+      </div>
+
+      {/* Call-to-Action Buttons */}
+      <div className="ds-action-buttons-section">
+        <div className="ds-cta-buttons">
+          <button
+            className="ds-action-btn ds-primary-action"
+            onClick={() => onNavigate('create-job')}
+            aria-label="Create a new data synchronization job"
+          >
+            <span className="ds-btn-icon">➕</span>
+            <span className="ds-btn-text">Create New Job</span>
+            <span className="ds-btn-description">Set up a new data synchronization task</span>
+          </button>
+
+          <button
+            className="ds-action-btn ds-secondary-action"
+            onClick={() => onNavigate('job-details')}
+            aria-label="View and manage existing jobs"
+          >
+            <span className="ds-btn-icon">📋</span>
+            <span className="ds-btn-text">Job Details</span>
+            <span className="ds-btn-description">View and manage all synchronization jobs</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Statistics Dashboard */}
+      <div className="ds-stats-section">
+        <h3 className="ds-stats-title">Performance Overview</h3>
+        <div className="ds-stats-grid">
+          {/* Total Jobs - Navigates to Job Details view */}
+          <StatCard
+            icon="📊"
+            title="Total Jobs"
+            number="12"
+            change="+2 this week"
+            onClick={() => onNavigate('job-details')}
+            clickable={true}
+          />
+
+          {/* Active Jobs - Navigates to Job Details view */}
+          <StatCard
+            icon="✅"
+            title="Active Jobs"
+            number="8"
+            change="Running smoothly"
+            onClick={() => onNavigate('job-details')}
+            clickable={true}
+          />
+
+          {/* Inactive Jobs - Static */}
+          <StatCard
+            icon="⚠️"
+            title="Inactive Jobs"
+            number="4"
+            change="Needs attention"
+            clickable={false}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const DataSyncPage: React.FC = () => {
+  const [currentView, setCurrentView] = useState<DataSyncView>('dashboard');
+
+  const handleNavigate = (view: DataSyncView) => {
+    setCurrentView(view);
+  };
+
+  const handleBackToDashboard = () => {
+    setCurrentView('dashboard');
+  };
+
+  const renderCurrentView = () => {
+    switch (currentView) {
+      case 'create-job':
+        return <JobWizard onExit={handleBackToDashboard} />;
+      case 'job-details':
+        return (
+          <ViewJobsPage
+            onBackToDashboard={handleBackToDashboard}
+            onCreateJob={() => handleNavigate('create-job')}
+          />
+        );
+      case 'dashboard':
+      default:
+        return <DataSyncDashboard onNavigate={handleNavigate} />;
+    }
+  };
+
+  return (
+    <div className="ds-page">
+      {renderCurrentView()}
+    </div>
+  );
+};
+
+export default DataSyncPage;

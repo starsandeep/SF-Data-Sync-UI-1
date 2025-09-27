@@ -12,7 +12,11 @@ import { Step5TestSchedule } from './steps/Step5TestSchedule';
 // import { Step5Validation } from './steps/Step5Validation';
 import '../../App.css';
 
-export const JobWizard: React.FC = () => {
+interface JobWizardProps {
+  onExit?: () => void;
+}
+
+export const JobWizard: React.FC<JobWizardProps> = ({ onExit }) => {
   const navigate = useNavigate();
   const {
     currentStep,
@@ -45,7 +49,13 @@ export const JobWizard: React.FC = () => {
         saveAsDraft();
       }
     }
-    navigate('/dashboard');
+
+    // Use onExit callback if provided, otherwise navigate to dashboard
+    if (onExit) {
+      onExit();
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const handleStepClick = (stepNumber: number) => {
@@ -120,7 +130,12 @@ export const JobWizard: React.FC = () => {
             onNext={async () => {
               const result = await createJob();
               if (result.success) {
-                navigate('/jobs');
+                // Use onExit callback if provided, otherwise navigate to jobs
+                if (onExit) {
+                  onExit();
+                } else {
+                  navigate('/jobs');
+                }
               }
             }}
             onPrevious={previousStep}

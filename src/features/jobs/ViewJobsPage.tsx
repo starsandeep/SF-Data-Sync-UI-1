@@ -5,9 +5,12 @@ import { Button } from '../../components/common/Button';
 import { Input } from '../../components/common/Input';
 import { Modal } from '../../components/common/Modal';
 
-interface ViewJobsPageProps {}
+interface ViewJobsPageProps {
+  onBackToDashboard?: () => void;
+  onCreateJob?: () => void;
+}
 
-export const ViewJobsPage: React.FC<ViewJobsPageProps> = () => {
+export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({ onBackToDashboard, onCreateJob }) => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState<JobListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -224,12 +227,30 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = () => {
       <div className="scrollable-content">
         <div className="jobs-header">
         <div className="header-content">
+          {onBackToDashboard && (
+            <Button
+              variant="outline"
+              onClick={onBackToDashboard}
+              aria-label="Back to Data Sync Dashboard"
+              className="back-button"
+            >
+              ← Back to Dashboard
+            </Button>
+          )}
           <h3 className="page-title">All Jobs</h3>
         </div>
         <div className="header-actions">
           <Button
             variant="primary"
-            onClick={() => navigate('/create-job')}
+            onClick={() => {
+              if (onCreateJob) {
+                // When used within DataSyncPage, use the callback
+                onCreateJob();
+              } else {
+                // When used standalone, navigate normally
+                navigate('/create-job');
+              }
+            }}
             aria-label="Create new job"
           >
             + New Job
@@ -300,7 +321,13 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = () => {
                 <p>Get started by creating your first data synchronization job.</p>
                 <Button
                   variant="primary"
-                  onClick={() => navigate('/create-job')}
+                  onClick={() => {
+                    if (onCreateJob) {
+                      onCreateJob();
+                    } else {
+                      navigate('/create-job');
+                    }
+                  }}
                 >
                   Create Your First Job
                 </Button>
