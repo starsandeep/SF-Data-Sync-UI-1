@@ -107,12 +107,6 @@ const tabs: TabConfig[] = [
     label: 'Data Quality',
     route: '/data-cleansing',
     icon: <CleaningServicesIcon />
-  },
-  {
-    id: 'job-details',
-    label: 'Job Details',
-    route: '/jobs',
-    icon: <WorkIcon />
   }
 ];
 
