@@ -5127,42 +5127,12 @@
    DATA SYNCHRONIZATION FEATURE STYLES
    ===================================================================
    Modern, clean design with full light/dark mode support
+   Uses global theme variables for seamless integration
    All classes prefixed with 'ds-' for namespace isolation
    =================================================================== */
 
-/* CSS Variables for Theme Support */
+/* DataSync-specific CSS Variables using global theme system */
 :root {
-  /* Light Mode Colors */
-  --ds-primary-color: #007bff;
-  --ds-primary-hover: #0056b3;
-  --ds-secondary-color: #6c757d;
-  --ds-success-color: #28a745;
-  --ds-warning-color: #ffc107;
-  --ds-danger-color: #dc3545;
-
-  /* Background Colors */
-  --ds-bg-primary: #ffffff;
-  --ds-bg-secondary: #f8f9fa;
-  --ds-bg-tertiary: #e9ecef;
-  --ds-bg-accent: #f1f3f4;
-
-  /* Text Colors */
-  --ds-text-primary: #212529;
-  --ds-text-secondary: #6c757d;
-  --ds-text-muted: #adb5bd;
-  --ds-text-inverse: #ffffff;
-
-  /* Border Colors */
-  --ds-border-color: #dee2e6;
-  --ds-border-light: #e9ecef;
-  --ds-border-accent: #007bff;
-
-  /* Shadow Variables */
-  --ds-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  --ds-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-  --ds-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
-  --ds-shadow-hover: 0 0.25rem 0.75rem rgba(0, 123, 255, 0.25);
-
   /* Spacing */
   --ds-spacing-xs: 0.25rem;
   --ds-spacing-sm: 0.5rem;
@@ -5176,49 +5146,27 @@
   --ds-radius-md: 0.5rem;
   --ds-radius-lg: 0.75rem;
   --ds-radius-xl: 1rem;
+
+  /* DataSync-specific hover shadows */
+  --ds-shadow-hover-light: 0 0.25rem 0.75rem rgba(0, 123, 255, 0.25);
+  --ds-shadow-hover-dark: 0 0.25rem 0.75rem rgba(0, 132, 255, 0.4);
 }
 
-/* Dark Mode Colors */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Primary colors remain similar for brand consistency */
-    --ds-primary-color: #4dabf7;
-    --ds-primary-hover: #339af0;
-    --ds-secondary-color: #868e96;
-    --ds-success-color: #51cf66;
-    --ds-warning-color: #ffd43b;
-    --ds-danger-color: #ff6b6b;
+/* Dark theme hover shadows */
+[data-theme="dark"] {
+  --ds-shadow-hover: var(--ds-shadow-hover-dark);
+}
 
-    /* Dark Background Colors */
-    --ds-bg-primary: #1a1a1a;
-    --ds-bg-secondary: #2d2d2d;
-    --ds-bg-tertiary: #404040;
-    --ds-bg-accent: #333333;
-
-    /* Dark Text Colors */
-    --ds-text-primary: #ffffff;
-    --ds-text-secondary: #adb5bd;
-    --ds-text-muted: #6c757d;
-    --ds-text-inverse: #212529;
-
-    /* Dark Border Colors */
-    --ds-border-color: #404040;
-    --ds-border-light: #333333;
-    --ds-border-accent: #4dabf7;
-
-    /* Dark Mode Shadows */
-    --ds-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
-    --ds-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
-    --ds-shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.5);
-    --ds-shadow-hover: 0 0.25rem 0.75rem rgba(77, 171, 247, 0.4);
-  }
+/* Light theme hover shadows (default) */
+:root {
+  --ds-shadow-hover: var(--ds-shadow-hover-light);
 }
 
 /* Main Container */
 .ds-page {
   min-height: 100vh;
-  background-color: var(--ds-bg-primary);
-  color: var(--ds-text-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.6;
   transition: all 0.3s ease;
@@ -5226,36 +5174,36 @@
 
 /* Dashboard Container */
 .ds-dashboard {
-  max-width: 1200px;
+  max-width: 80%;
   margin: 0 auto;
-  padding: var(--ds-spacing-xl);
+  padding: var(--ds-spacing-md);
   display: flex;
   flex-direction: column;
-  gap: var(--ds-spacing-xxl);
+  gap: var(--ds-spacing-lg);
 }
 
 /* Service Introduction Section */
 .ds-service-introduction {
   text-align: center;
-  padding: var(--ds-spacing-xl);
-  background: linear-gradient(135deg, var(--ds-bg-secondary) 0%, var(--ds-bg-accent) 100%);
+  padding: var(--ds-spacing-md);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-accent) 100%);
   border-radius: var(--ds-radius-xl);
-  box-shadow: var(--ds-shadow-md);
-  border: 1px solid var(--ds-border-light);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-secondary);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .ds-service-introduction:hover {
   transform: translateY(-2px);
-  box-shadow: var(--ds-shadow-lg);
+  box-shadow: var(--shadow-lg);
 }
 
 .ds-main-title {
   font-size: 2.5rem;
   font-weight: 700;
-  color: var(--ds-text-primary);
+  color: var(--text-primary);
   margin-bottom: var(--ds-spacing-lg);
-  background: linear-gradient(135deg, var(--ds-primary-color), var(--ds-primary-hover));
+  background: linear-gradient(135deg, var(--bg-button), var(--bg-button-hover));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -5264,8 +5212,8 @@
 
 .ds-description-text {
   font-size: 1.125rem;
-  color: var(--ds-text-secondary);
-  max-width: 800px;
+  color: var(--text-secondary);
+  max-width: 80%;
   margin: 0 auto;
   line-height: 1.7;
   font-weight: 400;
@@ -5275,7 +5223,7 @@
 .ds-action-buttons-section {
   display: flex;
   justify-content: center;
-  margin: var(--ds-spacing-xl) 0;
+  margin: var(--ds-spacing-md) 0;
 }
 
 .ds-cta-buttons {
@@ -5291,14 +5239,14 @@
   align-items: center;
   padding: var(--ds-spacing-lg) var(--ds-spacing-xl);
   min-width: 220px;
-  background: var(--ds-bg-primary);
-  border: 2px solid var(--ds-border-color);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-primary);
   border-radius: var(--ds-radius-lg);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
   font-family: inherit;
-  box-shadow: var(--ds-shadow-sm);
+  box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
 }
@@ -5321,29 +5269,29 @@
 .ds-action-btn:hover {
   transform: translateY(-3px);
   box-shadow: var(--ds-shadow-hover);
-  border-color: var(--ds-border-accent);
+  border-color: var(--border-focus);
 }
 
 .ds-primary-action {
-  background: linear-gradient(135deg, var(--ds-primary-color), var(--ds-primary-hover));
-  border-color: var(--ds-primary-color);
-  color: var(--ds-text-inverse);
+  background: linear-gradient(135deg, var(--bg-button), var(--bg-button-hover));
+  border-color: var(--bg-button);
+  color: var(--text-inverse);
 }
 
 .ds-primary-action:hover {
-  background: linear-gradient(135deg, var(--ds-primary-hover), var(--ds-primary-color));
-  border-color: var(--ds-primary-hover);
+  background: linear-gradient(135deg, var(--bg-button-hover), var(--bg-button));
+  border-color: var(--bg-button-hover);
 }
 
 .ds-secondary-action {
-  background: var(--ds-bg-secondary);
-  border-color: var(--ds-border-color);
-  color: var(--ds-text-primary);
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
 }
 
 .ds-secondary-action:hover {
-  background: var(--ds-bg-tertiary);
-  border-color: var(--ds-primary-color);
+  background: var(--bg-tertiary);
+  border-color: var(--bg-button);
 }
 
 .ds-btn-icon {
@@ -5369,13 +5317,13 @@
 
 /* Statistics Section */
 .ds-stats-section {
-  margin-top: var(--ds-spacing-xl);
+  margin-top: 0;
 }
 
 .ds-stats-title {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--ds-text-primary);
+  color: var(--text-primary);
   text-align: center;
   margin-bottom: var(--ds-spacing-lg);
 }
@@ -5389,15 +5337,15 @@
 
 /* Stat Cards */
 .ds-stat-card {
-  background: var(--ds-bg-primary);
-  border: 1px solid var(--ds-border-color);
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
   border-radius: var(--ds-radius-lg);
   padding: var(--ds-spacing-lg);
   display: flex;
   align-items: center;
   gap: var(--ds-spacing-md);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: var(--ds-shadow-sm);
+  box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
 }
@@ -5409,7 +5357,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--ds-primary-color), var(--ds-success-color));
+  background: linear-gradient(90deg, var(--bg-button), var(--bg-success));
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.3s ease;
@@ -5421,8 +5369,8 @@
 
 .ds-stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--ds-shadow-lg);
-  border-color: var(--ds-border-accent);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-focus);
 }
 
 .ds-clickable {
@@ -5430,7 +5378,7 @@
 }
 
 .ds-clickable:hover {
-  background: var(--ds-bg-secondary);
+  background: var(--bg-secondary);
 }
 
 .ds-stat-icon {
@@ -5440,7 +5388,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--ds-bg-accent);
+  background: var(--bg-accent);
   border-radius: var(--ds-radius-md);
   flex-shrink: 0;
 }
@@ -5453,7 +5401,7 @@
 .ds-stat-content h3 {
   font-size: 1rem;
   font-weight: 500;
-  color: var(--ds-text-secondary);
+  color: var(--text-secondary);
   margin: 0 0 var(--ds-spacing-xs) 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -5462,14 +5410,14 @@
 .ds-stat-number {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--ds-text-primary);
+  color: var(--text-primary);
   margin: 0 0 var(--ds-spacing-xs) 0;
   line-height: 1.2;
 }
 
 .ds-stat-change {
   font-size: 0.875rem;
-  color: var(--ds-success-color);
+  color: var(--text-success);
   font-weight: 500;
   display: inline-flex;
   align-items: center;
@@ -5571,7 +5519,7 @@
 /* Focus States for Accessibility */
 .ds-action-btn:focus,
 .ds-stat-card.ds-clickable:focus {
-  outline: 2px solid var(--ds-primary-color);
+  outline: 2px solid var(--border-focus);
   outline-offset: 2px;
 }
 
@@ -5614,5 +5562,11 @@
   .ds-action-btn {
     box-shadow: none !important;
     border: 1px solid #ccc !important;
+    background: white !important;
+  }
+
+  .ds-main-title {
+    color: black !important;
+    -webkit-text-fill-color: black !important;
   }
 }
