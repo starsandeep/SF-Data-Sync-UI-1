@@ -2,6 +2,10 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '../../../components/common/Button';
 import { FieldMapping } from '../types';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface Step4FieldMappingProps {
   fieldMappings: FieldMapping;
@@ -20,42 +24,48 @@ interface MappingRow {
   isEditing: boolean;
 }
 
-// Available Salesforce fields for mapping
+// Available Salesforce fields for mapping (Account target object)
 const SALESFORCE_FIELDS = [
-  { value: 'AccountId__c', label: 'AccountId__c' },
-  { value: 'Name', label: 'Name' },
+  { value: 'Account_Name__c', label: 'Account_Name__c' },
+  { value: 'Account_Owner__c', label: 'Account_Owner__c' },
+  { value: 'Billing_Address_Line_1__c', label: 'Billing_Address_Line_1__c' },
+  { value: 'Billing_Address_Line_2__c', label: 'Billing_Address_Line_2__c' },
+  { value: 'Billing_City__c', label: 'Billing_City__c' },
+  { value: 'Billing_Country__c', label: 'Billing_Country__c' },
+  { value: 'Billing_StateProvince__c', label: 'Billing_StateProvince__c' },
+  { value: 'Billing_Street__c', label: 'Billing_Street__c' },
+  { value: 'Billing_ZipPostal_Code__c', label: 'Billing_ZipPostal_Code__c' },
   { value: 'CreatedById', label: 'CreatedById' },
-  { value: 'Dept__c', label: 'Dept__c' },
-  { value: 'Desc__c', label: 'Desc__c' },
-  { value: 'First_Name__c', label: 'First_Name__c' },
-  { value: 'Last_Name__c', label: 'Last_Name__c' },
-  { value: 'MailCity__c', label: 'MailCity__c' },
-  { value: 'MailingCountry__c', label: 'MailingCountry__c' },
-  { value: 'MailingState__c', label: 'MailingState__c' },
+  { value: 'Last_Activity__c', label: 'Last_Activity__c' },
+  { value: 'LastModifiedById', label: 'LastModifiedById' },
+  { value: 'Last_Modified_Date__c', label: 'Last_Modified_Date__c' },
   { value: 'OwnerId', label: 'OwnerId' },
   { value: 'Phone__c', label: 'Phone__c' },
-  { value: 'Title__c', label: 'Title__c' },
-  { value: 'LastModifiedById', label: 'LastModifiedById' },
+  { value: 'Rating__c', label: 'Rating__c' },
+  { value: 'Type__c', label: 'Type__c' },
   { value: 'extid__c', label: 'extid__c' },
   { value: '', label: '-- (Unmapped)' }
 ];
 
-// Default field mappings
+// Default field mappings for Account source to Account__c target
 const DEFAULT_MAPPINGS: MappingRow[] = [
-  { sourceField: 'AccountId', sourceLabel: 'AccountId', targetField: 'AccountId__c', isEditing: false },
-  { sourceField: 'Name', sourceLabel: 'Name', targetField: 'Name', isEditing: false },
+  { sourceField: 'Name', sourceLabel: 'Name', targetField: 'Account_Name__c', isEditing: false },
+  { sourceField: 'Account_Owner', sourceLabel: 'Account_Owner', targetField: 'Account_Owner__c', isEditing: false },
+  { sourceField: 'Billing_Address_Line_1', sourceLabel: 'Billing_Address_Line_1', targetField: 'Billing_Address_Line_1__c', isEditing: false },
+  { sourceField: 'Billing_Address_Line_2', sourceLabel: 'Billing_Address_Line_2', targetField: 'Billing_Address_Line_2__c', isEditing: false },
+  { sourceField: 'Billing_City', sourceLabel: 'Billing_City', targetField: 'Billing_City__c', isEditing: false },
+  { sourceField: 'Billing_Country', sourceLabel: 'Billing_Country', targetField: 'Billing_Country__c', isEditing: false },
+  { sourceField: 'Billing_StateProvince', sourceLabel: 'Billing_StateProvince', targetField: 'Billing_StateProvince__c', isEditing: false },
+  { sourceField: 'Billing_Street', sourceLabel: 'Billing_Street', targetField: 'Billing_Street__c', isEditing: false },
+  { sourceField: 'Billing_ZipPostal_Code', sourceLabel: 'Billing_ZipPostal_Code', targetField: 'Billing_ZipPostal_Code__c', isEditing: false },
   { sourceField: 'CreatedById', sourceLabel: 'CreatedById', targetField: 'CreatedById', isEditing: false },
-  { sourceField: 'Department', sourceLabel: 'Department', targetField: 'Dept__c', isEditing: false },
-  { sourceField: 'Description', sourceLabel: 'Description', targetField: 'Desc__c', isEditing: false },
-  { sourceField: 'FirstName', sourceLabel: 'FirstName', targetField: 'First_Name__c', isEditing: false },
-  { sourceField: 'LastName', sourceLabel: 'LastName', targetField: 'Last_Name__c', isEditing: false },
-  { sourceField: 'MailingCity', sourceLabel: 'MailingCity', targetField: 'MailCity__c', isEditing: false },
-  { sourceField: 'MailingCountry', sourceLabel: 'MailingCountry', targetField: 'MailingCountry__c', isEditing: false },
-  { sourceField: 'MailingState', sourceLabel: 'MailingState', targetField: 'MailingState__c', isEditing: false },
+  { sourceField: 'Last_Activity', sourceLabel: 'Last_Activity', targetField: 'Last_Activity__c', isEditing: false },
+  { sourceField: 'LastModifiedById', sourceLabel: 'LastModifiedById', targetField: 'LastModifiedById', isEditing: false },
+  { sourceField: 'Last_Modified_Date', sourceLabel: 'Last_Modified_Date', targetField: 'Last_Modified_Date__c', isEditing: false },
   { sourceField: 'OwnerId', sourceLabel: 'OwnerId', targetField: 'OwnerId', isEditing: false },
   { sourceField: 'Phone', sourceLabel: 'Phone', targetField: 'Phone__c', isEditing: false },
-  { sourceField: 'Title', sourceLabel: 'Title', targetField: 'Title__c', isEditing: false },
-  { sourceField: 'LastModifiedById', sourceLabel: 'LastModifiedById', targetField: 'LastModifiedById', isEditing: false },
+  { sourceField: 'Rating', sourceLabel: 'Rating', targetField: 'Rating__c', isEditing: false },
+  { sourceField: 'Type', sourceLabel: 'Type', targetField: 'Type__c', isEditing: false },
   { sourceField: 'Id', sourceLabel: 'Id', targetField: 'extid__c', isEditing: false }
 ];
 
@@ -119,17 +129,54 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     return () => clearInterval(interval);
   }, [showLoader]);
 
-  // Check for duplicate mappings
-  const duplicateTargetFields = useMemo(() => {
+  // Comprehensive validations
+  const validationResults = useMemo(() => {
     const targetFields = mappingRows
       .map(row => row.targetField)
       .filter(field => field && field !== '');
 
+    // Check for duplicate mappings
     const duplicates = targetFields.filter((field, index) =>
       targetFields.indexOf(field) !== index
     );
+    const duplicateTargetFields = new Set(duplicates);
 
-    return new Set(duplicates);
+    // Check for required fields (at least one mapping should exist)
+    const hasAnyMapping = mappingRows.some(row => row.targetField && row.targetField !== '');
+
+    // Check for empty source fields
+    const emptySourceFields = mappingRows.filter(row => !row.sourceField || row.sourceField.trim() === '');
+
+    // Check for invalid field name patterns
+    const invalidSourceFields = mappingRows.filter(row => {
+      if (!row.sourceField) return false;
+      // Source fields should not contain special characters except underscores
+      return !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(row.sourceField);
+    });
+
+    // Check for mapping completeness (source has target)
+    const unmappedFields = mappingRows.filter(row =>
+      row.sourceField && row.sourceField.trim() !== '' && (!row.targetField || row.targetField === '')
+    );
+
+    // Check for total mapping count
+    const totalMappings = targetFields.length;
+    const maxRecommendedMappings = 50; // Salesforce API limits
+
+    return {
+      duplicateTargetFields,
+      hasAnyMapping,
+      emptySourceFields,
+      invalidSourceFields,
+      unmappedFields,
+      totalMappings,
+      maxRecommendedMappings,
+      isValid: duplicateTargetFields.size === 0 &&
+               hasAnyMapping &&
+               emptySourceFields.length === 0 &&
+               invalidSourceFields.length === 0 &&
+               totalMappings <= maxRecommendedMappings
+    };
   }, [mappingRows]);
 
   const handleEditStart = useCallback((sourceField: string, currentTargetField: string) => {
@@ -172,6 +219,19 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     setMappingRows(prev => prev.filter(row => row.sourceField !== sourceField));
   }, []);
 
+  const handleAddNewMapping = useCallback(() => {
+    const newRow: MappingRow = {
+      sourceField: `NewField_${Date.now()}`,
+      sourceLabel: `NewField_${Date.now()}`,
+      targetField: '',
+      isEditing: true
+    };
+    setMappingRows(prev => [...prev, newRow]);
+    setEditingField(newRow.sourceField);
+    setTempTargetField('');
+  }, []);
+
+
   const handleSaveMappings = useCallback(() => {
     const newMappings: FieldMapping = {};
     const newSelectedFields: string[] = [];
@@ -190,12 +250,13 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   }, [mappingRows, syncAllFields, onUpdateMappings]);
 
   const handleNext = useCallback(() => {
-    handleSaveMappings();
-    onNext();
-  }, [handleSaveMappings, onNext]);
+    if (validationResults.isValid) {
+      handleSaveMappings();
+      onNext();
+    }
+  }, [handleSaveMappings, onNext, validationResults.isValid]);
 
-  const hasDuplicates = duplicateTargetFields.size > 0;
-  const canProceed = !hasDuplicates && mappingRows.some(row => row.targetField && row.targetField !== '');
+  const canProceed = validationResults.isValid;
 
   if (showLoader) {
     return (
@@ -235,32 +296,70 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         <h4 className="step-title">Field Mapping</h4>
         <p className="step-description">
           This is AI-driven field mapping. It automatically maps fields based on names and provide autosuggestions.
-          Configure how source fields map to target Salesforce fields.
+          Configure how Account (source) fields map to Account__c (target) Salesforce fields.
           Some default mappings are pre-configured to get you started.
         </p>
+        <div className="mapping-info">
+          <span className="source-info">📊 Source: <strong>Account</strong></span>
+          <span className="arrow">→</span>
+          <span className="target-info">🎯 Target: <strong>Account__c</strong></span>
+        </div>
       </div>
 
       <div className="info-box">
         <strong>Required Editions:</strong> Available in: All Account Engagement Editions
       </div>
 
+      {/* Validation Summary */}
+      {!validationResults.isValid && (
+        <div className="validation-summary">
+          <h5>⚠️ Validation Issues</h5>
+          <ul>
+            {validationResults.duplicateTargetFields.size > 0 && (
+              <li>Duplicate target field mappings detected</li>
+            )}
+            {!validationResults.hasAnyMapping && (
+              <li>At least one field mapping is required</li>
+            )}
+            {validationResults.emptySourceFields.length > 0 && (
+              <li>{validationResults.emptySourceFields.length} empty source field(s) found</li>
+            )}
+            {validationResults.invalidSourceFields.length > 0 && (
+              <li>{validationResults.invalidSourceFields.length} invalid source field name(s) found</li>
+            )}
+            {validationResults.unmappedFields.length > 0 && (
+              <li>{validationResults.unmappedFields.length} source field(s) not mapped to target</li>
+            )}
+            {validationResults.totalMappings > validationResults.maxRecommendedMappings && (
+              <li>Too many mappings ({validationResults.totalMappings}/{validationResults.maxRecommendedMappings} max recommended)</li>
+            )}
+          </ul>
+        </div>
+      )}
+
       <div className="field-mapping-table">
         <div className="table-header">
-          <div className="column-header">Source Field</div>
-          <div className="column-header">Target Field (Salesforce)</div>
+          <div className="column-header">Source Field (Account)</div>
+          <div className="column-header">Target Field (Account__c)</div>
           <div className="column-header">Actions</div>
         </div>
 
         {mappingRows.map((row) => {
-          const isDuplicate = duplicateTargetFields.has(row.targetField) && row.targetField !== '';
+          const isDuplicate = validationResults.duplicateTargetFields.has(row.targetField) && row.targetField !== '';
+          const isInvalidSource = validationResults.invalidSourceFields.some(f => f.sourceField === row.sourceField);
+          const isEmptySource = !row.sourceField || row.sourceField.trim() === '';
 
           return (
             <div
               key={row.sourceField}
-              className={`mapping-row ${row.isEditing ? 'editing' : ''} ${isDuplicate ? 'duplicate' : ''}`}
+              className={`mapping-row ${row.isEditing ? 'editing' : ''} ${isDuplicate ? 'duplicate' : ''} ${isInvalidSource ? 'invalid-source' : ''} ${isEmptySource ? 'empty-source' : ''}`}
             >
               <div className="source-field">
-                <div className="field-label">{row.sourceLabel}</div>
+                <div className={`field-label ${isInvalidSource || isEmptySource ? 'error' : ''}`}>
+                  {row.sourceLabel}
+                  {isInvalidSource && <span className="error-indicator"> (Invalid)</span>}
+                  {isEmptySource && <span className="error-indicator"> (Empty)</span>}
+                </div>
               </div>
 
               <div className="target-field">
@@ -310,14 +409,14 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                       onClick={() => handleEditSave(row.sourceField)}
                       disabled={isDuplicate}
                     >
-                      Save
+                      <CheckIcon fontSize="small" />
                     </Button>
                     <Button
                       variant="outline"
                       size="small"
                       onClick={() => handleEditCancel(row.sourceField)}
                     >
-                      Cancel
+                      <CloseIcon fontSize="small" />
                     </Button>
                   </div>
                 ) : (
@@ -327,14 +426,14 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                       size="small"
                       onClick={() => handleEditStart(row.sourceField, row.targetField)}
                     >
-                      Edit
+                      <EditIcon fontSize="small" />
                     </Button>
                     <Button
                       variant="danger"
                       size="small"
                       onClick={() => handleDelete(row.sourceField)}
                     >
-                      Delete
+                      <DeleteIcon fontSize="small" />
                     </Button>
                   </div>
                 )}
@@ -344,16 +443,29 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         })}
       </div>
 
-      {hasDuplicates && (
+      {/* Additional validation messages at the bottom */}
+      {validationResults.duplicateTargetFields.size > 0 && (
         <div className="error-message" role="alert">
           <strong>Duplicate mappings detected:</strong> Multiple source fields are mapped to the same target field.
           Please resolve duplicates before proceeding.
         </div>
       )}
 
-      {!hasDuplicates && mappingRows.every(row => !row.targetField || row.targetField === '') && (
+      {!validationResults.hasAnyMapping && (
         <div className="warning-message" role="alert">
           <strong>No mappings configured:</strong> At least one field mapping is required to proceed.
+        </div>
+      )}
+
+      {validationResults.invalidSourceFields.length > 0 && (
+        <div className="error-message" role="alert">
+          <strong>Invalid source field names:</strong> Source field names must start with a letter or underscore and contain only letters, numbers, and underscores.
+        </div>
+      )}
+
+      {validationResults.totalMappings > validationResults.maxRecommendedMappings && (
+        <div className="warning-message" role="alert">
+          <strong>Too many mappings:</strong> Consider reducing the number of field mappings for better performance.
         </div>
       )}
 
