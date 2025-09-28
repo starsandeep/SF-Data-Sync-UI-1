@@ -349,7 +349,7 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
         </div>
       </div>
 
-      <div className="ds-step-actions">
+      <div className="step-actions">
         <Button
           variant="outline"
           onClick={onPrevious}
