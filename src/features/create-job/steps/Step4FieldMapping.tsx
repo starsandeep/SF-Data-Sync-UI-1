@@ -1,5 +1,5 @@
 // Step 4: Field Mapping Component
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '../../../components/common/Button';
 import { FieldMapping } from '../types';
 
@@ -68,6 +68,10 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   onPrevious,
   isLoading
 }) => {
+  const [showLoader, setShowLoader] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [processingStep, setProcessingStep] = useState('Initializing field analysis...');
+
   const [mappingRows, setMappingRows] = useState<MappingRow[]>(() => {
     // Initialize with default mappings or existing mappings
     return DEFAULT_MAPPINGS.map(row => ({
@@ -78,6 +82,42 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempTargetField, setTempTargetField] = useState<string>('');
+
+  // Loader effect with progress animation
+  useEffect(() => {
+    if (!showLoader) return;
+
+    const steps = [
+      'Initializing field analysis...',
+      'Analyzing source data structure...',
+      'Mapping field relationships...',
+      'Optimizing data transformations...',
+      'Finalizing field mappings...'
+    ];
+
+    let currentStep = 0;
+    let currentProgress = 0;
+
+    const interval = setInterval(() => {
+      currentProgress += 2;
+      setProgress(currentProgress);
+
+      // Update processing step every 20% progress
+      if (currentProgress % 20 === 0 && currentStep < steps.length - 1) {
+        currentStep++;
+        setProcessingStep(steps[currentStep]);
+      }
+
+      if (currentProgress >= 100) {
+        clearInterval(interval);
+        setTimeout(() => {
+          setShowLoader(false);
+        }, 500);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [showLoader]);
 
   // Check for duplicate mappings
   const duplicateTargetFields = useMemo(() => {
@@ -156,6 +196,38 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
   const hasDuplicates = duplicateTargetFields.size > 0;
   const canProceed = !hasDuplicates && mappingRows.some(row => row.targetField && row.targetField !== '');
+
+  if (showLoader) {
+    return (
+      <div className="processing-screen">
+        <div className="processing-container">
+          <div className="ai-logo">
+            <div className="ai-circle">
+              🧠
+            </div>
+          </div>
+
+          <h2>AI-Powered Analysis in Progress</h2>
+          <p>Our advanced algorithms are analyzing your data quality...</p>
+
+          <div className="progress-container">
+            <div className="progress-bar">
+              <div
+                className="progress-fill"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="progress-text">{Math.round(progress)}% Complete</div>
+          </div>
+
+          <div className="processing-step">
+            <span className="step-icon">⚙️</span>
+            <span>{processingStep}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="step-container">
