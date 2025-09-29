@@ -4825,7 +4825,7 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    height: calc(100vh - 172px);
+    height: calc(100vh - 148px);
     padding: 1rem;
     background-color: var(--bg-primary);
     transition: background-color 0.3s ease;
@@ -4868,13 +4868,13 @@
 .dashboard-layout {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 172px);
+    height: calc(100vh - 148px)
 }
 
 .wizard-layout {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 172px);
+    height: calc(100vh - 148px)
 }
 
 .wizard-layout .scrollable-content {
@@ -4946,7 +4946,7 @@
 .jobs-page-layout {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 172px);
+    height: calc(100vh - 148px)
 }
 
 /* Modern Landing Page Styles */
@@ -6329,5 +6329,454 @@
 
   .ds-object-card.ds-selected {
     border-width: 3px;
+  }
+}
+
+/* Step 3 Object Selection - Compact Design */
+
+/* Compact Layout */
+.ds-layout-compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-lg);
+}
+
+.ds-section-compact {
+  background: var(--bg-secondary);
+  border-radius: var(--ds-radius-md);
+  padding: var(--ds-spacing-sm);
+  border: 1px solid var(--border-secondary);
+  transition: all 0.3s ease;
+}
+
+.ds-section-compact:hover {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Compact Header */
+.ds-header-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ds-spacing-sm);
+  gap: var(--ds-spacing-sm);
+}
+
+.ds-title-compact {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ds-search-compact {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* Compact List */
+.ds-list-compact {
+  max-height: calc(100vh - 470px);
+  overflow-y: auto;
+  padding-right: var(--ds-spacing-xs);
+}
+
+.ds-list-compact::-webkit-scrollbar {
+  width: 4px;
+}
+
+.ds-list-compact::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+}
+
+.ds-list-compact::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 2px;
+}
+
+.ds-list-compact::-webkit-scrollbar-thumb:hover {
+  background: var(--border-focus);
+}
+
+.ds-empty-compact {
+  text-align: center;
+  padding: var(--ds-spacing-lg);
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+/* Compact Object Card */
+.ds-object-card-compact {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--ds-radius-sm);
+  margin-bottom: var(--ds-spacing-xs);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.ds-object-card-compact:hover {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.ds-object-card-compact.ds-selected {
+  border-color: var(--bg-button);
+  box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.3);
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.03) 0%, rgba(0, 123, 255, 0.08) 100%);
+}
+
+.ds-object-card-compact.ds-selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--bg-button);
+}
+
+/* Compact Object Row */
+.ds-object-row-compact {
+  display: flex;
+  align-items: center;
+  padding: var(--ds-spacing-xs);
+  gap: var(--ds-spacing-xs);
+}
+
+.ds-object-main-compact {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--ds-spacing-xs);
+  cursor: pointer;
+  padding: var(--ds-spacing-xs);
+  border-radius: var(--ds-radius-xs);
+  transition: background-color 0.2s ease;
+  min-width: 0;
+}
+
+.ds-object-main-compact:hover {
+  background: var(--bg-accent);
+}
+
+.ds-object-main-compact:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.ds-object-icon-compact {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds-object-name-compact {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.ds-selected-compact {
+  color: var(--bg-button);
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Compact Expand Button */
+.ds-expand-btn-compact {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--ds-spacing-xs);
+  border-radius: var(--ds-radius-xs);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ds-expand-btn-compact:hover {
+  background: var(--bg-accent);
+}
+
+.ds-expand-btn-compact:focus {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.ds-expand-arrow-compact {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+
+.ds-expand-arrow-compact.ds-expanded {
+  transform: rotate(180deg);
+}
+
+/* Compact Fields Section */
+.ds-fields-compact {
+  padding: var(--ds-spacing-sm);
+  border-top: 1px solid var(--border-secondary);
+  background: var(--bg-accent);
+  animation: ds-compact-expand 0.2s ease-out;
+}
+
+@keyframes ds-compact-expand {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 300px;
+    padding-top: var(--ds-spacing-sm);
+    padding-bottom: var(--ds-spacing-sm);
+  }
+}
+
+.ds-loading-compact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ds-spacing-xs);
+  padding: var(--ds-spacing-md);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+.ds-fields-table-container {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.ds-fields-table-container::-webkit-scrollbar {
+  width: 3px;
+}
+
+.ds-fields-table-container::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 2px;
+}
+
+.ds-fields-table-container::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 2px;
+}
+
+.ds-fields-table-compact {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+  border-radius: var(--ds-radius-xs);
+  overflow: hidden;
+  font-size: 0.85rem;
+}
+
+.ds-fields-table-compact thead {
+  background: var(--bg-tertiary);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ds-fields-table-compact th {
+  padding: var(--ds-spacing-xs) var(--ds-spacing-sm);
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.ds-fields-table-compact td {
+  padding: var(--ds-spacing-xs) var(--ds-spacing-sm);
+  border-bottom: 1px solid var(--border-secondary);
+  transition: background-color 0.2s ease;
+}
+
+.ds-fields-table-compact tbody tr:hover {
+  background: var(--bg-accent);
+}
+
+.ds-fields-table-compact tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ds-field-name-compact {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.ds-field-type-compact {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+
+.ds-no-fields-compact {
+  text-align: center;
+  padding: var(--ds-spacing-md);
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+/* Compact Step Header */
+.ds-step-header-compact {
+  text-align: center;
+  margin-bottom: var(--ds-spacing-lg);
+  padding-bottom: var(--ds-spacing-md);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.ds-step-title-compact {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--ds-spacing-xs) 0;
+}
+
+.ds-step-description-compact {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsive Design for Compact Layout */
+@media (max-width: 1024px) {
+  .ds-layout-compact {
+    grid-template-columns: 1fr;
+    gap: var(--ds-spacing-sm);
+  }
+}
+
+@media (max-width: 768px) {
+  .ds-header-compact {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--ds-spacing-xs);
+  }
+
+  .ds-search-compact {
+    max-width: none;
+  }
+
+  .ds-list-compact {
+    max-height: 300px;
+  }
+
+  .ds-fields-table-compact th,
+  .ds-fields-table-compact td {
+    padding: var(--ds-spacing-xs);
+  }
+
+  .ds-field-name-compact {
+    max-width: 120px;
+  }
+
+  .ds-step-title-compact {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ds-section-compact {
+    padding: var(--ds-spacing-xs);
+  }
+
+  .ds-object-row-compact {
+    padding: var(--ds-spacing-xs);
+  }
+
+  .ds-object-name-compact {
+    font-size: 0.85rem;
+  }
+
+  .ds-fields-table-compact {
+    font-size: 0.8rem;
+  }
+
+  .ds-fields-table-compact th,
+  .ds-fields-table-compact td {
+    padding: calc(var(--ds-spacing-xs) / 2) var(--ds-spacing-xs);
+  }
+
+  .ds-field-name-compact {
+    max-width: 100px;
+    font-size: 0.75rem;
+  }
+
+  .ds-field-type-compact {
+    font-size: 0.7rem;
+  }
+
+  .ds-step-title-compact {
+    font-size: 1.2rem;
+  }
+
+  .ds-step-description-compact {
+    font-size: 0.9rem;
+  }
+}
+
+/* Accessibility for Compact Design */
+@media (prefers-reduced-motion: reduce) {
+  .ds-object-card-compact,
+  .ds-expand-btn-compact,
+  .ds-object-main-compact,
+  .ds-expand-arrow-compact {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .ds-object-card-compact {
+    border-width: 2px;
+  }
+
+  .ds-object-card-compact.ds-selected {
+    border-width: 3px;
+  }
+
+  .ds-field-compact {
+    border-width: 2px;
   }
 }

@@ -127,9 +127,7 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
 
     const term = sourceSearchTerm.toLowerCase();
     return objects.filter(obj =>
-      obj.name.toLowerCase().includes(term) ||
-      obj.label.toLowerCase().includes(term) ||
-      obj.description?.toLowerCase().includes(term)
+      obj.name.toLowerCase().includes(term)
     );
   }, [objects, sourceSearchTerm]);
 
@@ -141,9 +139,7 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
 
     const term = targetSearchTerm.toLowerCase();
     return objects.filter(obj =>
-      obj.name.toLowerCase().includes(term) ||
-      obj.label.toLowerCase().includes(term) ||
-      obj.description?.toLowerCase().includes(term)
+      obj.name.toLowerCase().includes(term)
     );
   }, [objects, targetSearchTerm]);
 
@@ -201,10 +197,9 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
 
   return (
     <div className="ds-step-container" role="main" aria-labelledby="step3-heading">
-      <div className="ds-step-header">
-        <p className="ds-step-description">
-          Select source and target objects for synchronization. Source objects are what you'll sync from, and target objects are what you'll sync to.
-        </p>
+      <div className="ds-step-header-compact">
+        <h4 className="ds-step-title-compact">Object Selection</h4>
+        <p className="ds-step-description-compact">Choose source and target objects for sync.</p>
       </div>
 
       {error && (
@@ -221,39 +216,22 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
 
       <div className="ds-object-selection-container">
 
-        <div className="ds-objects-grid-container">
-          {/* Source Objects Section */}
-          <div className="ds-objects-section">
-            <div className="ds-search-section">
-              <h5 className="ds-section-title">
-                Source Objects
-                <div id="source-search-help" className="ds-field-help">
-                  Found {filteredSourceObjects.length} object{filteredSourceObjects.length !== 1 ? 's' : ''}
-                  {sourceSearchTerm && ` matching "${sourceSearchTerm}"`}
-                </div>
-              </h5>
+        <div className="ds-layout-compact">
+          <div className="ds-section-compact">
+            <div className="ds-header-compact">
+              <h3 className="ds-title-compact">Source ({filteredSourceObjects.length})</h3>
               <Input
-                type="text"
-                id="source-object-search"
-                name="sourceSearch"
+                id="source-search"
+                name="source-search"
                 value={sourceSearchTerm}
                 onChange={setSourceSearchTerm}
-                placeholder="Search source objects..."
-                aria-describedby="source-search-help"
+                placeholder="Search..."
+                className="ds-search-compact"
               />
-
             </div>
-            <div className="ds-objects-list" role="radiogroup" aria-labelledby="step3-heading">
+            <div className="ds-list-compact">
               {filteredSourceObjects.length === 0 ? (
-                <div className="ds-no-objects">
-                  <p>No source objects found matching your search criteria.</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSourceSearchTerm('')}
-                  >
-                    Clear Search
-                  </Button>
-                </div>
+                <div className="ds-empty-compact">No objects found</div>
               ) : (
                 filteredSourceObjects.map((object) => (
                   <ExpandableObjectCard
@@ -264,7 +242,6 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
                     onSelect={(objectName) => handleObjectSelect(objectName, 'source')}
                     onToggleExpand={(objectName) => toggleObjectExpansion(objectName, 'source')}
                     onKeyDown={(event, objectName) => handleKeyDown(event, objectName, 'source')}
-                    isTarget={false}
                     fields={objectFields[object.name]}
                     isLoadingFields={loadingFields.has(object.name)}
                   />
@@ -273,36 +250,21 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
             </div>
           </div>
 
-          {/* Target Objects Section */}
-          <div className="ds-objects-section">
-            <div className="ds-search-section">
-              <h5 className="ds-section-title">Target Objects
-                <div id="target-search-help" className="ds-field-help">
-                  Found {filteredTargetObjects.length} object{filteredTargetObjects.length !== 1 ? 's' : ''}
-                  {targetSearchTerm && ` matching "${targetSearchTerm}"`}
-                </div>
-              </h5>
+          <div className="ds-section-compact">
+            <div className="ds-header-compact">
+              <h3 className="ds-title-compact">Target ({filteredTargetObjects.length})</h3>
               <Input
-                type="text"
-                id="target-object-search"
-                name="targetSearch"
+                id="target-search"
+                name="target-search"
                 value={targetSearchTerm}
                 onChange={setTargetSearchTerm}
-                placeholder="Search target objects..."
-                aria-describedby="target-search-help"
+                placeholder="Search..."
+                className="ds-search-compact"
               />
             </div>
-            <div className="ds-objects-list" role="radiogroup" aria-labelledby="step3-heading">
+            <div className="ds-list-compact">
               {filteredTargetObjects.length === 0 ? (
-                <div className="ds-no-objects">
-                  <p>No target objects found matching your search criteria.</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => setTargetSearchTerm('')}
-                  >
-                    Clear Search
-                  </Button>
-                </div>
+                <div className="ds-empty-compact">No objects found</div>
               ) : (
                 filteredTargetObjects.map((object) => (
                   <ExpandableObjectCard
@@ -313,7 +275,6 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
                     onSelect={(objectName) => handleObjectSelect(objectName, 'target')}
                     onToggleExpand={(objectName) => toggleObjectExpansion(objectName, 'target')}
                     onKeyDown={(event, objectName) => handleKeyDown(event, objectName, 'target')}
-                    isTarget={true}
                     fields={objectFields[object.name]}
                     isLoadingFields={loadingFields.has(object.name)}
                   />
@@ -361,7 +322,6 @@ interface ExpandableObjectCardProps {
   onSelect: (objectName: string) => void;
   onToggleExpand: (objectName: string) => void;
   onKeyDown: (event: React.KeyboardEvent, objectName: string) => void;
-  isTarget?: boolean;
   fields?: any[];
   isLoadingFields?: boolean;
 }
@@ -373,7 +333,6 @@ const ExpandableObjectCard: React.FC<ExpandableObjectCardProps> = ({
   onSelect,
   onToggleExpand,
   onKeyDown,
-  isTarget = false,
   fields,
   isLoadingFields = false
 }) => {
@@ -391,86 +350,57 @@ const ExpandableObjectCard: React.FC<ExpandableObjectCardProps> = ({
   };
 
   return (
-    <div className={`ds-object-card ${isSelected ? 'ds-selected' : ''} ${object.isCustom ? 'ds-custom' : ''} ${isTarget ? 'ds-target' : 'ds-source'}`}>
-      <div className="ds-object-header">
+    <div className={`ds-object-card-compact ${isSelected ? 'ds-selected' : ''}`}>
+      <div className="ds-object-row-compact">
         <div
-          className="ds-expand-toggle"
-          onClick={handleExpandToggle}
-          onKeyDown={handleExpandKeyDown}
-          role="button"
-          tabIndex={0}
-          aria-expanded={isExpanded}
-          aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${object.label}`}
-        >
-          <span className={`ds-expand-icon ${isExpanded ? 'ds-expanded' : ''}`}>▶</span>
-        </div>
-        <div
-          className="ds-object-clickable-area"
+          className="ds-object-main-compact"
           onClick={() => onSelect(object.name)}
           onKeyDown={(e) => onKeyDown(e, object.name)}
           role="radio"
           aria-checked={isSelected}
           tabIndex={0}
         >
-          <div className="ds-object-icon">
-            {getObjectIcon(object.name, object.isCustom)}
-          </div>
-          <div className="ds-object-info">
-            <h3 className="ds-object-label">
-              {object.name}
-            </h3>
-          </div>
-          <div className="ds-selection-indicator">
-            {isSelected && (
-              <span className="ds-selected-icon" aria-hidden="true">✓</span>
-            )}
-          </div>
+          <span className="ds-object-icon-compact">{getObjectIcon(object.name, object.isCustom)}</span>
+          <span className="ds-object-name-compact">{object.name}</span>
+          {isSelected && <span className="ds-selected-compact">✓</span>}
         </div>
+        <button
+          className="ds-expand-btn-compact"
+          onClick={handleExpandToggle}
+          onKeyDown={handleExpandKeyDown}
+          aria-expanded={isExpanded}
+          aria-label={`${isExpanded ? 'Hide' : 'Show'} fields`}
+        >
+          <span className={`ds-expand-arrow-compact ${isExpanded ? 'ds-expanded' : ''}`}>▼</span>
+        </button>
       </div>
 
       {isExpanded && (
-        <div className="ds-object-details">
-          <div className="ds-fields-section">
-            <h4 className="ds-fields-title">Fields</h4>
-            {isLoadingFields ? (
-              <div className="ds-fields-loading">
-                <div className="ds-loading-spinner-small">
-                  <svg className="ds-spinner-small" viewBox="0 0 24 24">
-                    <circle
-                      className="ds-spinner-circle"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      fill="none"
-                      strokeWidth="2"
-                    />
-                  </svg>
-                </div>
-                <span>Loading fields...</span>
-              </div>
-            ) : fields && fields.length > 0 ? (
-              <table className="ds-table-dark">
+        <div className="ds-fields-compact">
+          {isLoadingFields ? (
+            <div className="ds-loading-compact">⏳ Loading...</div>
+          ) : fields && fields.length > 0 ? (
+            <div className="ds-fields-table-container">
+              <table className="ds-fields-table-compact">
                 <thead>
                   <tr>
-                    <th>Label</th>
-                    <th>Name</th>
+                    <th>Field Name</th>
                     <th>Type</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {fields.map((field, index) => (
-                    <tr key={field.name || index}>
-                      <td>{field.label}</td>
-                      <td>{field.name}</td>
-                      <td>{field.type}</td>
+                  {fields.map((field: any, index: number) => (
+                    <tr key={`field-${index}`}>
+                      <td className="ds-field-name-compact">{field.name}</td>
+                      <td className="ds-field-type-compact">{field.type}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            ) : (
-              <div className="ds-no-fields">No fields available</div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="ds-no-fields-compact">No fields</div>
+          )}
         </div>
       )}
     </div>

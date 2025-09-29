@@ -85,20 +85,15 @@ export const JobWizard: React.FC<JobWizardProps> = ({ onExit }) => {
       case 2:
         return (
           <Step2Connections
-            sourceConnection={jobData.sourceConnection}
-            targetConnection={jobData.targetConnection}
-            onConnect={connectToOrg}
             onNext={nextStep}
             onPrevious={previousStep}
             isLoading={isLoading}
-            error={error}
           />
         );
 
       case 3:
         return (
           <Step3ObjectSelection
-            selectedObject={jobData.selectedObject}
             sourceObject={jobData.sourceObject}
             targetObject={jobData.targetObject}
             onSelectObject={selectObject}
