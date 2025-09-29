@@ -32,6 +32,39 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, number, change, onClic
 const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> = ({ onNavigate }) => {
   return (
     <div className="ds-dashboard">
+      {/* Statistics Dashboard */}
+      <div className="ds-stats-section">
+        <div className="ds-stats-grid">
+          {/* Total Jobs - Navigates to Job Details view */}
+          <StatCard
+            icon="📊"
+            title="Total Jobs"
+            number="12"
+            change="+2 this week"
+            onClick={() => onNavigate('job-details')}
+            clickable={true}
+          />
+
+          {/* Active Jobs - Navigates to Job Details view */}
+          <StatCard
+            icon="✅"
+            title="Active Jobs"
+            number="8"
+            change="Running smoothly"
+            onClick={() => onNavigate('job-details')}
+            clickable={true}
+          />
+
+          {/* Inactive Jobs - Static */}
+          <StatCard
+            icon="⚠️"
+            title="Inactive Jobs"
+            number="4"
+            change="Needs attention"
+            clickable={false}
+          />
+        </div>
+      </div>
       {/* Professional Introduction */}
       <div className="ds-service-introduction">
         <h2 className="ds-main-title">Data Synchronization Service</h2>
@@ -65,41 +98,6 @@ const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> 
             <span className="ds-btn-text">Job Details</span>
             <span className="ds-btn-description">View and manage all synchronization jobs</span>
           </button>
-        </div>
-      </div>
-
-      {/* Statistics Dashboard */}
-      <div className="ds-stats-section">
-        <h3 className="ds-stats-title">Performance Overview</h3>
-        <div className="ds-stats-grid">
-          {/* Total Jobs - Navigates to Job Details view */}
-          <StatCard
-            icon="📊"
-            title="Total Jobs"
-            number="12"
-            change="+2 this week"
-            onClick={() => onNavigate('job-details')}
-            clickable={true}
-          />
-
-          {/* Active Jobs - Navigates to Job Details view */}
-          <StatCard
-            icon="✅"
-            title="Active Jobs"
-            number="8"
-            change="Running smoothly"
-            onClick={() => onNavigate('job-details')}
-            clickable={true}
-          />
-
-          {/* Inactive Jobs - Static */}
-          <StatCard
-            icon="⚠️"
-            title="Inactive Jobs"
-            number="4"
-            change="Needs attention"
-            clickable={false}
-          />
         </div>
       </div>
     </div>

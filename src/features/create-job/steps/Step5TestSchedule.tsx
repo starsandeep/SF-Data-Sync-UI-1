@@ -199,7 +199,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               <div className="section-info">
                 <h3 className="section-title">Test Job</h3>
                 <p className="section-subtitle">
-                  Run a test to validate the sync before scheduling. This will process a small sample of data.
+                  Run a test to validate the sync before scheduling. This will process a small sample of data for the given time period you are selecting.
                 </p>
               </div>
             </div>
@@ -211,7 +211,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
                 Test Duration
               </h4>
               <p className="subsection-description">
-                Set when the test should run and for how long
+                Select the time period to pick the data changes during the window.
               </p>
 
               <div className="test-datetime-compact">
@@ -338,7 +338,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
                   disabled={isTestRunning}
                 />
                 <span className="help-text">
-                  Number of records to process in the test (10-1000)
+                  Maximum number of records to process. Change it to dropdown (50, 100, 200, 500, 1000)
                 </span>
               </div>
 

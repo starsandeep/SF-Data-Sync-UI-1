@@ -306,10 +306,6 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         </div>
       </div>
 
-      <div className="info-box">
-        <strong>Required Editions:</strong> Available in: All Account Engagement Editions
-      </div>
-
       {/* Validation Summary */}
       {!validationResults.isValid && (
         <div className="validation-summary">
@@ -468,10 +464,6 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           <strong>Too many mappings:</strong> Consider reducing the number of field mappings for better performance.
         </div>
       )}
-
-      <div className="auto-save-info">
-        ℹ️ Changes are automatically saved when you proceed to the next step
-      </div>
 
       <div className="step-actions">
         <Button
