@@ -77,7 +77,6 @@ const Dashboard: React.FC = () => {
               <div className="stat-content">
                 <h3>Active Jobs</h3>
                 <p className="stat-number">8</p>
-                <span className="stat-change">Running smoothly</span>
               </div>
             </div>
             <div className="stat-card">
@@ -85,7 +84,6 @@ const Dashboard: React.FC = () => {
               <div className="stat-content">
                 <h3>Inactive Jobs</h3>
                 <p className="stat-number">4</p>
-                <span className="stat-change">Needs attention</span>
               </div>
             </div>
           </div>

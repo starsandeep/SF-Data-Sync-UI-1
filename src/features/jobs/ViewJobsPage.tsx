@@ -95,6 +95,7 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
       {/* Header Section */}
       <div className="ds-jobs-header">
         <div className="ds-jobs-header-content">
+          <h2 className="ds-jobs-title">Job Details</h2>
           {onBackToDashboard && (
             <Button
               variant="outline"
@@ -104,7 +105,6 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
               ← Back to Dashboard
             </Button>
           )}
-          <h2 className="ds-jobs-title">Job Details</h2>
         </div>
       </div>
 

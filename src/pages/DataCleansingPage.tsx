@@ -430,8 +430,8 @@ const DataCleansingPage: React.FC = () => {
         <div className="dc-results-header">
           <div className="dc-header-content">
             <div className="dc-header-text">
-              <h2 className="dc-results-title">AI Analysis - Data Quality</h2>
-              <p className="dc-results-subtitle">Comprehensive analysis of {results.totalRecords.toLocaleString()} records</p>
+              <h2 className="dc-results-title">{selectedObject} - AI Analysis Summary</h2>
+              <p className="dc-results-subtitle">Comprehensive analysis of {selectedObject} {results.totalRecords.toLocaleString()} records</p>
             </div>
             <div className="dc-header-actions">
               <Button variant="outline" onClick={() => console.log('Export report')}>
@@ -453,6 +453,10 @@ const DataCleansingPage: React.FC = () => {
             </div>
             <div className="dc-score-breakdown">
               <div className="dc-breakdown-item">
+                <div className="dc-item-value">28,750</div>
+                <div className="dc-item-label">Records Analyzed</div>
+              </div>
+              <div className="dc-breakdown-item">
                 <span className="dc-item-value">{results.cleanRecords.toLocaleString()}</span>
                 <span className="dc-item-label">Clean Records</span>
               </div>
@@ -463,10 +467,6 @@ const DataCleansingPage: React.FC = () => {
               <div className="dc-breakdown-item">
                 <span className="dc-item-value">{Object.keys(results.categories).length}</span>
                 <span className="dc-item-label">Categories</span>
-              </div>
-              <div className="dc-breakdown-item">
-                <div className="dc-item-value">28,750</div>
-                <div className="dc-item-label">Records Analyzed</div>
               </div>
               <div className="dc-breakdown-item">
                 <div className="dc-item-value">15</div>

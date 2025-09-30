@@ -50,7 +50,7 @@ const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> 
             icon="✅"
             title="Active Jobs"
             number="8"
-            change="Running smoothly"
+            change=""
             onClick={() => onNavigate('job-details')}
             clickable={true}
           />
@@ -60,7 +60,7 @@ const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> 
             icon="⚠️"
             title="Inactive Jobs"
             number="4"
-            change="Needs attention"
+            change=""
             clickable={false}
           />
         </div>

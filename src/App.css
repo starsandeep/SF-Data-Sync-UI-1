@@ -431,7 +431,7 @@
 .btn-medium {
   font-size: 17px;
   line-height: 1.17648;
-  padding: 7px 15px;
+  padding: 5px 15px;
   min-width: 30px;
 }
 
@@ -4925,7 +4925,7 @@
 }
 
 .hero-section {
-    max-width: 800px;
+    max-width: 1200px;
     text-align: center;
     z-index: 10;
     position: relative;
@@ -6915,7 +6915,7 @@
 .ds-schedule-container {
   max-width: 90%;
   margin: 0 auto;
-  padding: var(--ds-spacing-md);
+  padding: var(--ds-spacing-sm);
 }
 
 /* Header */
@@ -7387,23 +7387,22 @@
 .ds-jobs-page {
   max-width: 95%;
   margin: 0 auto;
-  padding: var(--ds-spacing-lg);
+  padding: var(--ds-spacing-md);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Header Section */
 .ds-jobs-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--ds-spacing-md);
-  padding-bottom: var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-sm);
+  padding-bottom: var(--ds-spacing-sm);
   border-bottom: 1px solid var(--border-primary);
 }
 
 .ds-jobs-header-content {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--ds-spacing-sm);
 }
 
@@ -7807,13 +7806,13 @@
 @media (max-width: 1024px) {
   .ds-jobs-page {
     max-width: 98%;
-    padding: var(--ds-spacing-md);
+    padding: var(--ds-spacing-sm);
   }
 
-  .ds-jobs-header {
+  .ds-jobs-header-content {
     flex-direction: column;
-    gap: var(--ds-spacing-md);
-    align-items: stretch;
+    align-items: flex-start;
+    gap: var(--ds-spacing-sm);
   }
 
   .ds-jobs-header-actions {
@@ -7868,13 +7867,6 @@
   .ds-jobs-json-content {
     font-size: 0.625rem;
   }
-}
-
-/* Data Cleansing Page Styles */
-.data-cleansing-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--ds-spacing-lg);
 }
 
 /* Connection Selection Styles */

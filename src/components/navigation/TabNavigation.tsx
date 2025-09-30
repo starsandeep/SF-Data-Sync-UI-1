@@ -5,7 +5,7 @@ import { styled } from '@mui/material/styles';
 import HomeIcon from '@mui/icons-material/Home';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import SyncIcon from '@mui/icons-material/Sync';
-import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
+import PolicyIcon from '@mui/icons-material/Policy';
 import WorkIcon from '@mui/icons-material/Work';
 
 // Types
@@ -91,10 +91,10 @@ const tabs: TabConfig[] = [
     icon: <HomeIcon />
   },
   {
-    id: 'dashboard',
-    label: 'Dashboard',
-    route: '/dashboard',
-    icon: <DashboardIcon />
+    id: 'data-quality',
+    label: 'Data Quality',
+    route: '/data-cleansing',
+    icon: <PolicyIcon />
   },
   {
     id: 'data-sync',
@@ -103,10 +103,10 @@ const tabs: TabConfig[] = [
     icon: <SyncIcon />
   },
   {
-    id: 'data-quality',
-    label: 'Data Quality',
-    route: '/data-cleansing',
-    icon: <CleaningServicesIcon />
+    id: 'dashboard',
+    label: 'Dashboard',
+    route: '/dashboard',
+    icon: <DashboardIcon />
   }
 ];
 

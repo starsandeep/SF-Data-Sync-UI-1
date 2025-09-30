@@ -22,7 +22,7 @@ export const HomePage: React.FC = () => {
             <p className="description-text">
               R-DataX is your comprehensive solution for data excellence. Our platform enables
               thorough data quality assessment, resolves data inconsistency issues, and helps
-              synchronize data across your systems seamlessly.
+              synchronize data across your Salesforce Organizations seamlessly.
             </p>
           </div>
 
