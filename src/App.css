@@ -7242,6 +7242,13 @@
   margin-bottom: var(--ds-spacing-lg);
 }
 
+.ds-schedule-cron-help {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: var(--ds-spacing-xs);
+  font-style: italic;
+}
+
 /* Job Duration */
 .ds-schedule-job-duration {
   border-top: 1px solid var(--border-secondary);

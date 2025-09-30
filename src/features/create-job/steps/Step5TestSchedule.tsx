@@ -21,16 +21,13 @@ interface ScheduleOptionData {
 }
 
 const SCHEDULE_OPTIONS: ScheduleOptionData[] = [
-  { value: 'manual', label: 'Manual', description: 'Run manually when needed', icon: '🎯' },
-  { value: '30min', label: 'Every 30 minutes', description: 'High frequency sync', icon: '⚡' },
-  { value: '1hour', label: 'Every hour', description: 'Regular updates', icon: '🕐' },
-  { value: '2hours', label: 'Every 2 hours', description: 'Moderate frequency', icon: '🕑' },
   { value: '6hours', label: 'Every 6 hours', description: 'Four times daily', icon: '🕕' },
   { value: '12hours', label: 'Every 12 hours', description: 'Twice daily', icon: '🕛' },
   { value: 'daily', label: 'Daily', description: 'Once per day', icon: '📅' },
   { value: 'weekly', label: 'Weekly', description: 'Once per week', icon: '📆' },
   { value: '2weeks', label: 'Every 2 weeks', description: 'Bi-weekly sync', icon: '🗓️' },
   { value: 'monthly', label: 'Monthly', description: 'Once per month', icon: '📊' },
+  { value: 'custom', label: 'Custom (Cron)', description: 'Use cron expression', icon: '⚙️' },
 ];
 
 export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
@@ -55,6 +52,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const [startTime, setStartTime] = useState<string>(jobData.startTime || '');
   const [endDate, setEndDate] = useState<string>(jobData.endDate || '');
   const [endTime, setEndTime] = useState<string>(jobData.endTime || '');
+  const [customCron, setCustomCron] = useState<string>(jobData.customCron || '');
 
   const [testCompleted, setTestCompleted] = useState<boolean>(jobData.tested || false);
   const [isTestRunning, setIsTestRunning] = useState<boolean>(false);
@@ -128,8 +126,8 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
 
   // Update parent when schedule changes
   useEffect(() => {
-    onUpdateSchedule(selectedSchedule, startDate, startTime, undefined, endDate, endTime);
-  }, [selectedSchedule, startDate, startTime, endDate, endTime, onUpdateSchedule]);
+    onUpdateSchedule(selectedSchedule, startDate, startTime, customCron, endDate, endTime);
+  }, [selectedSchedule, startDate, startTime, customCron, endDate, endTime, onUpdateSchedule]);
 
   const handleTestJob = async () => {
     if (!isTestDateTimeValid) {
@@ -171,7 +169,8 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const isStartDateTimeValid = startDate && startTime && new Date(`${startDate}T${startTime}`) > new Date();
   const isEndDateTimeValid = endDate && endTime && startDate && startTime &&
     new Date(`${endDate}T${endTime}`) > new Date(`${startDate}T${startTime}`);
-  const isMainDateTimeValid = selectedSchedule === 'manual' || (isStartDateTimeValid && isEndDateTimeValid);
+  const isCronValid = selectedSchedule !== 'custom' || (customCron && customCron.trim().length > 0);
+  const isMainDateTimeValid = selectedSchedule === 'manual' || (selectedSchedule === 'custom' ? isCronValid : (isStartDateTimeValid && isEndDateTimeValid));
 
   const canProceed = testCompleted && isMainDateTimeValid;
 
@@ -363,8 +362,26 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               </select>
             </div>
 
+            {/* Custom Cron Input */}
+            {selectedSchedule === 'custom' && (
+              <div className="ds-schedule-frequency-control">
+                <label className="ds-schedule-control-label">Cron Expression</label>
+                <input
+                  type="text"
+                  className="ds-schedule-date-input"
+                  value={customCron}
+                  onChange={(e) => setCustomCron(e.target.value)}
+                  placeholder="0 0 * * * (every hour at minute 0)"
+                  required
+                />
+                <div className="ds-schedule-cron-help">
+                  Format: minute hour day month weekday (e.g., "0 9 * * 1-5" for 9 AM weekdays)
+                </div>
+              </div>
+            )}
+
             {/* Job Duration - Compact Layout */}
-            {selectedSchedule !== 'manual' && (
+            {selectedSchedule !== 'manual' && selectedSchedule !== 'custom' && (
               <div className="ds-schedule-job-duration">
                 <div className="ds-schedule-duration-header">
                   <span className="ds-schedule-duration-icon">📅</span>
@@ -474,7 +491,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
                       <div className="ds-schedule-preview-item">
                         <span className="ds-schedule-preview-label">Frequency</span>
                         <span className="ds-schedule-preview-value">
-                          {SCHEDULE_OPTIONS.find(opt => opt.value === selectedSchedule)?.label}
+                          {selectedSchedule === 'custom' && customCron ? customCron : SCHEDULE_OPTIONS.find(opt => opt.value === selectedSchedule)?.label}
                         </span>
                       </div>
                     </div>
@@ -492,6 +509,13 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
                     Job end time must be after start time
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Cron Validation Errors */}
+            {selectedSchedule === 'custom' && !isCronValid && (
+              <div className="ds-schedule-error-message">
+                Please enter a valid cron expression
               </div>
             )}
           </div>
