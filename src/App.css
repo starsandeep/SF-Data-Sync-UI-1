@@ -7015,3 +7015,444 @@
     border-width: 3px;
   }
 }
+
+/* Step 5 Test & Schedule - Compact Design */
+
+/* Container */
+.ds-schedule-container {
+  max-width: 90%;
+  margin: 0 auto;
+  padding: var(--ds-spacing-md);
+}
+
+/* Header */
+.ds-schedule-header {
+  margin-bottom: var(--ds-spacing-lg);
+  text-align: left;
+}
+
+.ds-schedule-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--ds-spacing-xs) 0;
+}
+
+.ds-schedule-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Main Layout */
+.ds-schedule-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-spacing-lg);
+  margin-bottom: var(--ds-spacing-lg);
+}
+
+/* Section Cards */
+.ds-schedule-section-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--ds-radius-lg);
+  padding: var(--ds-spacing-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+}
+
+.ds-schedule-section-card:hover {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-md);
+}
+
+/* Section Headers */
+.ds-schedule-section-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: var(--ds-spacing-lg);
+  gap: var(--ds-spacing-sm);
+}
+
+.ds-schedule-section-icon {
+  font-size: 1.25rem;
+  margin-top: 2px;
+}
+
+.ds-schedule-section-info {
+  flex: 1;
+}
+
+.ds-schedule-section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--ds-spacing-xs) 0;
+}
+
+.ds-schedule-section-subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Test Duration Grid */
+.ds-schedule-test-duration {
+  margin-bottom: var(--ds-spacing-lg);
+}
+
+.ds-schedule-duration-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ds-spacing-sm);
+  margin-bottom: var(--ds-spacing-sm);
+}
+
+.ds-schedule-grid-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-xs);
+}
+
+.ds-schedule-grid-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Form Controls */
+.ds-schedule-date-input,
+.ds-schedule-time-select,
+.ds-schedule-sample-select,
+.ds-schedule-frequency-select {
+  height: 36px;
+  padding: var(--ds-spacing-xs) var(--ds-spacing-sm);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--ds-radius-sm);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ds-schedule-date-input:focus,
+.ds-schedule-time-select:focus,
+.ds-schedule-sample-select:focus,
+.ds-schedule-frequency-select:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Test Controls */
+.ds-schedule-test-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-md);
+}
+
+.ds-schedule-sample-control {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-xs);
+}
+
+.ds-schedule-control-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.ds-schedule-test-button {
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+/* Test Results */
+.ds-schedule-test-results {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--ds-radius-sm);
+  padding: var(--ds-spacing-md);
+}
+
+.ds-schedule-result-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-spacing-xs);
+  margin-bottom: var(--ds-spacing-sm);
+}
+
+.ds-schedule-result-icon {
+  font-size: 1rem;
+}
+
+.ds-schedule-result-status {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ds-schedule-result-stats {
+  display: flex;
+  gap: var(--ds-spacing-md);
+}
+
+.ds-schedule-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--ds-spacing-xs) var(--ds-spacing-sm);
+  background: var(--bg-primary);
+  border-radius: var(--ds-radius-sm);
+  border: 1px solid var(--border-secondary);
+  min-width: 70px;
+}
+
+.ds-schedule-stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ds-schedule-stat-label {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ds-schedule-stat.success .ds-schedule-stat-value {
+  color: var(--bg-success);
+}
+
+.ds-schedule-stat.error .ds-schedule-stat-value {
+  color: var(--bg-danger);
+}
+
+/* Schedule Frequency */
+.ds-schedule-frequency-control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-xs);
+  margin-bottom: var(--ds-spacing-lg);
+}
+
+/* Job Duration */
+.ds-schedule-job-duration {
+  border-top: 1px solid var(--border-secondary);
+  padding-top: var(--ds-spacing-lg);
+}
+
+.ds-schedule-duration-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-spacing-xs);
+  margin-bottom: var(--ds-spacing-md);
+}
+
+.ds-schedule-duration-icon {
+  font-size: 1rem;
+}
+
+.ds-schedule-duration-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ds-schedule-job-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-md);
+}
+
+.ds-schedule-job-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-xs);
+}
+
+.ds-schedule-group-label {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-spacing-xs);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.ds-schedule-group-icon {
+  font-size: 0.875rem;
+}
+
+.ds-schedule-group-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ds-spacing-xs);
+}
+
+/* Duration Preview */
+.ds-schedule-duration-preview {
+  background: var(--bg-accent);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--ds-radius-sm);
+  padding: var(--ds-spacing-sm);
+  margin-bottom: var(--ds-spacing-sm);
+}
+
+.ds-schedule-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ds-spacing-xs);
+}
+
+.ds-schedule-preview-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ds-schedule-preview-label {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ds-schedule-preview-value {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Error Messages */
+.ds-schedule-error-message {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid var(--bg-danger);
+  border-radius: var(--ds-radius-sm);
+  padding: var(--ds-spacing-xs) var(--ds-spacing-sm);
+  color: var(--bg-danger);
+  font-size: 0.8125rem;
+  margin-top: var(--ds-spacing-xs);
+}
+
+/* Error Banner */
+.ds-schedule-error-banner {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid var(--bg-danger);
+  border-radius: var(--ds-radius-sm);
+  padding: var(--ds-spacing-sm) var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-md);
+  color: var(--bg-danger);
+  font-size: 0.875rem;
+}
+
+/* Actions */
+.ds-schedule-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ds-spacing-md);
+  padding-top: var(--ds-spacing-lg);
+  border-top: 1px solid var(--border-secondary);
+}
+
+.ds-schedule-action-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-spacing-xs);
+  flex: 1;
+  align-items: flex-end;
+}
+
+.ds-schedule-action-help {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: right;
+  max-width: 300px;
+  line-height: 1.4;
+}
+
+.ds-schedule-create-button {
+  min-width: 140px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .ds-schedule-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-schedule-job-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .ds-schedule-container {
+    padding: var(--ds-spacing-sm);
+  }
+
+  .ds-schedule-section-card {
+    padding: var(--ds-spacing-md);
+  }
+
+  .ds-schedule-duration-grid {
+    grid-template-columns: 1fr;
+    gap: var(--ds-spacing-xs);
+  }
+
+  .ds-schedule-test-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ds-schedule-result-stats {
+    flex-wrap: wrap;
+    gap: var(--ds-spacing-xs);
+  }
+
+  .ds-schedule-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ds-schedule-actions {
+    flex-direction: column;
+    gap: var(--ds-spacing-sm);
+  }
+
+  .ds-schedule-action-main {
+    align-items: stretch;
+  }
+
+  .ds-schedule-action-help {
+    text-align: left;
+    max-width: none;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .ds-schedule-section-card,
+  .ds-schedule-date-input,
+  .ds-schedule-time-select,
+  .ds-schedule-sample-select,
+  .ds-schedule-frequency-select {
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .ds-schedule-section-card,
+  .ds-schedule-date-input,
+  .ds-schedule-time-select,
+  .ds-schedule-sample-select,
+  .ds-schedule-frequency-select {
+    border-width: 2px;
+  }
+}
