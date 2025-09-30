@@ -2,6 +2,8 @@
 
 export type ScheduleOption = 'manual' | '30min' | '1hour' | '2hours' | '6hours' | '12hours' | 'daily' | 'weekly' | '2weeks' | 'monthly' | 'custom';
 
+export type Environment = 'stage-sandbox' | 'pre-prod-sandbox' | 'qa-sandbox' | 'prod-sandbox';
+
 export type ValidationStatus = 'valid' | 'warning' | 'incompatible';
 
 export type TransformationType = 'none' | 'script' | 'builtin';
@@ -72,6 +74,17 @@ export interface TestResult {
   sampleData?: any[];
 }
 
+export interface ConnectionData {
+  username: string;
+  password: string;
+  securityToken: string;
+  environment: Environment;
+  isConnected: boolean;
+  orgName?: string;
+  connectionTimestamp?: string;
+  connectionError?: string;
+}
+
 export interface JobData {
   id?: string;
   name: string;
@@ -83,6 +96,8 @@ export interface JobData {
   selectedFields: string[];
   fieldMappings: FieldMapping;
   transformations: Record<string, Transformation>;
+  sourceConnection: ConnectionData;
+  targetConnection: ConnectionData;
 
   // Test Job Schedule
   testStartDate?: string;
@@ -124,6 +139,21 @@ export interface WizardState {
 }
 
 // API Request/Response types
+export interface ConnectOrgRequest {
+  username: string;
+  password: string;
+  securityToken: string;
+  environment: Environment;
+  type: 'source' | 'target';
+}
+
+export interface ConnectOrgResponse {
+  success: boolean;
+  orgName?: string;
+  orgId?: string;
+  error?: string;
+}
+
 export interface ListObjectsRequest {
   connectionId: string;
 }
@@ -172,6 +202,8 @@ export interface TestJobResponse {
 export interface CreateJobRequest {
   name: string;
   description?: string;
+  sourceConnection: ConnectionData;
+  targetConnection: ConnectionData;
   object: string;
   mappings: FieldMapping;
   transformations: Record<string, Transformation>;

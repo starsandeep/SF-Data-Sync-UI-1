@@ -8032,7 +8032,7 @@
 }
 
 .dc-list-compact {
-  max-height: 350px;
+  max-height: calc(100vh - 400px);
   overflow-y: auto;
 }
 
@@ -8379,7 +8379,7 @@
 }
 
 .dc-score-label {
-  font-size: 0.75rem;
+  font-size: 0.5rem;
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -8388,7 +8388,7 @@
 
 .dc-score-breakdown {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--ds-spacing-lg);
   flex: 1;
 }

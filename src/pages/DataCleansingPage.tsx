@@ -85,24 +85,24 @@ const DataCleansingPage: React.FC = () => {
   // Available Environments
   const ENVIRONMENTS: EnvironmentOption[] = [
     {
-      value: 'production',
-      label: 'Production',
-      description: 'Live production environment with real data'
+      value: 'stage-sandbox',
+      label: 'Stage Sandbox',
+      description: 'Staging environment for testing'
     },
     {
-      value: 'sandbox',
-      label: 'Sandbox',
-      description: 'Testing environment with sample data'
+      value: 'pre-prod-sandbox',
+      label: 'Pre-Prod Sandbox',
+      description: 'Pre-production environment for final testing'
     },
     {
-      value: 'development',
-      label: 'Development',
-      description: 'Development environment for testing'
+      value: 'qa-sandbox',
+      label: 'QA Sandbox',
+      description: 'Quality assurance testing environment'
     },
     {
-      value: 'pre-production',
-      label: 'Pre-Production',
-      description: 'Staging environment before production'
+      value: 'prod-sandbox',
+      label: 'Prod Sandbox',
+      description: 'Production sandbox environment'
     }
   ];
 
@@ -377,11 +377,11 @@ const DataCleansingPage: React.FC = () => {
                   </div>
                   <div className="dc-object-icon">
                     {objectName.includes('Account') ? '🏢' :
-                     objectName.includes('Contact') ? '👤' :
-                     objectName.includes('Lead') ? '🎯' :
-                     objectName.includes('Opportunity') ? '💰' :
-                     objectName.includes('Case') ? '📋' :
-                     objectName.includes('Campaign') ? '📢' : '📊'}
+                      objectName.includes('Contact') ? '👤' :
+                        objectName.includes('Lead') ? '🎯' :
+                          objectName.includes('Opportunity') ? '💰' :
+                            objectName.includes('Case') ? '📋' :
+                              objectName.includes('Campaign') ? '📢' : '📊'}
                   </div>
                 </div>
               ))
@@ -418,17 +418,6 @@ const DataCleansingPage: React.FC = () => {
           <span className="step-icon">⚙️</span>
           <span>{processingStep}</span>
         </div>
-
-        <div className="processing-stats">
-          <div className="stat-item">
-            <div className="stat-number">28,750</div>
-            <div className="stat-label">Records Analyzed</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">15</div>
-            <div className="stat-label">Quality Checks</div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -441,7 +430,7 @@ const DataCleansingPage: React.FC = () => {
         <div className="dc-results-header">
           <div className="dc-header-content">
             <div className="dc-header-text">
-              <h2 className="dc-results-title">Data Quality Analysis</h2>
+              <h2 className="dc-results-title">AI Analysis - Data Quality</h2>
               <p className="dc-results-subtitle">Comprehensive analysis of {results.totalRecords.toLocaleString()} records</p>
             </div>
             <div className="dc-header-actions">
@@ -475,6 +464,14 @@ const DataCleansingPage: React.FC = () => {
                 <span className="dc-item-value">{Object.keys(results.categories).length}</span>
                 <span className="dc-item-label">Categories</span>
               </div>
+              <div className="dc-breakdown-item">
+                <div className="dc-item-value">28,750</div>
+                <div className="dc-item-label">Records Analyzed</div>
+              </div>
+              <div className="dc-breakdown-item">
+                <div className="dc-item-value">15</div>
+                <div className="dc-item-label">Quality Checks</div>
+              </div>
             </div>
           </div>
         </div>
@@ -487,7 +484,7 @@ const DataCleansingPage: React.FC = () => {
               <div key={categoryId} className="dc-summary-card">
                 <div className="dc-summary-icon">
                   {categoryId === 'missing-data' ? '🔍' :
-                   categoryId === 'inconsistent-formatting' ? '📝' : '👥'}
+                    categoryId === 'inconsistent-formatting' ? '📝' : '👥'}
                 </div>
                 <div className="dc-summary-content">
                   <div className="dc-summary-count">{category.count}</div>

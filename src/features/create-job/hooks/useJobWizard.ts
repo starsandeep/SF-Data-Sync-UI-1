@@ -34,14 +34,14 @@ const INITIAL_JOB_DATA: JobData = {
     username: '',
     password: '',
     securityToken: '',
-    environment: 'production' as Environment,
+    environment: 'stage-sandbox' as Environment,
     isConnected: false
   },
   targetConnection: {
     username: '',
     password: '',
     securityToken: '',
-    environment: 'sandbox' as Environment,
+    environment: 'pre-prod-sandbox' as Environment,
     isConnected: false
   },
   selectedObject: '', // Keep for backward compatibility
@@ -173,7 +173,7 @@ export const useJobWizard = () => {
         username: '',
         password: '',
         securityToken: '',
-        environment: connectionData.environment || (type === 'source' ? 'production' : 'sandbox'),
+        environment: connectionData.environment || (type === 'source' ? 'stage-sandbox' : 'pre-prod-sandbox'),
         isConnected: false
       };
 

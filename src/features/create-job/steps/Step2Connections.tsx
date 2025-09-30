@@ -1,10 +1,10 @@
 // Step 2: Salesforce Connections Component
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '../../../components/common/Button';
 
 // New simplified types for org/environment selection
 export type SalesforceOrganization = 'service-cloud-mtmg' | 'sales-cloud-sales-mgmt' | 'case-management' | 'experience-cloud-portal';
-export type SalesforceEnvironment = 'production' | 'sandbox' | 'development' | 'pre-production';
+export type SalesforceEnvironment = 'stage-sandbox' | 'pre-prod-sandbox' | 'qa-sandbox' | 'prod-sandbox';
 
 interface OrganizationOption {
   value: SalesforceOrganization;
@@ -56,24 +56,24 @@ const ORGANIZATIONS: OrganizationOption[] = [
 // Available Environments
 const ENVIRONMENTS: EnvironmentOption[] = [
   {
-    value: 'production',
-    label: 'Production',
-    description: 'Live production environment with real data'
+    value: 'stage-sandbox',
+    label: 'Stage Sandbox',
+    description: 'Staging environment for testing'
   },
   {
-    value: 'sandbox',
-    label: 'Sandbox',
-    description: 'Testing environment with sample data'
+    value: 'pre-prod-sandbox',
+    label: 'Pre-Prod Sandbox',
+    description: 'Pre-production environment for final testing'
   },
   {
-    value: 'development',
-    label: 'Development',
-    description: 'Development environment for testing'
+    value: 'qa-sandbox',
+    label: 'QA Sandbox',
+    description: 'Quality assurance testing environment'
   },
   {
-    value: 'pre-production',
-    label: 'Pre-Production',
-    description: 'Staging environment before production'
+    value: 'prod-sandbox',
+    label: 'Prod Sandbox',
+    description: 'Production sandbox environment'
   }
 ];
 
