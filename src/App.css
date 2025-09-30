@@ -611,7 +611,7 @@
 }
 
 .dashboard-header {
-  padding: 0.75rem 2rem;
+  padding: 0.5rem 2rem;
   background: var(--bg-header);
   border-bottom: 1px solid var(--border-primary);
   display: flex;
@@ -632,7 +632,7 @@
 }
 
 .header-logo {
-  height: 32px;
+  height: 23px;
   width: auto;
   transition: transform 0.2s ease;
 }
@@ -5417,12 +5417,13 @@
 
 /* Dashboard Container */
 .ds-dashboard {
-  max-width: 80%;
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
-  padding: var(--ds-spacing-md);
+  padding: var(--ds-spacing-sm);
   display: flex;
   flex-direction: column;
-  gap: var(--ds-spacing-lg);
+  gap: var(--ds-spacing-md);
 }
 
 /* Service Introduction Section */
@@ -5430,8 +5431,8 @@
   text-align: center;
   padding: var(--ds-spacing-md);
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-accent) 100%);
-  border-radius: var(--ds-radius-xl);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-secondary);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -5442,10 +5443,11 @@
 }
 
 .ds-main-title {
-  font-size: 2.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: var(--ds-spacing-lg);
+  margin-top: 0;
+  margin-bottom: var(--ds-spacing-sm);
   background: linear-gradient(135deg, var(--bg-button), var(--bg-button-hover));
   background-clip: text;
   -webkit-background-clip: text;
@@ -5454,11 +5456,11 @@
 }
 
 .ds-description-text {
-  font-size: 1.125rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  max-width: 80%;
+  max-width: 90%;
   margin: 0 auto;
-  line-height: 1.7;
+  line-height: 1.5;
   font-weight: 400;
 }
 
@@ -5466,12 +5468,12 @@
 .ds-action-buttons-section {
   display: flex;
   justify-content: center;
-  margin: var(--ds-spacing-md) 0;
+  margin: var(--ds-spacing-sm) 0;
 }
 
 .ds-cta-buttons {
   display: flex;
-  gap: var(--ds-spacing-lg);
+  gap: var(--ds-spacing-md);
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -5480,11 +5482,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--ds-spacing-lg) var(--ds-spacing-xl);
-  min-width: 220px;
+  padding: var(--ds-spacing-md) var(--ds-spacing-lg);
+  min-width: 180px;
   background: var(--bg-primary);
   border: 2px solid var(--border-primary);
-  border-radius: var(--ds-radius-lg);
+  border-radius: var(--ds-radius-md);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration: none;
@@ -5538,23 +5540,23 @@
 }
 
 .ds-btn-icon {
-  font-size: 2rem;
-  margin-bottom: var(--ds-spacing-sm);
+  font-size: 1.5rem;
+  margin-bottom: var(--ds-spacing-xs);
   display: block;
 }
 
 .ds-btn-text {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   margin-bottom: var(--ds-spacing-xs);
   display: block;
 }
 
 .ds-btn-description {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   opacity: 0.8;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.3;
   display: block;
 }
 
@@ -5573,20 +5575,20 @@
 
 .ds-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--ds-spacing-lg);
-  margin-top: var(--ds-spacing-lg);
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--ds-spacing-md);
+  margin-top: var(--ds-spacing-md);
 }
 
 /* Stat Cards */
 .ds-stat-card {
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
-  border-radius: var(--ds-radius-lg);
-  padding: var(--ds-spacing-lg);
+  border-radius: var(--ds-radius-md);
+  padding: var(--ds-spacing-md);
   display: flex;
   align-items: center;
-  gap: var(--ds-spacing-md);
+  gap: var(--ds-spacing-sm);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-sm);
   position: relative;
@@ -5625,14 +5627,14 @@
 }
 
 .ds-stat-icon {
-  font-size: 2.5rem;
-  width: 60px;
-  height: 60px;
+  font-size: 1.75rem;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-accent);
-  border-radius: var(--ds-radius-md);
+  border-radius: var(--ds-radius-sm);
   flex-shrink: 0;
 }
 
@@ -5642,7 +5644,7 @@
 }
 
 .ds-stat-content h3 {
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-secondary);
   margin: 0 0 var(--ds-spacing-xs) 0;
@@ -5651,7 +5653,7 @@
 }
 
 .ds-stat-number {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 var(--ds-spacing-xs) 0;
@@ -5659,7 +5661,7 @@
 }
 
 .ds-stat-change {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-success);
   font-weight: 500;
   display: inline-flex;
@@ -5670,16 +5672,16 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .ds-dashboard {
-    padding: var(--ds-spacing-md);
-    gap: var(--ds-spacing-xl);
+    padding: var(--ds-spacing-sm);
+    gap: var(--ds-spacing-md);
   }
 
   .ds-main-title {
-    font-size: 2rem;
+    font-size: 1.5rem;
   }
 
   .ds-description-text {
-    font-size: 1rem;
+    font-size: 0.8125rem;
   }
 
   .ds-cta-buttons {
@@ -5688,54 +5690,54 @@
   }
 
   .ds-action-btn {
-    min-width: 250px;
+    min-width: 200px;
     max-width: 100%;
   }
 
   .ds-stats-grid {
     grid-template-columns: 1fr;
-    gap: var(--ds-spacing-md);
+    gap: var(--ds-spacing-sm);
   }
 
   .ds-stat-card {
-    padding: var(--ds-spacing-md);
+    padding: var(--ds-spacing-sm);
   }
 
   .ds-stat-icon {
-    font-size: 2rem;
-    width: 50px;
-    height: 50px;
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
   }
 
   .ds-stat-number {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 }
 
 @media (max-width: 480px) {
   .ds-dashboard {
-    padding: var(--ds-spacing-sm);
+    padding: var(--ds-spacing-xs);
   }
 
   .ds-service-introduction {
-    padding: var(--ds-spacing-lg);
+    padding: var(--ds-spacing-sm);
   }
 
   .ds-main-title {
-    font-size: 1.75rem;
+    font-size: 1.375rem;
   }
 
   .ds-action-btn {
-    min-width: 200px;
-    padding: var(--ds-spacing-md);
+    min-width: 160px;
+    padding: var(--ds-spacing-sm);
   }
 
   .ds-btn-icon {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 
   .ds-btn-text {
-    font-size: 1rem;
+    font-size: 0.875rem;
   }
 }
 
