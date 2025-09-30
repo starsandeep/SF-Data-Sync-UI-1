@@ -1,13 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/common/Button';
+import { Input } from '../components/common/Input';
+import { SalesforceOrganization, SalesforceEnvironment } from '../features/create-job/steps/Step2Connections';
 
-interface DataObject {
-  id: string;
-  name: string;
-  icon: string;
+
+interface ConnectionSelection {
+  organization: SalesforceOrganization | '';
+  environment: SalesforceEnvironment | '';
+}
+
+interface OrganizationOption {
+  value: SalesforceOrganization;
+  label: string;
   description: string;
-  recordCount?: number;
-  isAvailable: boolean;
+}
+
+interface EnvironmentOption {
+  value: SalesforceEnvironment;
+  label: string;
+  description: string;
 }
 
 interface QualityResult {
@@ -29,48 +40,69 @@ interface QualityResult {
   };
 }
 
-type Stage = 'object-selection' | 'processing' | 'results';
+type Stage = 'connection-selection' | 'object-selection' | 'processing' | 'results';
 
 const DataCleansingPage: React.FC = () => {
-  const [stage, setStage] = useState<Stage>('object-selection');
+  const [stage, setStage] = useState<Stage>('connection-selection');
   const [selectedObject, setSelectedObject] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState('');
   const [results, setResults] = useState<QualityResult | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [connection, setConnection] = useState<ConnectionSelection>({
+    organization: '',
+    environment: ''
+  });
+  const [objects, setObjects] = useState<string[]>([]);
+  const [loadingObjects, setLoadingObjects] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const dataObjects: DataObject[] = [
+
+  // Available Salesforce Organizations
+  const ORGANIZATIONS: OrganizationOption[] = [
     {
-      id: 'accounts',
-      name: 'Accounts',
-      icon: '🏢',
-      description: 'Company and organization records',
-      recordCount: 15420,
-      isAvailable: false
+      value: 'service-cloud-mtmg',
+      label: 'Service Cloud - Management',
+      description: 'Multi-Tenant Management Group for Service Cloud'
     },
     {
-      id: 'contacts',
-      name: 'Contacts',
-      icon: '👤',
-      description: 'Individual contact records',
-      recordCount: 28750,
-      isAvailable: true
+      value: 'sales-cloud-sales-mgmt',
+      label: 'Sales Cloud - Sales Management',
+      description: 'Sales Management and CRM Platform'
     },
     {
-      id: 'opportunities',
-      name: 'Opportunities',
-      icon: '💰',
-      description: 'Sales opportunity records',
-      recordCount: 8320,
-      isAvailable: false
+      value: 'case-management',
+      label: 'Service Cloud - Case Mgmt',
+      description: 'Case Management and Support Platform'
     },
     {
-      id: 'leads',
-      name: 'Leads',
-      icon: '🎯',
-      description: 'Potential customer records',
-      recordCount: 12100,
-      isAvailable: false
+      value: 'experience-cloud-portal',
+      label: 'Experience Cloud - Portal',
+      description: 'Customer and Partner Portal Platform'
+    }
+  ];
+
+  // Available Environments
+  const ENVIRONMENTS: EnvironmentOption[] = [
+    {
+      value: 'production',
+      label: 'Production',
+      description: 'Live production environment with real data'
+    },
+    {
+      value: 'sandbox',
+      label: 'Sandbox',
+      description: 'Testing environment with sample data'
+    },
+    {
+      value: 'development',
+      label: 'Development',
+      description: 'Development environment for testing'
+    },
+    {
+      value: 'pre-production',
+      label: 'Pre-Production',
+      description: 'Staging environment before production'
     }
   ];
 
@@ -125,7 +157,52 @@ const DataCleansingPage: React.FC = () => {
     }
   };
 
-  const issuesCount = Object.values(mockResults.categories).reduce((sum, cat) => sum + cat.count, 0);
+
+  // Handle organization selection
+  const handleOrganizationChange = (organization: SalesforceOrganization | '') => {
+    setConnection({
+      ...connection,
+      organization,
+      environment: '' // Reset environment when org changes
+    });
+  };
+
+  // Handle environment selection
+  const handleEnvironmentChange = (environment: SalesforceEnvironment | '') => {
+    setConnection({
+      ...connection,
+      environment
+    });
+  };
+
+  // Fetch objects from API when connection is complete
+  useEffect(() => {
+    const fetchObjects = async () => {
+      if (connection.organization && connection.environment) {
+        setLoadingObjects(true);
+        try {
+          const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects');
+          if (response.ok) {
+            const data = await response.json();
+            setObjects(data);
+            setStage('object-selection');
+          }
+        } catch (error) {
+          console.error('Error fetching objects:', error);
+        } finally {
+          setLoadingObjects(false);
+        }
+      }
+    };
+
+    fetchObjects();
+  }, [connection.organization, connection.environment]);
+
+  // Filter objects based on search term
+  const filteredObjects = objects.filter(obj =>
+    obj.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
 
   useEffect(() => {
     if (stage === 'processing') {
@@ -149,20 +226,17 @@ const DataCleansingPage: React.FC = () => {
           setTimeout(() => {
             setResults(mockResults);
             setStage('results');
-          }, 1000);
+          }, 500);
         }
-      }, 1500);
+      }, 500);
 
       return () => clearInterval(interval);
     }
   }, [stage]);
 
-  const handleObjectSelect = (objectId: string) => {
-    const obj = dataObjects.find(o => o.id === objectId);
-    if (obj?.isAvailable) {
-      setSelectedObject(objectId);
-      setStage('processing');
-    }
+  const handleObjectSelect = (objectName: string) => {
+    setSelectedObject(objectName);
+    setStage('processing');
   };
 
   const toggleCategoryExpansion = (categoryId: string) => {
@@ -175,76 +249,188 @@ const DataCleansingPage: React.FC = () => {
     setExpandedCategories(newExpanded);
   };
 
-  const renderObjectSelection = () => {
+  const renderConnectionSelection = () => {
     return (
-      <div className="object-selection-screen">
-        <div className="selection-header">
-          <h2>Select Data Object</h2>
-          <p>AI-powered data cleansing and quality analysis. Choose which data object you'd like to analyze for quality issues.</p>
+      <div className="dc-connection-selection">
+        <div className="dc-header">
+          <div className="dc-header-text">
+            <h2 className="dc-title">Select Salesforce Connection</h2>
+            <p className="dc-description">
+              Choose your Salesforce organization and environment to begin data quality analysis.
+            </p>
+          </div>
         </div>
 
-        <div className="objects-grid">
-          {dataObjects.map((obj) => (
-            <div
-              key={obj.id}
-              className={`object-card ${obj.isAvailable ? 'available' : 'disabled'}`}
-              onClick={() => handleObjectSelect(obj.id)}
-            >
-              {!obj.isAvailable && <div className="coming-soon">Coming Soon</div>}
-              <div className="object-icon">{obj.icon}</div>
-              <h3 className="object-name">{obj.name}</h3>
-              <p className="object-description">{obj.description}</p>
-              {obj.recordCount && (
-                <div className="record-count">
-                  {obj.recordCount.toLocaleString()} records
+        <div className="dc-connections-panel">
+          <div className="dc-connections-form">
+            {/* Organization Dropdown */}
+            <div className="dc-connections-form-group">
+              <label htmlFor="dc-organization" className="dc-connections-form-label">
+                Organization <span className="dc-connections-required">*</span>
+              </label>
+              <select
+                id="dc-organization"
+                value={connection.organization}
+                onChange={(e) => handleOrganizationChange(e.target.value as SalesforceOrganization)}
+                className="dc-connections-form-select"
+              >
+                <option value="">Select an organization...</option>
+                {ORGANIZATIONS.map(org => (
+                  <option key={org.value} value={org.value}>
+                    {org.label}
+                  </option>
+                ))}
+              </select>
+              {connection.organization && (
+                <div className="dc-connections-form-help">
+                  {ORGANIZATIONS.find(org => org.value === connection.organization)?.description}
                 </div>
               )}
             </div>
-          ))}
+
+            {/* Environment Dropdown */}
+            <div className="dc-connections-form-group">
+              <label htmlFor="dc-environment" className="dc-connections-form-label">
+                Environment <span className="dc-connections-required">*</span>
+              </label>
+              <select
+                id="dc-environment"
+                value={connection.environment}
+                onChange={(e) => handleEnvironmentChange(e.target.value as SalesforceEnvironment)}
+                className="dc-connections-form-select"
+                disabled={!connection.organization}
+              >
+                <option value="">Select an environment...</option>
+                {ENVIRONMENTS.map(env => (
+                  <option key={env.value} value={env.value}>
+                    {env.label}
+                  </option>
+                ))}
+              </select>
+              {connection.environment && (
+                <div className="dc-connections-form-help">
+                  {ENVIRONMENTS.find(env => env.value === connection.environment)?.description}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {loadingObjects && (
+            <div className="dc-loading">
+              <div className="dc-spinner"></div>
+              <p>Loading objects...</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderObjectSelection = () => {
+    return (
+      <div className="dc-object-selection">
+        <div className="dc-header">
+          <div className="dc-header-content">
+            <div className="dc-header-text">
+              <h2 className="dc-title">Select Data Object</h2>
+              <p className="dc-description">
+                AI-powered data quality analysis. Choose which Salesforce object you'd like to analyze.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setStage('connection-selection')}
+              className="dc-back-button"
+            >
+              ← Back to Connection
+            </Button>
+          </div>
+        </div>
+
+        <div className="dc-section-compact">
+          <div className="dc-header-compact">
+            <h3 className="dc-title-compact">Available Objects ({filteredObjects.length})</h3>
+            <Input
+              id="object-search"
+              name="object-search"
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search objects..."
+              className="dc-search-compact"
+            />
+          </div>
+          <div className="dc-list-compact">
+            {filteredObjects.length === 0 ? (
+              <div className="dc-empty-compact">No objects found</div>
+            ) : (
+              filteredObjects.map((objectName) => (
+                <div
+                  key={objectName}
+                  className={`dc-object-card ${selectedObject === objectName ? 'selected' : ''}`}
+                  onClick={() => handleObjectSelect(objectName)}
+                >
+                  <div className="dc-object-info">
+                    <div className="dc-object-name">{objectName}</div>
+                    <div className="dc-object-type">
+                      {objectName.endsWith('__c') ? 'Custom Object' : 'Standard Object'}
+                    </div>
+                  </div>
+                  <div className="dc-object-icon">
+                    {objectName.includes('Account') ? '🏢' :
+                     objectName.includes('Contact') ? '👤' :
+                     objectName.includes('Lead') ? '🎯' :
+                     objectName.includes('Opportunity') ? '💰' :
+                     objectName.includes('Case') ? '📋' :
+                     objectName.includes('Campaign') ? '📢' : '📊'}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     );
   };
 
   const renderProcessing = () => (
-    <div className="processing-screen">
-      <div className="processing-container">
-        <div className="ai-logo">
-          <div className="ai-circle">
+    <div className="dc-processing-screen">
+      <div className="dc-processing-container">
+        <div className="dc-ai-logo">
+          <div className="dc-ai-circle">
             🧠
           </div>
         </div>
 
-        <h2>AI-Powered Analysis in Progress</h2>
-        <p>Our advanced algorithms are analyzing your data quality...</p>
+        <h2 className="dc-processing-title">AI-Powered Analysis in Progress</h2>
+        <p className="dc-processing-subtitle">Our advanced algorithms are analyzing your data quality...</p>
 
-        <div className="progress-container">
-          <div className="progress-bar">
+        <div className="dc-progress-container">
+          <div className="dc-progress-bar">
             <div
-              className="progress-fill"
+              className="dc-progress-fill"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="progress-text">{Math.round(progress)}% Complete</div>
+          <div className="dc-progress-text">{Math.round(progress)}% Complete</div>
         </div>
 
-        <div className="processing-step">
-          <span className="step-icon">⚙️</span>
+        <div className="dc-processing-step">
+          <span className="dc-step-icon">⚙️</span>
           <span>{processingStep}</span>
         </div>
 
-        <div className="processing-stats">
-          <div className="stat-item">
-            <div className="stat-number">28,750</div>
-            <div className="stat-label">Records Analyzed</div>
+        <div className="dc-processing-stats">
+          <div className="dc-stat-item">
+            <div className="dc-stat-number">28,750</div>
+            <div className="dc-stat-label">Records Analyzed</div>
           </div>
-          <div className="stat-item">
-            <div className="stat-number">15</div>
-            <div className="stat-label">Quality Checks</div>
+          <div className="dc-stat-item">
+            <div className="dc-stat-number">15</div>
+            <div className="dc-stat-label">Quality Checks</div>
           </div>
-          <div className="stat-item">
-            <div className="stat-number">3</div>
-            <div className="stat-label">AI Models</div>
+          <div className="dc-stat-item">
+            <div className="dc-stat-number">3</div>
+            <div className="dc-stat-label">AI Models</div>
           </div>
         </div>
       </div>
@@ -255,59 +441,61 @@ const DataCleansingPage: React.FC = () => {
     if (!results) return null;
 
     return (
-      <div className="results-screen">
-        <div className="results-header">
-          <div className="header-content">
-            <h2>Data Quality Analysis Complete</h2>
-            <p>Comprehensive analysis of {results.totalRecords.toLocaleString()} records</p>
-          </div>
-          <div className="header-actions">
-            <Button variant="outline" onClick={() => console.log('Export report')}>
-              📊 Export Report
-            </Button>
-            {/* <Button variant="primary" onClick={() => console.log('Start cleansing')}>
-              🧹 Start Cleansing
-            </Button> */}
+      <div className="dc-results-screen">
+        <div className="dc-results-header">
+          <div className="dc-header-content">
+            <div className="dc-header-text">
+              <h2 className="dc-results-title">Data Quality Analysis Complete</h2>
+              <p className="dc-results-subtitle">Comprehensive analysis of {results.totalRecords.toLocaleString()} records</p>
+            </div>
+            <div className="dc-header-actions">
+              <Button variant="outline" onClick={() => console.log('Export report')}>
+                📊 Export Report
+              </Button>
+              <Button variant="outline" onClick={() => setStage('object-selection')}>
+                🔄 Analyze Another
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Quality Score Overview */}
-        <div className="quality-score-section">
-          <div className="score-card">
-            <div className="score-circle">
-              <span className="score-value">{results.score}%</span>
-              <span className="score-label">Quality Score</span>
+        <div className="dc-score-section">
+          <div className="dc-score-card">
+            <div className="dc-score-circle">
+              <span className="dc-score-value">{results.score}%</span>
+              <span className="dc-score-label">Quality Score</span>
             </div>
-            <div className="score-breakdown">
-              <div className="breakdown-item">
-                <span className="item-value">{results.cleanRecords.toLocaleString()}</span>
-                <span className="item-label">Clean Records</span>
+            <div className="dc-score-breakdown">
+              <div className="dc-breakdown-item">
+                <span className="dc-item-value">{results.cleanRecords.toLocaleString()}</span>
+                <span className="dc-item-label">Clean Records</span>
               </div>
-              <div className="breakdown-item">
-                <span className="item-value">{results.issuesFound.toLocaleString()}</span>
-                <span className="item-label">Issues Found</span>
+              <div className="dc-breakdown-item">
+                <span className="dc-item-value">{results.issuesFound.toLocaleString()}</span>
+                <span className="dc-item-label">Issues Found</span>
               </div>
-              <div className="breakdown-item">
-                <span className="item-value">{Object.keys(results.categories).length}</span>
-                <span className="item-label">Categories</span>
+              <div className="dc-breakdown-item">
+                <span className="dc-item-value">{Object.keys(results.categories).length}</span>
+                <span className="dc-item-label">Categories</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Issues Summary */}
-        <div className="issues-summary">
-          <h3>Issues Summary</h3>
-          <div className="summary-grid">
+        <div className="dc-issues-summary">
+          <h3 className="dc-section-title">Issues Summary</h3>
+          <div className="dc-summary-grid">
             {Object.entries(results.categories).map(([categoryId, category]) => (
-              <div key={categoryId} className="summary-card">
-                <div className="summary-icon">
+              <div key={categoryId} className="dc-summary-card">
+                <div className="dc-summary-icon">
                   {categoryId === 'missing-data' ? '🔍' :
                    categoryId === 'inconsistent-formatting' ? '📝' : '👥'}
                 </div>
-                <div>
-                  <div className="summary-count">{category.count}</div>
-                  <div className="summary-type">{category.name}</div>
+                <div className="dc-summary-content">
+                  <div className="dc-summary-count">{category.count}</div>
+                  <div className="dc-summary-type">{category.name}</div>
                 </div>
               </div>
             ))}
@@ -315,57 +503,40 @@ const DataCleansingPage: React.FC = () => {
         </div>
 
         {/* Detailed Issues */}
-        <div className="detailed-issues">
-          <h3>Detailed Issues</h3>
-          {Object.entries(results.categories).map(([categoryId, category]) => (
-            <div key={categoryId} className="issue-category">
-              <div
-                className="category-header"
-                onClick={() => toggleCategoryExpansion(categoryId)}
-              >
-                <div className="category-header-left">
-                  <span className="category-name">{category.name}</span>
-                  <span className="category-count">({category.count} issues)</span>
+        <div className="dc-detailed-issues">
+          <h3 className="dc-section-title">Detailed Issues</h3>
+          <div className="dc-issues-container">
+            {Object.entries(results.categories).map(([categoryId, category]) => (
+              <div key={categoryId} className="dc-issue-category">
+                <div
+                  className="dc-category-header"
+                  onClick={() => toggleCategoryExpansion(categoryId)}
+                >
+                  <div className="dc-category-header-left">
+                    <span className="dc-category-name">{category.name}</span>
+                    <span className="dc-category-count">({category.count} issues)</span>
+                  </div>
+                  <span className="dc-expand-icon">
+                    {expandedCategories.has(categoryId) ? '▲' : '▼'}
+                  </span>
                 </div>
-                <span className="expand-icon">
-                  {expandedCategories.has(categoryId) ? '▲' : '▼'}
-                </span>
-              </div>
-              {expandedCategories.has(categoryId) && (
-                <div className="category-content">
-                  {category.issues.map((issue, index) => (
-                    <div key={index} className="issue-item">
-                      <div className="issue-header">
-                        <div className="severity-indicator" />
-                        <strong className="issue-field">{issue.field}</strong>
-                        <span className="issue-count">({issue.count} records)</span>
+                {expandedCategories.has(categoryId) && (
+                  <div className="dc-category-content">
+                    {category.issues.map((issue, index) => (
+                      <div key={index} className="dc-issue-item">
+                        <div className="dc-issue-header">
+                          <div className="dc-severity-indicator" />
+                          <strong className="dc-issue-field">{issue.field}</strong>
+                          <span className="dc-issue-count">({issue.count} records)</span>
+                        </div>
+                        <div className="dc-issue-description">{issue.description}</div>
+                        <div className="dc-issue-suggestion">💡 {issue.suggestion}</div>
                       </div>
-                      <div className="issue-description">{issue.description}</div>
-                      <div className="issue-suggestion">💡 {issue.suggestion}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Next Steps */}
-        <div className="action-panel">
-          <div className="panel-content">
-            <h3>🚀 Ready to Clean Your Data?</h3>
-            <p>
-              Start the automated cleansing process to fix {results.issuesFound.toLocaleString()}
-              identified issues and improve your data quality to 95%+
-            </p>
-            <div className="panel-actions">
-              <Button variant="outline" onClick={() => setStage('object-selection')}>
-                🔄 Analyze Another Object
-              </Button>
-              <Button variant="primary" onClick={() => console.log('Start cleansing workflow')}>
-                🚀 Start Data Cleanup
-              </Button>
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -375,6 +546,7 @@ const DataCleansingPage: React.FC = () => {
   return (
     <main className="scrollable-content">
       <div className="data-cleansing-page">
+        {stage === 'connection-selection' && renderConnectionSelection()}
         {stage === 'object-selection' && renderObjectSelection()}
         {stage === 'processing' && renderProcessing()}
         {stage === 'results' && renderResults()}
