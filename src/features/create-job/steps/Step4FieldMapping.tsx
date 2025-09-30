@@ -22,6 +22,7 @@ interface MappingRow {
   sourceLabel: string;
   targetField: string;
   isEditing: boolean;
+  confidenceScore: number; // AI confidence score (0-100)
 }
 
 // Available Salesforce fields for mapping (Account target object)
@@ -49,25 +50,38 @@ const SALESFORCE_FIELDS = [
 
 // Default field mappings for Account source to Account__c target
 const DEFAULT_MAPPINGS: MappingRow[] = [
-  { sourceField: 'Name', sourceLabel: 'Name', targetField: 'Account_Name__c', isEditing: false },
-  { sourceField: 'Account_Owner', sourceLabel: 'Account_Owner', targetField: 'Account_Owner__c', isEditing: false },
-  { sourceField: 'Billing_Address_Line_1', sourceLabel: 'Billing_Address_Line_1', targetField: 'Billing_Address_Line_1__c', isEditing: false },
-  { sourceField: 'Billing_Address_Line_2', sourceLabel: 'Billing_Address_Line_2', targetField: 'Billing_Address_Line_2__c', isEditing: false },
-  { sourceField: 'Billing_City', sourceLabel: 'Billing_City', targetField: 'Billing_City__c', isEditing: false },
-  { sourceField: 'Billing_Country', sourceLabel: 'Billing_Country', targetField: 'Billing_Country__c', isEditing: false },
-  { sourceField: 'Billing_StateProvince', sourceLabel: 'Billing_StateProvince', targetField: 'Billing_StateProvince__c', isEditing: false },
-  { sourceField: 'Billing_Street', sourceLabel: 'Billing_Street', targetField: 'Billing_Street__c', isEditing: false },
-  { sourceField: 'Billing_ZipPostal_Code', sourceLabel: 'Billing_ZipPostal_Code', targetField: 'Billing_ZipPostal_Code__c', isEditing: false },
-  { sourceField: 'CreatedById', sourceLabel: 'CreatedById', targetField: 'CreatedById', isEditing: false },
-  { sourceField: 'Last_Activity', sourceLabel: 'Last_Activity', targetField: 'Last_Activity__c', isEditing: false },
-  { sourceField: 'LastModifiedById', sourceLabel: 'LastModifiedById', targetField: 'LastModifiedById', isEditing: false },
-  { sourceField: 'Last_Modified_Date', sourceLabel: 'Last_Modified_Date', targetField: 'Last_Modified_Date__c', isEditing: false },
-  { sourceField: 'OwnerId', sourceLabel: 'OwnerId', targetField: 'OwnerId', isEditing: false },
-  { sourceField: 'Phone', sourceLabel: 'Phone', targetField: 'Phone__c', isEditing: false },
-  { sourceField: 'Rating', sourceLabel: 'Rating', targetField: 'Rating__c', isEditing: false },
-  { sourceField: 'Type', sourceLabel: 'Type', targetField: 'Type__c', isEditing: false },
-  { sourceField: 'Id', sourceLabel: 'Id', targetField: 'extid__c', isEditing: false }
+  { sourceField: 'Name', sourceLabel: 'Name', targetField: 'Account_Name__c', isEditing: false, confidenceScore: 88 },
+  { sourceField: 'Account_Owner', sourceLabel: 'Account_Owner', targetField: 'Account_Owner__c', isEditing: false, confidenceScore: 95 },
+  { sourceField: 'Billing_Address_Line_1', sourceLabel: 'Billing_Address_Line_1', targetField: 'Billing_Address_Line_1__c', isEditing: false, confidenceScore: 97 },
+  { sourceField: 'Billing_Address_Line_2', sourceLabel: 'Billing_Address_Line_2', targetField: 'Billing_Address_Line_2__c', isEditing: false, confidenceScore: 97 },
+  { sourceField: 'Billing_City', sourceLabel: 'Billing_City', targetField: 'Billing_City__c', isEditing: false, confidenceScore: 94 },
+  { sourceField: 'Billing_Country', sourceLabel: 'Billing_Country', targetField: 'Billing_Country__c', isEditing: false, confidenceScore: 93 },
+  { sourceField: 'Billing_StateProvince', sourceLabel: 'Billing_StateProvince', targetField: 'Billing_StateProvince__c', isEditing: false, confidenceScore: 96 },
+  { sourceField: 'Billing_Street', sourceLabel: 'Billing_Street', targetField: 'Billing_Street__c', isEditing: false, confidenceScore: 91 },
+  { sourceField: 'Billing_ZipPostal_Code', sourceLabel: 'Billing_ZipPostal_Code', targetField: 'Billing_ZipPostal_Code__c', isEditing: false, confidenceScore: 98 },
+  { sourceField: 'CreatedById', sourceLabel: 'CreatedById', targetField: 'CreatedById', isEditing: false, confidenceScore: 99 },
+  { sourceField: 'Last_Activity', sourceLabel: 'Last_Activity', targetField: 'Last_Activity__c', isEditing: false, confidenceScore: 85 },
+  { sourceField: 'LastModifiedById', sourceLabel: 'LastModifiedById', targetField: 'LastModifiedById', isEditing: false, confidenceScore: 99 },
+  { sourceField: 'Last_Modified_Date', sourceLabel: 'Last_Modified_Date', targetField: 'Last_Modified_Date__c', isEditing: false, confidenceScore: 92 },
+  { sourceField: 'OwnerId', sourceLabel: 'OwnerId', targetField: 'OwnerId', isEditing: false, confidenceScore: 99 },
+  { sourceField: 'Phone', sourceLabel: 'Phone', targetField: 'Phone__c', isEditing: false, confidenceScore: 86 },
+  { sourceField: 'Rating', sourceLabel: 'Rating', targetField: 'Rating__c', isEditing: false, confidenceScore: 89 },
+  { sourceField: 'Type', sourceLabel: 'Type', targetField: 'Type__c', isEditing: false, confidenceScore: 82 },
+  { sourceField: 'Id', sourceLabel: 'Id', targetField: 'extid__c', isEditing: false, confidenceScore: 75 }
 ];
+
+// Helper functions for confidence scoring
+const getConfidenceLevel = (score: number): string => {
+  if (score >= 90) return 'high';
+  if (score >= 75) return 'medium';
+  return 'low';
+};
+
+const getConfidenceLabel = (score: number): string => {
+  if (score >= 90) return 'High';
+  if (score >= 75) return 'Medium';
+  return 'Low';
+};
 
 export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   fieldMappings,
@@ -93,7 +107,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempTargetField, setTempTargetField] = useState<string>('');
 
-  // Loader effect with progress animation
+  // Loader effect with progress animation - 3 seconds total
   useEffect(() => {
     if (!showLoader) return;
 
@@ -109,11 +123,20 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     let currentProgress = 0;
 
     const interval = setInterval(() => {
-      currentProgress += 2;
+      currentProgress += 3.33; // 3.33% every 100ms = 3 seconds total
       setProgress(currentProgress);
 
       // Update processing step every 20% progress
-      if (currentProgress % 20 === 0 && currentStep < steps.length - 1) {
+      if (currentProgress >= 20 && currentStep === 0) {
+        currentStep++;
+        setProcessingStep(steps[currentStep]);
+      } else if (currentProgress >= 40 && currentStep === 1) {
+        currentStep++;
+        setProcessingStep(steps[currentStep]);
+      } else if (currentProgress >= 60 && currentStep === 2) {
+        currentStep++;
+        setProcessingStep(steps[currentStep]);
+      } else if (currentProgress >= 80 && currentStep === 3) {
         currentStep++;
         setProcessingStep(steps[currentStep]);
       }
@@ -122,7 +145,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         clearInterval(interval);
         setTimeout(() => {
           setShowLoader(false);
-        }, 500);
+        }, 300);
       }
     }, 100);
 
@@ -224,7 +247,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       sourceField: `NewField_${Date.now()}`,
       sourceLabel: `NewField_${Date.now()}`,
       targetField: '',
-      isEditing: true
+      isEditing: true,
+      confidenceScore: 50 // Default confidence for new mappings
     };
     setMappingRows(prev => [...prev, newRow]);
     setEditingField(newRow.sourceField);
@@ -310,6 +334,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         <div className="table-header">
           <div className="column-header">Source Field (Account)</div>
           <div className="column-header">Target Field (Account__c)</div>
+          <div className="column-header">AI Confidence</div>
           <div className="column-header">Actions</div>
         </div>
 
@@ -367,6 +392,13 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                     {isDuplicate && <span className="duplicate-indicator"> (Duplicate)</span>}
                   </div>
                 )}
+              </div>
+
+              <div className="confidence-score">
+                <div className={`confidence-badge confidence-${getConfidenceLevel(row.confidenceScore)}`}>
+                  <span className="confidence-value">{row.confidenceScore}%</span>
+                  <span className="confidence-level">{getConfidenceLabel(row.confidenceScore)}</span>
+                </div>
               </div>
 
               <div className="actions">

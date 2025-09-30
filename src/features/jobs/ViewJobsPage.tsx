@@ -1,144 +1,78 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { jobsAPI, JobListItem } from '../../api/jobsAPI';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../../components/common/Button';
-import { Input } from '../../components/common/Input';
-import { Modal } from '../../components/common/Modal';
 
 interface ViewJobsPageProps {
   onBackToDashboard?: () => void;
   onCreateJob?: () => void;
 }
 
-export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({ onBackToDashboard, onCreateJob }) => {
-  const navigate = useNavigate();
-  const [jobs, setJobs] = useState<JobListItem[]>([]);
+interface JobData {
+  name: string;
+  schedule: {
+    frequency: string;
+    timeUnit: string;
+  };
+  fromDate: string;
+  toDate: string;
+  sourceObject: string;
+  targetObject: string;
+  extId: string;
+  fieldMaping: Array<{
+    source: string;
+    sourceType: string;
+    target: string;
+    targetType: string;
+  }>;
+}
+
+interface ApiResponse {
+  [jobName: string]: string; // JSON string that needs to be parsed
+}
+
+export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
+  onBackToDashboard,
+  onCreateJob
+}) => {
+  const [jobs, setJobs] = useState<{ [key: string]: JobData }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalJobs, setTotalJobs] = useState(0);
-  const [pageSize] = useState(10);
-  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [actionLoading, setActionLoading] = useState<{ [key: string]: string }>({});
 
-  const totalPages = Math.ceil(totalJobs / pageSize);
-
-  const fetchJobs = useCallback(async (page: number = 1, search: string = '') => {
+  // Fetch jobs from API
+  const fetchJobs = async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await jobsAPI.list(page, pageSize, search);
+      const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/readJobs');
 
-      if (response.success && response.data) {
-        setJobs(response.data.jobs);
-        setTotalJobs(response.data.total);
-        setCurrentPage(response.data.page);
-      } else {
-        setError(response.error || 'Failed to fetch jobs');
-        setJobs([]);
-        setTotalJobs(0);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data: ApiResponse = await response.json();
+
+      // Parse the JSON strings in the response
+      const parsedJobs: { [key: string]: JobData } = {};
+      Object.keys(data).forEach(jobName => {
+        try {
+          parsedJobs[jobName] = JSON.parse(data[jobName]);
+        } catch (parseError) {
+          console.error(`Failed to parse job data for ${jobName}:`, parseError);
+        }
+      });
+
+      setJobs(parsedJobs);
     } catch (err) {
-      setError('Network error occurred while fetching jobs');
-      setJobs([]);
-      setTotalJobs(0);
+      console.error('Error fetching jobs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch jobs');
     } finally {
       setIsLoading(false);
     }
-  }, [pageSize]);
+  };
 
   useEffect(() => {
-    fetchJobs(1, searchTerm);
-  }, [fetchJobs, searchTerm]);
-
-  useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      if (currentPage === 1) {
-        fetchJobs(1, searchTerm);
-      } else {
-        setCurrentPage(1);
-        fetchJobs(1, searchTerm);
-      }
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchTerm, fetchJobs]);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages && page !== currentPage) {
-      setCurrentPage(page);
-      fetchJobs(page, searchTerm);
-    }
-  };
-
-  const handleDeleteJob = async () => {
-    if (!deleteJobId) return;
-
-    setIsDeleting(true);
-    try {
-      const response = await jobsAPI.delete(deleteJobId);
-
-      if (response.success) {
-        setDeleteJobId(null);
-        fetchJobs(currentPage, searchTerm);
-      } else {
-        setError(response.error || 'Failed to delete job');
-      }
-    } catch (err) {
-      setError('Network error occurred while deleting job');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleJobAction = async (jobId: string, action: 'pause' | 'resume' | 'run') => {
-    setActionLoading(prev => ({ ...prev, [jobId]: action }));
-
-    try {
-      let response;
-      switch (action) {
-        case 'pause':
-          response = await jobsAPI.pause(jobId);
-          break;
-        case 'resume':
-          response = await jobsAPI.resume(jobId);
-          break;
-        case 'run':
-          response = await jobsAPI.runNow(jobId);
-          break;
-      }
-
-      if (response.success) {
-        fetchJobs(currentPage, searchTerm);
-      } else {
-        setError(response.error || `Failed to ${action} job`);
-      }
-    } catch (err) {
-      setError(`Network error occurred while trying to ${action} job`);
-    } finally {
-      setActionLoading(prev => {
-        const newState = { ...prev };
-        delete newState[jobId];
-        return newState;
-      });
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Active':
-        return <span className="status-icon active">▶️</span>;
-      case 'Inactive':
-        return <span className="status-icon inactive">⏸️</span>;
-      case 'Draft':
-        return <span className="status-icon draft">📝</span>;
-      default:
-        return <span className="status-icon">⚪</span>;
-    }
-  };
+    fetchJobs();
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -150,347 +84,149 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({ onBackToDashboard, o
     });
   };
 
-  const renderPagination = () => {
-    if (totalPages <= 1) return null;
-
-    const maxVisiblePages = 7;
-    const halfVisible = Math.floor(maxVisiblePages / 2);
-
-    let startPage = Math.max(1, currentPage - halfVisible);
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    const pages = [];
-
-    if (startPage > 1) {
-      pages.push(1);
-      if (startPage > 2) pages.push('...');
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-
-    if (endPage < totalPages) {
-      if (endPage < totalPages - 1) pages.push('...');
-      pages.push(totalPages);
-    }
-
-    return (
-      <div className="pagination">
-        <Button
-          variant="outline"
-          size="small"
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          aria-label="Previous page"
-        >
-          ←
-        </Button>
-
-        {pages.map((page, index) => (
-          <React.Fragment key={index}>
-            {page === '...' ? (
-              <span className="pagination-ellipsis">...</span>
-            ) : (
-              <Button
-                variant={currentPage === page ? 'primary' : 'outline'}
-                size="small"
-                onClick={() => handlePageChange(page as number)}
-                aria-label={`Go to page ${page}`}
-                aria-current={currentPage === page ? 'page' : undefined}
-              >
-                {page}
-              </Button>
-            )}
-          </React.Fragment>
-        ))}
-
-        <Button
-          variant="outline"
-          size="small"
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          aria-label="Next page"
-        >
-          →
-        </Button>
-      </div>
-    );
+  const formatSchedule = (schedule: JobData['schedule']) => {
+    const unit = schedule.timeUnit.toLowerCase();
+    const freq = schedule.frequency;
+    return `Every ${freq} ${unit}`;
   };
 
   return (
-    <div className="jobs-page-layout">
-      <div className="scrollable-content">
-        <div className="jobs-header">
-        <div className="header-content">
+    <div className="ds-jobs-page">
+      {/* Header Section */}
+      <div className="ds-jobs-header">
+        <div className="ds-jobs-header-content">
           {onBackToDashboard && (
             <Button
               variant="outline"
               onClick={onBackToDashboard}
-              aria-label="Back to Data Sync Dashboard"
-              className="back-button"
+              className="ds-jobs-back-button"
             >
               ← Back to Dashboard
             </Button>
           )}
-          <h3 className="page-title">All Jobs</h3>
-        </div>
-        <div className="header-actions">
-          <Button
-            variant="primary"
-            onClick={() => {
-              if (onCreateJob) {
-                // When used within DataSyncPage, use the callback
-                onCreateJob();
-              } else {
-                // When used standalone, navigate normally
-                navigate('/create-job');
-              }
-            }}
-            aria-label="Create new job"
-          >
-            + New Job
-          </Button>
+          <h2 className="ds-jobs-title">Job Details</h2>
         </div>
       </div>
 
-      <div className="jobs-controls">
-        <div className="search-section">
-          <Input
-            type="text"
-            placeholder="Search jobs by name, object, organization, or status..."
-            value={searchTerm}
-            onChange={setSearchTerm}
-            className="search-input"
-            aria-label="Search jobs"
-          />
-        </div>
+      {/* Content Section */}
+      <div className="ds-jobs-content">
+        {error && (
+          <div className="ds-jobs-error" role="alert">
+            <span className="ds-jobs-error-icon">⚠️</span>
+            <span className="ds-jobs-error-text">{error}</span>
+            <Button
+              variant="outline"
+              size="small"
+              onClick={fetchJobs}
+              className="ds-jobs-retry-button"
+            >
+              Retry
+            </Button>
+          </div>
+        )}
 
-        <div className="jobs-stats">
-          <span className="stats-text">
-            {isLoading ? 'Loading...' : `${totalJobs} total jobs`}
-          </span>
-        </div>
-      </div>
-
-      {error && (
-        <div className="error-banner" role="alert">
-          <span className="error-icon">⚠️</span>
-          <span className="error-text">{error}</span>
-          <Button
-            variant="outline"
-            size="small"
-            onClick={() => {
-              setError(null);
-              fetchJobs(currentPage, searchTerm);
-            }}
-          >
-            Retry
-          </Button>
-        </div>
-      )}
-
-      <div className="jobs-table-container">
         {isLoading ? (
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
+          <div className="ds-jobs-loading">
+            <div className="ds-jobs-spinner"></div>
             <p>Loading jobs...</p>
           </div>
-        ) : jobs.length === 0 ? (
-          <div className="empty-state">
-            {searchTerm ? (
-              <>
-                <div className="empty-icon">🔍</div>
-                <h3>No jobs found</h3>
-                <p>No jobs match your search criteria. Try adjusting your search terms.</p>
-                <Button
-                  variant="outline"
-                  onClick={() => setSearchTerm('')}
-                >
-                  Clear Search
-                </Button>
-              </>
-            ) : (
-              <>
-                <div className="empty-icon">📊</div>
-                <h3>No jobs yet</h3>
-                <p>Get started by creating your first data synchronization job.</p>
-                <Button
-                  variant="primary"
-                  onClick={() => {
-                    if (onCreateJob) {
-                      onCreateJob();
-                    } else {
-                      navigate('/create-job');
-                    }
-                  }}
-                >
-                  Create Your First Job
-                </Button>
-              </>
+        ) : Object.keys(jobs).length === 0 ? (
+          <div className="ds-jobs-empty">
+            <div className="ds-jobs-empty-icon">📊</div>
+            <h3>No jobs found</h3>
+            <p>No synchronization jobs are currently configured.</p>
+            {onCreateJob && (
+              <Button
+                variant="primary"
+                onClick={onCreateJob}
+                className="ds-jobs-empty-action"
+              >
+                Create Your First Job
+              </Button>
             )}
           </div>
         ) : (
-          <>
-            <table className="jobs-table" role="table" aria-label="Jobs list">
-              <thead>
-                <tr>
-                  <th scope="col">Job Name</th>
-                  <th scope="col">Object</th>
-                  <th scope="col">Source → Target</th>
-                  <th scope="col">Schedule</th>
-                  <th scope="col">Status</th>
-                  <th scope="col">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {jobs.map((job) => (
-                  <tr key={job.id} className="job-row">
-                    <td className="job-name-cell">
-                      <div className="job-name">{job.name}</div>
-                      <div className="job-meta">
-                        {job.tested && <span className="tested-badge">Tested</span>}
-                        <span className="created-date">
-                          Created {formatDate(job.created)}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="object-cell">
-                      <span className="object-name">{job.object}</span>
-                    </td>
-
-                    <td className="orgs-cell">
-                      <div className="org-flow">
-                        <div className="source-org" title={job.sourceOrg}>
-                          {job.sourceOrg}
-                        </div>
-                        <div className="flow-arrow">→</div>
-                        <div className="target-org" title={job.targetOrg}>
-                          {job.targetOrg}
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="schedule-cell">
-                      <span className="schedule-value">{job.schedule}</span>
-                      {job.nextRun && (
-                        <div className="next-run">
-                          Next: {formatDate(job.nextRun)}
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="status-cell">
-                      <div className="status-container">
-                        {getStatusIcon(job.status)}
-                        <span className={`status-text status-${job.status.toLowerCase()}`}>
-                          {job.status}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td className="actions-cell">
-                      <div className="job-actions">
-                        {job.status === 'Active' && (
-                          <Button
-                            variant="outline"
-                            size="small"
-                            onClick={() => handleJobAction(job.id, 'pause')}
-                            disabled={!!actionLoading[job.id]}
-                            loading={actionLoading[job.id] === 'pause'}
-                            title="Deactivate job"
-                          >
-                            ⏸️
-                          </Button>
-                        )}
-
-                        {job.status === 'Inactive' && (
-                          <Button
-                            variant="outline"
-                            size="small"
-                            onClick={() => handleJobAction(job.id, 'resume')}
-                            disabled={!!actionLoading[job.id]}
-                            loading={actionLoading[job.id] === 'resume'}
-                            title="Activate job"
-                          >
-                            ▶️
-                          </Button>
-                        )}
-
-                        {(job.status === 'Active' || job.status === 'Inactive') && (
-                          <Button
-                            variant="outline"
-                            size="small"
-                            onClick={() => handleJobAction(job.id, 'run')}
-                            disabled={!!actionLoading[job.id]}
-                            loading={actionLoading[job.id] === 'run'}
-                            title="Run now"
-                          >
-                            🚀
-                          </Button>
-                        )}
-
-                        <Button
-                          variant="outline"
-                          size="small"
-                          onClick={() => setDeleteJobId(job.id)}
-                          disabled={!!actionLoading[job.id]}
-                          title="Delete job"
-                          className="delete-button"
-                        >
-                          🗑️
-                        </Button>
-                      </div>
-                    </td>
+          <div className="ds-jobs-table-container">
+            <div className="ds-jobs-table-wrapper">
+              <table className="ds-jobs-table">
+                <thead className="ds-jobs-thead">
+                  <tr className="ds-jobs-header-row">
+                    <th className="ds-jobs-th">Job Name</th>
+                    <th className="ds-jobs-th">Objects</th>
+                    <th className="ds-jobs-th">Schedule</th>
+                    <th className="ds-jobs-th">Duration</th>
+                    <th className="ds-jobs-th">Field Mappings</th>
+                    <th className="ds-jobs-th">JSON Data</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="ds-jobs-tbody">
+                  {Object.entries(jobs).map(([jobName, jobData]) => (
+                    <tr key={jobName} className="ds-jobs-row">
+                      <td className="ds-jobs-td ds-jobs-name-cell">
+                        <div className="ds-jobs-name">{jobData.name}</div>
+                        <div className="ds-jobs-ext-id">ID: {jobData.extId}</div>
+                      </td>
 
-            <div className="table-footer">
-              <div className="results-info">
-                Showing {Math.min((currentPage - 1) * pageSize + 1, totalJobs)} to{' '}
-                {Math.min(currentPage * pageSize, totalJobs)} of {totalJobs} jobs
-              </div>
-              {renderPagination()}
+                      <td className="ds-jobs-td ds-jobs-objects-cell">
+                        <div className="ds-jobs-object-flow">
+                          <span className="ds-jobs-source">{jobData.sourceObject}</span>
+                          <span className="ds-jobs-arrow">→</span>
+                          <span className="ds-jobs-target">{jobData.targetObject}</span>
+                        </div>
+                      </td>
+
+                      <td className="ds-jobs-td ds-jobs-schedule-cell">
+                        <div className="ds-jobs-schedule">
+                          {formatSchedule(jobData.schedule)}
+                        </div>
+                      </td>
+
+                      <td className="ds-jobs-td ds-jobs-duration-cell">
+                        <div className="ds-jobs-date-range">
+                          <div className="ds-jobs-from">From: {formatDate(jobData.fromDate)}</div>
+                          <div className="ds-jobs-to">To: {formatDate(jobData.toDate)}</div>
+                        </div>
+                      </td>
+
+                      <td className="ds-jobs-td ds-jobs-mappings-cell">
+                        <div className="ds-jobs-mappings-count">
+                          {jobData.fieldMaping.length} field{jobData.fieldMaping.length !== 1 ? 's' : ''}
+                        </div>
+                        <details className="ds-jobs-mappings-details">
+                          <summary className="ds-jobs-mappings-summary">View mappings</summary>
+                          <div className="ds-jobs-mappings-list">
+                            {jobData.fieldMaping.map((mapping, index) => (
+                              <div key={index} className="ds-jobs-mapping-item">
+                                <span className="ds-jobs-mapping-source">{mapping.source}</span>
+                                <span className="ds-jobs-mapping-arrow">→</span>
+                                <span className="ds-jobs-mapping-target">{mapping.target}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      </td>
+
+                      <td className="ds-jobs-td ds-jobs-json-cell">
+                        <details className="ds-jobs-json-details">
+                          <summary className="ds-jobs-json-summary">View JSON</summary>
+                          <pre className="ds-jobs-json-content">
+                            {JSON.stringify(jobData, null, 2)}
+                          </pre>
+                        </details>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </>
-        )}
-      </div>
 
-      <Modal
-        isOpen={!!deleteJobId}
-        onClose={() => setDeleteJobId(null)}
-        title="Delete Job"
-        size="small"
-      >
-        <div className="delete-confirmation">
-          <p>
-            Are you sure you want to delete this job? This action cannot be undone.
-          </p>
-          <div className="confirmation-actions">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteJobId(null)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDeleteJob}
-              loading={isDeleting}
-            >
-              {isDeleting ? 'Deleting...' : 'Delete Job'}
-            </Button>
+            <div className="ds-jobs-footer">
+              <div className="ds-jobs-count">
+                {Object.keys(jobs).length} job{Object.keys(jobs).length !== 1 ? 's' : ''} found
+              </div>
+            </div>
           </div>
-        </div>
-      </Modal>
+        )}
       </div>
     </div>
   );

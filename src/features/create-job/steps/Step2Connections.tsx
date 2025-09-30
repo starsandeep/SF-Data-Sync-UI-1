@@ -3,7 +3,7 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '../../../components/common/Button';
 
 // New simplified types for org/environment selection
-export type SalesforceOrganization = 'service-cloud-mtmg' | 'sales-cloud-sales-mgmt' | 'marketing-cloud-hub' | 'experience-cloud-portal';
+export type SalesforceOrganization = 'service-cloud-mtmg' | 'sales-cloud-sales-mgmt' | 'case-management' | 'experience-cloud-portal';
 export type SalesforceEnvironment = 'production' | 'sandbox' | 'development' | 'pre-production';
 
 interface OrganizationOption {
@@ -33,7 +33,7 @@ interface Step2ConnectionsProps {
 const ORGANIZATIONS: OrganizationOption[] = [
   {
     value: 'service-cloud-mtmg',
-    label: 'Service Cloud - MTMG',
+    label: 'Service Cloud - Management',
     description: 'Multi-Tenant Management Group for Service Cloud'
   },
   {
@@ -42,9 +42,9 @@ const ORGANIZATIONS: OrganizationOption[] = [
     description: 'Sales Management and CRM Platform'
   },
   {
-    value: 'marketing-cloud-hub',
-    label: 'Marketing Cloud - Hub',
-    description: 'Marketing Automation and Customer Journey'
+    value: 'case-management',
+    label: 'Service Cloud - Case Mgmt',
+    description: 'Case Management and Support Platform'
   },
   {
     value: 'experience-cloud-portal',
