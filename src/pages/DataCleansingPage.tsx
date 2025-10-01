@@ -108,10 +108,10 @@ const DataCleansingPage: React.FC = () => {
   ];
 
   const mockResults: QualityResult = {
-    score: 87,
+    score: 82,
     totalRecords: 28750,
-    cleanRecords: 25013,
-    issuesFound: 3737,
+    cleanRecords: 23663,
+    issuesFound: 5087,
     categories: {
       'missing-data': {
         name: 'Missing Data',
@@ -152,6 +152,30 @@ const DataCleansingPage: React.FC = () => {
             description: 'Duplicate contacts with same email address',
             suggestion: 'Merge duplicate records and maintain single source',
             count: 820
+          }
+        ]
+      },
+      'contact-relationship-issues': {
+        name: 'Contact Issues',
+        count: 1350,
+        issues: [
+          {
+            field: 'AccountId',
+            description: 'Contacts not linked to the correct Account (orphan contacts)',
+            suggestion: 'Review and update account relationships using contact matching rules',
+            count: 680
+          },
+          {
+            field: 'Title',
+            description: 'Generic job titles (e.g., "Manager") that prevent role-based routing',
+            suggestion: 'Standardize job titles and create role-based classification system',
+            count: 485
+          },
+          {
+            field: 'DoNotCall/Email',
+            description: 'Contacts flagged as "Do Not Contact" but still included in campaigns',
+            suggestion: 'Update campaign filters to exclude opted-out contacts and review consent management',
+            count: 185
           }
         ]
       }
@@ -529,7 +553,9 @@ const DataCleansingPage: React.FC = () => {
               <div key={categoryId} className="dc-summary-card">
                 <div className="dc-summary-icon">
                   {categoryId === 'missing-data' ? '🔍' :
-                    categoryId === 'inconsistent-formatting' ? '📝' : '👥'}
+                    categoryId === 'inconsistent-formatting' ? '📝' :
+                    categoryId === 'duplicate-records' ? '👥' :
+                    categoryId === 'contact-relationship-issues' ? '🔗' : '📊'}
                 </div>
                 <div className="dc-summary-content">
                   <div className="dc-summary-count">{category.count}</div>
