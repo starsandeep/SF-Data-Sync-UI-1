@@ -97,7 +97,7 @@ export const DataSyncPage: React.FC = () => {
   const renderCurrentView = () => {
     switch (currentView) {
       case 'create-job':
-        return <JobWizard onExit={handleBackToDashboard} />;
+        return <JobWizard onExit={() => handleNavigate('job-details')} />;
       case 'job-details':
         return (
           <ViewJobsPage

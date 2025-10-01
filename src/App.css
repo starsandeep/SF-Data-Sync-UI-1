@@ -6942,7 +6942,7 @@
 
 /* Container */
 .ds-schedule-container {
-  max-width: 90%;
+  max-width: 800px;
   margin: 0 auto;
   padding: var(--ds-spacing-sm);
 }
@@ -6968,8 +6968,8 @@
 
 /* Main Layout */
 .ds-schedule-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: var(--ds-spacing-lg);
   margin-bottom: var(--ds-spacing-lg);
 }

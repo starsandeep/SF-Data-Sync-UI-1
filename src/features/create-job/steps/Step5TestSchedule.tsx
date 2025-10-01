@@ -140,10 +140,80 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
     }
     setIsTestRunning(true);
     try {
-      await onTest(sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
-      setTestCompleted(true);
+      // Create test date strings
+      const testFromDate = new Date(`${testStartDate}T${testStartTime}:00.000Z`).toISOString();
+      const testToDate = new Date(`${testEndDate}T${testEndTime}:00.000Z`).toISOString();
+
+      // Convert fieldMappings object to API format array
+      const fieldMappingArray = Object.entries(jobData.fieldMappings || {}).map(([sourceField, targetField]) => ({
+        source: sourceField,
+        sourceType: "String",
+        target: targetField,
+        targetType: "String"
+      }));
+
+      const testRequestBody = {
+        name: `${jobData.name}_test`,
+        schedule: { frequency: '0', timeUnit: 'MANUAL' },
+        fromDate: testFromDate,
+        toDate: testToDate,
+        sourceObject: jobData.sourceObject,
+        targetObject: jobData.targetObject,
+        extId: jobData.extId || 'extid__c',
+        fieldMaping: fieldMappingArray,
+        isTest: true,
+        sampleSize: sampleSize
+      };
+
+      const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/syncsfdc', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testRequestBody)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        // Update jobData with test results
+        setJobData(prev => ({
+          ...prev,
+          testResult: {
+            success: true,
+            recordsProcessed: result.recordsProcessed || sampleSize,
+            recordsSucceeded: result.recordsSucceeded || sampleSize,
+            recordsFailed: result.recordsFailed || 0
+          }
+        }));
+        setTestCompleted(true);
+      } else {
+        const errorData = await response.text();
+        console.error('Test failed:', errorData);
+        // Set error result
+        setJobData(prev => ({
+          ...prev,
+          testResult: {
+            success: false,
+            recordsProcessed: 0,
+            recordsSucceeded: 0,
+            recordsFailed: sampleSize
+          }
+        }));
+        setTestCompleted(true);
+      }
     } catch (err) {
       console.error('Test failed:', err);
+      // Set error result
+      setJobData(prev => ({
+        ...prev,
+        testResult: {
+          success: false,
+          recordsProcessed: 0,
+          recordsSucceeded: 0,
+          recordsFailed: sampleSize
+        }
+      }));
+      setTestCompleted(true);
     } finally {
       setIsTestRunning(false);
     }
@@ -196,7 +266,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         fieldMaping: fieldMappingArray
       };
 
-      const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/syncsfdc', {
+      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/createJob?key=${encodeURIComponent(jobData.name)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +277,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       if (response.ok) {
         setJobCreationStatus('success');
         setJobCreationMessage('Job created successfully! Your sync job has been scheduled.');
-        // Wait 2 seconds then proceed to next step
+        // Wait 2 seconds then proceed to next step (which will handle navigation)
         setTimeout(() => {
           onNext();
         }, 2000);
@@ -252,7 +322,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const isCronValid = selectedSchedule !== 'custom' || (customCron && customCron.trim().length > 0);
   const isMainDateTimeValid = selectedSchedule === 'manual' || (selectedSchedule === 'custom' ? isCronValid : (isStartDateTimeValid && isEndDateTimeValid));
 
-  const canProceed = testCompleted && isMainDateTimeValid;
+  const canProceed = isMainDateTimeValid;
 
   return (
     <div className="ds-schedule-container" role="main" aria-labelledby="step5-heading">
@@ -636,8 +706,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
 
           {jobCreationStatus === 'idle' && (
             <div className="ds-schedule-action-help">
-              {!testCompleted && 'Please run a test before proceeding'}
-              {testCompleted && !isMainDateTimeValid && 'Please set valid start and end times'}
+              {!isMainDateTimeValid && 'Please set valid schedule configuration'}
               {canProceed && 'Ready to create your job'}
             </div>
           )}
