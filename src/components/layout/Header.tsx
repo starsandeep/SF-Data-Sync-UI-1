@@ -47,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
         </p>
       </div>
       <div className="header-buttons">
+        <span className="user-greeting">Hi Test User</span>
         <ThemeToggle />
         {/* Settings and Logout buttons - only show when feature flag is enabled */}
         {FEATURE_FLAGS.ENABLE_LOGIN && (
