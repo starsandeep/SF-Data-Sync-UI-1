@@ -48,16 +48,24 @@ const SALESFORCE_FIELDS = [
   { value: '', label: '-- (Unmapped)' }
 ];
 
-// Default field mappings for Account source to Account__c target
+// Default field mappings for Contact source to Contact__c target
 const DEFAULT_MAPPINGS: MappingRow[] = [
-  { sourceField: 'Name', sourceLabel: 'Name', targetField: 'Account_Name__c', isEditing: false, confidenceScore: 95 },
-  { sourceField: 'OwnerId', sourceLabel: 'OwnerId', targetField: 'OwnerId', isEditing: false, confidenceScore: 99 },
-  { sourceField: 'BillingAddress', sourceLabel: 'BillingAddress', targetField: 'Billing_Address_Line_1__c', isEditing: false, confidenceScore: 92 },
-  { sourceField: 'CreatedById', sourceLabel: 'CreatedById', targetField: 'CreatedById', isEditing: false, confidenceScore: 99 },
-  { sourceField: 'Phone', sourceLabel: 'Phone', targetField: 'Phone__c', isEditing: false, confidenceScore: 90 },
-  { sourceField: 'Rating', sourceLabel: 'Rating', targetField: 'Rating__c', isEditing: false, confidenceScore: 88 },
-  { sourceField: 'Type', sourceLabel: 'Type', targetField: 'Type__c', isEditing: false, confidenceScore: 87 },
-  { sourceField: 'Id', sourceLabel: 'Id', targetField: 'extid__c', isEditing: false, confidenceScore: 85 }
+  { sourceField: 'AccountId', sourceLabel: 'AccountId', targetField: 'Account.extid__c', isEditing: false, confidenceScore: 95 },
+  { sourceField: 'FirstName', sourceLabel: 'FirstName', targetField: 'FirstName', isEditing: false, confidenceScore: 99 },
+  { sourceField: 'LastName', sourceLabel: 'LastName', targetField: 'LastName', isEditing: false, confidenceScore: 99 },
+  { sourceField: 'Phone', sourceLabel: 'Phone', targetField: 'phone', isEditing: false, confidenceScore: 90 },
+  { sourceField: 'Department', sourceLabel: 'Department', targetField: 'Department', isEditing: false, confidenceScore: 88 },
+  { sourceField: 'Description', sourceLabel: 'Description', targetField: 'Description', isEditing: false, confidenceScore: 85 },
+  { sourceField: 'Email', sourceLabel: 'Email', targetField: 'Email', isEditing: false, confidenceScore: 95 },
+  { sourceField: 'Fax', sourceLabel: 'Fax', targetField: 'Fax', isEditing: false, confidenceScore: 80 },
+  { sourceField: 'Title', sourceLabel: 'Title', targetField: 'Title', isEditing: false, confidenceScore: 90 },
+  { sourceField: 'preferred_language__c', sourceLabel: 'preferred_language__c', targetField: 'language_preferred__c', isEditing: false, confidenceScore: 85 },
+  { sourceField: 'MailingStreet', sourceLabel: 'MailingStreet', targetField: 'MailingStreet', isEditing: false, confidenceScore: 92 },
+  { sourceField: 'MailingCity', sourceLabel: 'MailingCity', targetField: 'MailingCity', isEditing: false, confidenceScore: 92 },
+  { sourceField: 'MailingState', sourceLabel: 'MailingState', targetField: 'MailingState', isEditing: false, confidenceScore: 92 },
+  { sourceField: 'MailingPostalCode', sourceLabel: 'MailingPostalCode', targetField: 'MailingPostalCode', isEditing: false, confidenceScore: 92 },
+  { sourceField: 'MailingCountry', sourceLabel: 'MailingCountry', targetField: 'MailingCountry', isEditing: false, confidenceScore: 92 },
+  { sourceField: 'Id', sourceLabel: 'Id', targetField: 'extid__c', isEditing: false, confidenceScore: 99 }
 ];
 
 // Helper functions for confidence scoring
