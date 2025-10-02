@@ -108,62 +108,104 @@ const DataCleansingPage: React.FC = () => {
   ];
 
   const mockResults: QualityResult = {
-    score: 82,
-    totalRecords: 28750,
-    cleanRecords: 23663,
-    issuesFound: 5087,
+    score: 74,
+    totalRecords: 45320,
+    cleanRecords: 33536,
+    issuesFound: 11784,
     categories: {
       'missing-data': {
         name: 'Missing Data',
-        count: 1205,
+        count: 3842,
         issues: [
           {
             field: 'Email',
             description: 'Missing email addresses in contact records',
             suggestion: 'Use data enrichment services or contact validation',
-            count: 487
+            count: 1523
           },
           {
             field: 'Phone',
-            description: 'Missing phone numbers',
-            suggestion: 'Implement phone number collection in forms',
-            count: 718
+            description: 'Missing phone numbers preventing outreach',
+            suggestion: 'Implement phone number collection in forms and web-to-lead',
+            count: 1184
           }
         ]
       },
       'inconsistent-formatting': {
         name: 'Inconsistent Formatting',
-        count: 892,
+        count: 2156,
         issues: [
           {
             field: 'Name',
-            description: 'Inconsistent name capitalization',
-            suggestion: 'Apply title case formatting to all names',
-            count: 892
+            description: 'Inconsistent name capitalization and formatting',
+            suggestion: 'Apply title case formatting and remove extra spaces',
+            count: 1078
+          },
+          {
+            field: 'Phone',
+            description: 'Phone numbers in multiple formats (e.g., (555) 123-4567, 555-123-4567, 5551234567)',
+            suggestion: 'Standardize to single format using validation rules',
+            count: 672
+          },
+          {
+            field: 'Title',
+            description: 'Job titles with inconsistent abbreviations and case',
+            suggestion: 'Create standardized title taxonomy and normalization rules',
+            count: 406
           }
         ]
       },
       'duplicate-records': {
         name: 'Duplicate Records',
-        count: 1640,
+        count: 2847,
         issues: [
           {
             field: 'Email',
-            description: 'Duplicate contacts with same email address',
-            suggestion: 'Merge duplicate records and maintain single source',
-            count: 820
+            description: 'Duplicate contacts with identical email addresses',
+            suggestion: 'Merge duplicate records and implement duplicate prevention rules',
+            count: 1423
+          },
+          {
+            field: 'Name + Company',
+            description: 'Similar names at same company likely representing same person',
+            suggestion: 'Review matches and merge confirmed duplicates',
+            count: 856
+          },
+          {
+            field: 'Phone',
+            description: 'Multiple contacts sharing the same phone number',
+            suggestion: 'Verify relationships and consolidate where appropriate',
+            count: 568
           }
         ]
       },
-      'orphan-contacts': {
-        name: 'Orphan Contacts',
-        count: 680,
+      'data-quality': {
+        name: 'Data Quality Issues',
+        count: 1634,
         issues: [
           {
-            field: 'AccountId',
-            description: 'Contacts not linked to the correct Account (orphan contacts)',
-            suggestion: 'Review and update account relationships using contact matching rules',
-            count: 680
+            field: 'Email',
+            description: 'Invalid email formats and non-deliverable addresses',
+            suggestion: 'Implement email validation service and clean invalid entries',
+            count: 743
+          },
+          {
+            field: 'Website',
+            description: 'Malformed URLs and inactive company websites',
+            suggestion: 'Validate URLs and update with correct company domains',
+            count: 421
+          },
+          {
+            field: 'PostalCode',
+            description: 'Invalid postal codes that don\'t match geographic regions',
+            suggestion: 'Cross-reference with postal service databases',
+            count: 297
+          },
+          {
+            field: 'LeadSource',
+            description: 'Inconsistent lead source values affecting attribution',
+            suggestion: 'Standardize lead source picklist values',
+            count: 173
           }
         ]
       },
@@ -528,7 +570,7 @@ const DataCleansingPage: React.FC = () => {
             </div>
             <div className="dc-score-breakdown">
               <div className="dc-breakdown-item">
-                <div className="dc-item-value">28,750</div>
+                <div className="dc-item-value">{results.totalRecords.toLocaleString()}</div>
                 <div className="dc-item-label">Records Analyzed</div>
               </div>
               <div className="dc-breakdown-item">
@@ -544,34 +586,13 @@ const DataCleansingPage: React.FC = () => {
                 <span className="dc-item-label">Categories</span>
               </div>
               <div className="dc-breakdown-item">
-                <div className="dc-item-value">15</div>
+                <div className="dc-item-value">{Object.values(results.categories).reduce((total, category) => total + category.issues.length, 0)}</div>
                 <div className="dc-item-label">Quality Checks</div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Issues Summary */}
-        <div className="dc-issues-summary">
-          <h3 className="dc-section-title">Issues Summary</h3>
-          <div className="dc-summary-grid">
-            {Object.entries(results.categories).map(([categoryId, category]) => (
-              <div key={categoryId} className="dc-summary-card">
-                <div className="dc-summary-icon">
-                  {categoryId === 'missing-data' ? '🔍' :
-                    categoryId === 'inconsistent-formatting' ? '📝' :
-                    categoryId === 'duplicate-records' ? '👥' :
-                    categoryId === 'orphan-contacts' ? '🔗' :
-                    categoryId === 'other-contact-issues' ? '👤' : '📊'}
-                </div>
-                <div className="dc-summary-content">
-                  <div className="dc-summary-count">{category.count}</div>
-                  <div className="dc-summary-type">{category.name}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Detailed Issues */}
         <div className="dc-detailed-issues">
