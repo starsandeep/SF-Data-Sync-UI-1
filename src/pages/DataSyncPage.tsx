@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { JobWizard } from '../features/create-job/JobWizard';
 import { ViewJobsPage } from '../features/jobs/ViewJobsPage';
-
-// Define the different views available in the DataSync page
-type DataSyncView = 'dashboard' | 'create-job' | 'job-details';
 
 interface StatCardProps {
   icon?: string;
@@ -33,14 +31,16 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, number, change, onClic
   </div>
 );
 
-const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> = ({ onNavigate }) => {
+const DataSyncDashboard: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="ds-dashboard">
       {/* Statistics Dashboard */}
       <div className="ds-stats-section">
         <div className="ds-stats-grid">
-          <StatCard title="Total Jobs" number="12" change="+2 this week" onClick={() => onNavigate('job-details')} clickable={true} />
-          <StatCard title="Active Jobs" number="8" change="" onClick={() => onNavigate('job-details')} clickable={true} />
+          <StatCard title="Total Jobs" number="12" change="+2 this week" onClick={() => navigate('/data-sync/job-details')} clickable={true} />
+          <StatCard title="Active Jobs" number="8" change="" onClick={() => navigate('/data-sync/job-details')} clickable={true} />
           <StatCard title="Inactive Jobs" number="4" change="" clickable={false} />
         </div>
       </div>
@@ -60,7 +60,7 @@ const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> 
         <div className="ds-cta-buttons">
           <button
             className="ds-action-btn ds-primary-action"
-            onClick={() => onNavigate('create-job')}
+            onClick={() => navigate('/data-sync/create-job')}
             aria-label="Create a new data synchronization job"
           >
             <span className="ds-btn-icon">➕</span>
@@ -70,7 +70,7 @@ const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> 
 
           <button
             className="ds-action-btn ds-secondary-action"
-            onClick={() => onNavigate('job-details')}
+            onClick={() => navigate('/data-sync/job-details')}
             aria-label="View and manage existing jobs"
           >
             <span className="ds-btn-icon">📋</span>
@@ -84,30 +84,27 @@ const DataSyncDashboard: React.FC<{ onNavigate: (view: DataSyncView) => void }> 
 };
 
 export const DataSyncPage: React.FC = () => {
-  const [currentView, setCurrentView] = useState<DataSyncView>('dashboard');
-
-  const handleNavigate = (view: DataSyncView) => {
-    setCurrentView(view);
-  };
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleBackToDashboard = () => {
-    setCurrentView('dashboard');
+    navigate('/data-sync');
   };
 
   const renderCurrentView = () => {
-    switch (currentView) {
-      case 'create-job':
-        return <JobWizard onExit={() => handleNavigate('job-details')} />;
-      case 'job-details':
-        return (
-          <ViewJobsPage
-            onBackToDashboard={handleBackToDashboard}
-            onCreateJob={() => handleNavigate('create-job')}
-          />
-        );
-      case 'dashboard':
-      default:
-        return <DataSyncDashboard onNavigate={handleNavigate} />;
+    const path = location.pathname;
+
+    if (path === '/data-sync/create-job') {
+      return <JobWizard onExit={() => navigate('/data-sync/job-details')} />;
+    } else if (path === '/data-sync/job-details') {
+      return (
+        <ViewJobsPage
+          onBackToDashboard={handleBackToDashboard}
+          onCreateJob={() => navigate('/data-sync/create-job')}
+        />
+      );
+    } else {
+      return <DataSyncDashboard />;
     }
   };
 

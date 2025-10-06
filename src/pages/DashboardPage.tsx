@@ -163,7 +163,7 @@ const Dashboard: React.FC = () => {
                           <Button
                             variant="outline"
                             size="small"
-                            onClick={() => console.log(`View job ${job.id}`)}
+                            onClick={() => navigate('/data-sync/job-details')}
                           >
                             View
                           </Button>

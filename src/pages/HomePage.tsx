@@ -6,7 +6,7 @@ export const HomePage: React.FC = () => {
 
   // Direct navigation handlers for main functionality
   const handleDataSync = () => {
-    navigate('/create-job');
+    navigate('/data-sync');
   };
 
   const handleDataQuality = () => {

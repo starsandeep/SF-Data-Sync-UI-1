@@ -51,9 +51,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             }
           />
 
-          {/* Job Management Routes */}
+          {/* Data Sync Routes */}
           <Route
-            path="/create-job"
+            path="/data-sync"
             element={
               <ProtectedRoute>
                 <LandingPageLayout title="R-DataX" subtitle="Data Synchronization Service">
@@ -64,7 +64,18 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           />
 
           <Route
-            path="/jobs"
+            path="/data-sync/create-job"
+            element={
+              <ProtectedRoute>
+                <LandingPageLayout title="R-DataX" subtitle="Data Synchronization Service">
+                  <DataSyncPage />
+                </LandingPageLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/data-sync/job-details"
             element={
               <ProtectedRoute>
                 <LandingPageLayout title="R-DataX" subtitle="View and manage all synchronization jobs">
@@ -72,6 +83,17 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 </LandingPageLayout>
               </ProtectedRoute>
             }
+          />
+
+          {/* Legacy route redirect for backward compatibility */}
+          <Route
+            path="/create-job"
+            element={<Navigate to="/data-sync/create-job" replace />}
+          />
+
+          <Route
+            path="/jobs"
+            element={<Navigate to="/data-sync/job-details" replace />}
           />
 
           <Route

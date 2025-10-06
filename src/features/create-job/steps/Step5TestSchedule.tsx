@@ -313,7 +313,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
 
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
-    navigate('/jobs'); // Navigate to ViewJobsPage when modal is closed
+    navigate('/data-sync/job-details'); // Navigate to ViewJobsPage when modal is closed
   };
 
   // Countdown timer effect for auto-redirect

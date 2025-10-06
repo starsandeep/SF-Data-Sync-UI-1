@@ -99,7 +99,7 @@ const tabs: TabConfig[] = [
   {
     id: 'data-sync',
     label: 'Data Sync',
-    route: '/create-job',
+    route: '/data-sync',
     icon: <SyncIcon />
   },
   {
@@ -120,8 +120,15 @@ export const TabNavigation: React.FC<TabNavigationProps> = ({ className = '' }) 
   const getCurrentTabIndex = (): number => {
     // Normalize paths by removing trailing slashes for comparison
     const normalizedCurrentPath = location.pathname.replace(/\/$/, '') || '/';
+
     const currentTab = tabs.findIndex(tab => {
       const normalizedTabRoute = tab.route.replace(/\/$/, '') || '/';
+
+      // Special handling for data-sync routes - match any path starting with /data-sync
+      if (tab.route === '/data-sync' && normalizedCurrentPath.startsWith('/data-sync')) {
+        return true;
+      }
+
       return normalizedTabRoute === normalizedCurrentPath;
     });
     return currentTab !== -1 ? currentTab : 0;
