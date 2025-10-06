@@ -110,8 +110,8 @@ const DataCleansingPage: React.FC = () => {
   const mockResults: QualityResult = {
     score: 74,
     totalRecords: 45320,
-    cleanRecords: 33536,
-    issuesFound: 11784,
+    cleanRecords: 32736,
+    issuesFound: 12584,
     categories: {
       'missing-data': {
         name: 'Missing Data',
@@ -128,6 +128,12 @@ const DataCleansingPage: React.FC = () => {
             description: 'Missing phone numbers preventing outreach',
             suggestion: 'Implement phone number collection in forms and web-to-lead',
             count: 1184
+          },
+          {
+            field: 'Address',
+            description: 'Missing mailing addresses for physical outreach',
+            suggestion: 'Add address fields to forms and implement address validation',
+            count: 1135
           }
         ]
       },
@@ -176,6 +182,48 @@ const DataCleansingPage: React.FC = () => {
             description: 'Multiple contacts sharing the same phone number',
             suggestion: 'Verify relationships and consolidate where appropriate',
             count: 568
+          }
+        ]
+      },
+      'orphan-contacts': {
+        name: 'Orphan Contacts',
+        count: 1923,
+        issues: [
+          {
+            field: 'AccountId',
+            description: 'Contacts not linked to any Account record',
+            suggestion: 'Associate contacts with appropriate accounts or create new accounts',
+            count: 1923
+          }
+        ]
+      },
+      'do-not-contact': {
+        name: 'Do Not Contact Violations',
+        count: 916,
+        issues: [
+          {
+            field: 'Email Opt-Out',
+            description: 'Contacts flagged as "Do Not Contact" but still included in campaigns',
+            suggestion: 'Exclude these contacts from marketing communications',
+            count: 516
+          },
+          {
+            field: 'Phone Opt-Out',
+            description: 'Contacts with phone opt-out flags but still receiving calls',
+            suggestion: 'Update call lists to respect phone communication preferences',
+            count: 400
+          }
+        ]
+      },
+      'generic-job-titles': {
+        name: 'Generic Job Titles',
+        count: 900,
+        issues: [
+          {
+            field: 'Title',
+            description: 'Contacts with generic titles like “Manager” or “Director”',
+            suggestion: 'Encourage more specific title information during data collection',
+            count: 900
           }
         ]
       }

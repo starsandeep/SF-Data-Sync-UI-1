@@ -9,8 +9,8 @@ import { JobData, ScheduleOption } from '../types';
 
 interface Step5TestScheduleProps {
   jobData: JobData;
-  onTest: (sampleSize: number, testStartDate?: string, testStartTime?: string, testEndDate?: string, testEndTime?: string) => Promise<void>;
   onUpdateSchedule: (schedule: ScheduleOption, startDate?: string, startTime?: string, customCron?: string, endDate?: string, endTime?: string) => void;
+  onUpdateTestResult: (testResult: any, tested: boolean, sampleSize: number, testStartDate?: string, testStartTime?: string, testEndDate?: string, testEndTime?: string) => void;
   onNext: () => void;
   onPrevious: () => void;
   isLoading: boolean;
@@ -36,8 +36,8 @@ const SCHEDULE_OPTIONS: ScheduleOptionData[] = [
 
 export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   jobData,
-  onTest,
   onUpdateSchedule,
+  onUpdateTestResult,
   onNext,
   onPrevious,
   isLoading,
@@ -147,30 +147,40 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
     }
     setIsTestRunning(true);
     try {
-      // Create test date strings
+      // Create test date strings in the correct format
       const testFromDate = new Date(`${testStartDate}T${testStartTime}:00.000Z`).toISOString();
       const testToDate = new Date(`${testEndDate}T${testEndTime}:00.000Z`).toISOString();
 
-      // Convert fieldMappings object to API format array
+      // Helper function to determine field type based on field name
+      const getFieldType = (fieldName: string): string => {
+        if (/email/i.test(fieldName)) return 'Email';
+        if (/phone|fax/i.test(fieldName)) return 'Phone';
+        return 'String';
+      };
+
+      // Convert fieldMappings object to API format array with proper field types
       const fieldMappingArray = Object.entries(jobData.fieldMappings || {}).map(([sourceField, targetField]) => ({
         source: sourceField,
-        sourceType: "String",
+        sourceType: getFieldType(sourceField),
         target: targetField,
-        targetType: "String"
+        targetType: getFieldType(targetField)
       }));
 
       const testRequestBody = {
-        name: `${jobData.name}_test`,
-        schedule: { frequency: '0', timeUnit: 'MANUAL' },
+        name: `${jobData.name || 'TestSync'}`,
+        schedule: {
+          frequency: "30",
+          timeUnit: "MINUTES"
+        },
         fromDate: testFromDate,
         toDate: testToDate,
-        sourceObject: jobData.sourceObject,
-        targetObject: jobData.targetObject,
-        extId: jobData.extId || 'extid__c',
-        fieldMaping: fieldMappingArray,
-        isTest: true,
-        sampleSize: sampleSize
+        sourceObject: jobData.sourceObject || 'Contact',
+        targetObject: jobData.targetObject || 'Contact',
+        extId: "extid__c",
+        fieldMaping: fieldMappingArray
       };
+
+      console.log('Sending test request:', testRequestBody);
 
       const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/syncsfdc', {
         method: 'POST',
@@ -182,44 +192,62 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
 
       if (response.ok) {
         const result = await response.json();
-        // Update jobData with test results
-        setJobData(prev => ({
-          ...prev,
-          testResult: {
-            success: true,
-            recordsProcessed: result.recordsProcessed || sampleSize,
-            recordsSucceeded: result.recordsSucceeded || sampleSize,
-            recordsFailed: result.recordsFailed || 0
-          }
-        }));
+        console.log('Test response:', result);
+
+        // Extract results from the actual API response
+        const recordsProcessed = result.numberRecordsProcessed || 0;
+        const recordsFailed = result.numberRecordsFailed || 0;
+        const recordsSucceeded = recordsProcessed - recordsFailed;
+
+        // Create test result object to match the expected format
+        const testResult = {
+          success: recordsFailed === 0,
+          recordsProcessed,
+          recordsSucceeded,
+          recordsFailed,
+          errors: [],
+          estimatedDuration: result.totalProcessingTime || 0,
+          sampleData: []
+        };
+
+        // Update jobData with real API test results
+        onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
+
+        console.log(`Test completed: ${recordsSucceeded}/${recordsProcessed} records succeeded`);
         setTestCompleted(true);
       } else {
         const errorData = await response.text();
-        console.error('Test failed:', errorData);
-        // Set error result
-        setJobData(prev => ({
-          ...prev,
-          testResult: {
-            success: false,
-            recordsProcessed: 0,
-            recordsSucceeded: 0,
-            recordsFailed: sampleSize
-          }
-        }));
+        console.error('Test failed:', response.status, errorData);
+
+        // Create failed test result
+        const testResult = {
+          success: false,
+          recordsProcessed: 0,
+          recordsSucceeded: 0,
+          recordsFailed: sampleSize,
+          errors: [{ field: 'API', message: `API call failed: ${response.status}`, record: null }],
+          estimatedDuration: 0,
+          sampleData: []
+        };
+
+        onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
         setTestCompleted(true);
       }
     } catch (err) {
       console.error('Test failed:', err);
-      // Set error result
-      setJobData(prev => ({
-        ...prev,
-        testResult: {
-          success: false,
-          recordsProcessed: 0,
-          recordsSucceeded: 0,
-          recordsFailed: sampleSize
-        }
-      }));
+
+      // Create error test result
+      const testResult = {
+        success: false,
+        recordsProcessed: 0,
+        recordsSucceeded: 0,
+        recordsFailed: sampleSize,
+        errors: [{ field: 'Network', message: `Network error: ${err instanceof Error ? err.message : 'Unknown error'}`, record: null }],
+        estimatedDuration: 0,
+        sampleData: []
+      };
+
+      onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
       setTestCompleted(true);
     } finally {
       setIsTestRunning(false);
@@ -241,6 +269,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         'manual': { frequency: '0', timeUnit: 'MANUAL' },
         '30min': { frequency: '30', timeUnit: 'MINUTES' },
         '1hour': { frequency: '1', timeUnit: 'HOURS' },
+        '2hours': { frequency: '2', timeUnit: 'HOURS' },
         '6hours': { frequency: '6', timeUnit: 'HOURS' },
         '12hours': { frequency: '12', timeUnit: 'HOURS' },
         'daily': { frequency: '1', timeUnit: 'DAYS' },
@@ -269,7 +298,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         toDate,
         sourceObject: jobData.sourceObject,
         targetObject: jobData.targetObject,
-        extId: jobData.extId || 'extid__c',
+        extId: 'extid__c',
         fieldMaping: fieldMappingArray
       };
 
@@ -318,7 +347,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
 
   // Countdown timer effect for auto-redirect
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: number;
 
     if (showSuccessModal && countdown > 0) {
       timer = setTimeout(() => {

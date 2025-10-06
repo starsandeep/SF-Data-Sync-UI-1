@@ -34,6 +34,7 @@ export const JobWizard: React.FC<JobWizardProps> = ({ onExit }) => {
     updateFieldMappings,
     testJob,
     updateSchedule,
+    updateJobData,
     createJob,
     saveAsDraft,
     clearDraft,
@@ -121,8 +122,18 @@ export const JobWizard: React.FC<JobWizardProps> = ({ onExit }) => {
         return (
           <Step5TestSchedule
             jobData={jobData}
-            onTest={testJob}
             onUpdateSchedule={updateSchedule}
+            onUpdateTestResult={(testResult, tested, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime) => {
+              updateJobData({
+                testResult,
+                tested,
+                sampleSize,
+                testStartDate,
+                testStartTime,
+                testEndDate,
+                testEndTime
+              });
+            }}
             onNext={async () => {
               const result = await createJob();
               if (result.success) {
