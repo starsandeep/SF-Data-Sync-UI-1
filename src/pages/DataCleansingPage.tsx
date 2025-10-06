@@ -178,54 +178,6 @@ const DataCleansingPage: React.FC = () => {
             count: 568
           }
         ]
-      },
-      'data-quality': {
-        name: 'Data Quality Issues',
-        count: 1634,
-        issues: [
-          {
-            field: 'Email',
-            description: 'Invalid email formats and non-deliverable addresses',
-            suggestion: 'Implement email validation service and clean invalid entries',
-            count: 743
-          },
-          {
-            field: 'Website',
-            description: 'Malformed URLs and inactive company websites',
-            suggestion: 'Validate URLs and update with correct company domains',
-            count: 421
-          },
-          {
-            field: 'PostalCode',
-            description: 'Invalid postal codes that don\'t match geographic regions',
-            suggestion: 'Cross-reference with postal service databases',
-            count: 297
-          },
-          {
-            field: 'LeadSource',
-            description: 'Inconsistent lead source values affecting attribution',
-            suggestion: 'Standardize lead source picklist values',
-            count: 173
-          }
-        ]
-      },
-      'other-contact-issues': {
-        name: 'Other Contact Issues',
-        count: 670,
-        issues: [
-          {
-            field: 'Title',
-            description: 'Generic job titles (e.g., "Manager") that prevent role-based routing',
-            suggestion: 'Standardize job titles and create role-based classification system',
-            count: 485
-          },
-          {
-            field: 'DoNotCall/Email',
-            description: 'Contacts flagged as "Do Not Contact" but still included in campaigns',
-            suggestion: 'Update campaign filters to exclude opted-out contacts and review consent management',
-            count: 185
-          }
-        ]
       }
     }
   };
