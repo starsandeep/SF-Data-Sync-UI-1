@@ -283,12 +283,19 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       const fromDate = new Date(`${startDate}T${startTime}:00.000Z`).toISOString();
       const toDate = new Date(`${endDate}T${endTime}:00.000Z`).toISOString();
 
-      // Convert fieldMappings object to API format array
+      // Helper function to determine field type based on field name
+      const getFieldType = (fieldName: string): string => {
+        if (/email/i.test(fieldName)) return 'Email';
+        if (/phone|fax/i.test(fieldName)) return 'Phone';
+        return 'String';
+      };
+
+      // Convert fieldMappings object to API format array with proper field types
       const fieldMappingArray = Object.entries(jobData.fieldMappings || {}).map(([sourceField, targetField]) => ({
         source: sourceField,
-        sourceType: "String", // Default to String, could be enhanced with actual field types
+        sourceType: getFieldType(sourceField),
         target: targetField,
-        targetType: "String"
+        targetType: getFieldType(targetField)
       }));
 
       const requestBody: any = {
@@ -302,32 +309,30 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         fieldMaping: fieldMappingArray
       };
 
-      // API call commented out for demo purposes
-      // const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/createJob?key=${encodeURIComponent(jobData.name)}`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(requestBody)
-      // });
+      console.log('Creating job with request body:', requestBody);
 
-      // if (response.ok) {
-      //   setJobCreationStatus('success');
-      //   setJobCreationMessage('Job created successfully! Your sync job has been scheduled.');
-      //   // Wait 2 seconds then proceed to next step (which will handle navigation)
-      //   setTimeout(() => {
-      //     onNext();
-      //   }, 2000);
-      // } else {
-      //   const errorData = await response.text();
-      //   setJobCreationStatus('error');
-      //   setJobCreationMessage(`Failed to create job: ${response.status} ${response.statusText}. ${errorData}`);
-      // }
+      // Make API call to create the job
+      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/createJob?key=${encodeURIComponent(jobData.name || 'DefaultJob')}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
 
-      // Show success message instead of making API call
-      setJobCreationStatus('success');
-      setJobCreationMessage('Job created successfully! Your sync job has been scheduled.');
-      setShowSuccessModal(true);
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Job creation response:', result);
+
+        setJobCreationStatus('success');
+        setJobCreationMessage('Job created successfully! Your sync job has been scheduled.');
+        setShowSuccessModal(true);
+      } else {
+        const errorData = await response.text();
+        console.error('Job creation failed:', response.status, errorData);
+        setJobCreationStatus('error');
+        setJobCreationMessage(`Failed to create job: ${response.status} ${response.statusText}. ${errorData}`);
+      }
     } catch (error) {
       setJobCreationStatus('error');
       setJobCreationMessage(`Failed to create job: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
