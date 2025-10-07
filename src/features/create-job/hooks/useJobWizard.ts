@@ -21,7 +21,7 @@ const trackEvent = (event: string, data?: any) => {
 };
 
 const WIZARD_STEPS: WizardStep[] = [
-  { id: 1, title: 'Sync Config', description: 'Sync job information', icon: 'info', isCompleted: false, isActive: true, hasErrors: false },
+  { id: 1, title: 'Data Sync Config', description: 'Sync job information', icon: 'info', isCompleted: false, isActive: true, hasErrors: false },
   { id: 2, title: 'Connections', description: 'Source and target orgs', icon: 'link', isCompleted: false, isActive: false, hasErrors: false },
   { id: 3, title: 'Object Selection', description: 'Choose Object', icon: 'database', isCompleted: false, isActive: false, hasErrors: false },
   { id: 4, title: 'Field Mapping', description: 'Map source to target fields', icon: 'arrow-right', isCompleted: false, isActive: false, hasErrors: false },

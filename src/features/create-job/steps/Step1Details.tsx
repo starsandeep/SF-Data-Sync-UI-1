@@ -1,4 +1,4 @@
-// Step 1: Sync Configuration Component
+// Step 1: Data Sync Configuration Component
 import React, { useState, useEffect } from 'react';
 import { Input } from '../../../components/common/Input';
 import { Button } from '../../../components/common/Button';
@@ -32,16 +32,16 @@ export const Step1Details: React.FC<Step1DetailsProps> = ({
 
   const validateJobName = (name: string): string | null => {
     if (!name.trim()) {
-      return 'Sync name is required';
+      return 'Data Sync Name is required';
     }
     if (name.trim().length < 3) {
-      return 'Sync name must be at least 3 characters';
+      return 'Data Sync Name must be at least 3 characters';
     }
     if (name.trim().length > 120) {
-      return 'Sync name must be less than 120 characters';
+      return 'Data Sync Name must be less than 120 characters';
     }
     if (name !== name.trim()) {
-      return 'Sync name cannot have leading or trailing whitespace';
+      return 'Data Sync Name cannot have leading or trailing whitespace';
     }
     return null;
   };
@@ -102,7 +102,7 @@ export const Step1Details: React.FC<Step1DetailsProps> = ({
   return (
     <div className="step-container" role="main">
       <div className="ds-step-header-compact">
-        <h4 className="ds-step-title-compact">Sync Configuration</h4>
+        <h4 className="ds-step-title-compact">Data Sync Configuration</h4>
         <p className="ds-step-description-compact">
           Configure basic settings for your data sync operation.
         </p>
@@ -115,7 +115,7 @@ export const Step1Details: React.FC<Step1DetailsProps> = ({
               type="text"
               id="sync-name"
               name="name"
-              label="Sync Name"
+              label="Data Sync Name"
               value={formData.name}
               onChange={(value) => handleFieldChange('name', value)}
               onBlur={() => handleFieldBlur('name')}
@@ -174,7 +174,7 @@ export const Step1Details: React.FC<Step1DetailsProps> = ({
 
           <div id="next-help" className="ds-button-help">
             {!isValid && formData.name.length > 0 && 'Please fix the errors above to continue'}
-            {formData.name.length === 0 && 'Enter a sync name to continue'}
+            {formData.name.length === 0 && 'Enter a Data Sync Name to continue'}
           </div>
         </div>
       </form>

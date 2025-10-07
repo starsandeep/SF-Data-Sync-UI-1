@@ -112,7 +112,18 @@ const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
   return (
     <div className={`ds-connections-panel ${isFormValid ? 'ds-connections-ready' : ''}`}>
       <div className="ds-connections-panel-header">
-        <h3 className="ds-connections-panel-title">{title}</h3>
+        <h3 className="ds-connections-panel-title">
+          {title}
+           <img
+            src="/salesforce-logo.png"
+            alt="Salesforce"
+            style={{
+              height: '50px',
+              paddingLeft: '10px',
+              verticalAlign: 'middle'
+            }}
+          />
+        </h3>
       </div>
 
       <div className="ds-connections-form">

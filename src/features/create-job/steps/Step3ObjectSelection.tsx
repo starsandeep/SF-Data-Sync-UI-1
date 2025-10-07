@@ -199,7 +199,7 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
     <div className="ds-step-container" role="main" aria-labelledby="step3-heading">
       <div className="ds-step-header-compact">
         <h4 className="ds-step-title-compact">Object Selection</h4>
-        <p className="ds-step-description-compact">Choose source and target objects for sync.</p>
+        <p className="ds-step-description-compact">Choose source and target objects for data sync.</p>
       </div>
 
       {error && (
@@ -219,7 +219,18 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
         <div className="ds-layout-compact">
           <div className="ds-section-compact">
             <div className="ds-header-compact">
-              <h3 className="ds-title-compact">Source ({filteredSourceObjects.length})</h3>
+              <h3 className="ds-title-compact">
+                <img
+                  src="/salesforce-logo.png"
+                  alt="Salesforce"
+                  style={{
+                    height: '20px',
+                    marginRight: '8px',
+                    verticalAlign: 'middle'
+                  }}
+                />
+                Source ({filteredSourceObjects.length})
+              </h3>
               <Input
                 id="source-search"
                 name="source-search"
@@ -252,7 +263,18 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
 
           <div className="ds-section-compact">
             <div className="ds-header-compact">
-              <h3 className="ds-title-compact">Target ({filteredTargetObjects.length})</h3>
+              <h3 className="ds-title-compact">
+                <img
+                  src="/salesforce-logo.png"
+                  alt="Salesforce"
+                  style={{
+                    height: '20px',
+                    marginRight: '8px',
+                    verticalAlign: 'middle'
+                  }}
+                />
+                Target ({filteredTargetObjects.length})
+              </h3>
               <Input
                 id="target-search"
                 name="target-search"

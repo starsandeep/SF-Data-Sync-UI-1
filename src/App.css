@@ -1180,6 +1180,7 @@
 .step-container {
   margin: 0 auto;
   width: 90%;
+  max-width: 1200px;
 }
 
 .step-header {
@@ -5830,7 +5831,8 @@
 
 /* Main Container */
 .ds-step-container {
-  max-width: 90%;
+  width: 90%;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0;
   background: var(--bg-primary);
