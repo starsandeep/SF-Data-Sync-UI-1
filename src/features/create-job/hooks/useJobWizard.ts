@@ -7,6 +7,7 @@ import {
   ConnectOrgRequest,
   ConnectionData,
   FieldMapping,
+  FieldMappingMetadata,
   Transformation,
   Environment,
   ScheduleOption

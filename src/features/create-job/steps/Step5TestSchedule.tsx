@@ -66,8 +66,15 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const [endTime, setEndTime] = useState<string>(jobData.endTime || '');
   const [customCron, setCustomCron] = useState<string>(jobData.customCron || '');
 
-  const [testCompleted, setTestCompleted] = useState<boolean>(jobData.tested || false);
+  const [testCompleted, setTestCompleted] = useState<boolean>(false);
   const [isTestRunning, setIsTestRunning] = useState<boolean>(false);
+
+  // Check if there's a valid previous test result on component mount
+  useEffect(() => {
+    if (jobData.tested && jobData.testResult) {
+      setTestCompleted(true);
+    }
+  }, [jobData.tested, jobData.testResult]);
 
   // Generate time options with 30-minute intervals
   const generateTimeOptions = () => {
@@ -145,6 +152,9 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
     if (!isTestDateTimeValid) {
       return;
     }
+
+    // Reset test state when starting a new simulation
+    setTestCompleted(false);
     setIsTestRunning(true);
     try {
       // Create test date strings in the correct format
@@ -200,27 +210,106 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         const result = await response.json();
         console.log('Test response:', result);
 
-        // Extract results from the actual API response
-        const recordsProcessed = result.numberRecordsProcessed || 0;
-        const recordsFailed = result.numberRecordsFailed || 0;
-        const recordsSucceeded = recordsProcessed - recordsFailed;
+        // Handle different response formats
+        if (result.jobId && !result.id) {
+          // Format 1: Response has jobId but no id
+          if (result.jobState === 'JobComplete') {
+            // Show success message for completed job
+            const testResult = {
+              success: true,
+              recordsProcessed: result.recordsProcessed || 0,
+              recordsSucceeded: result.recordsProcessed || 0,
+              recordsFailed: result.recordsFailed || 0,
+              errors: [],
+              estimatedDuration: 0,
+              sampleData: []
+            };
 
-        // Create test result object to match the expected format
-        const testResult = {
-          success: recordsFailed === 0,
-          recordsProcessed,
-          recordsSucceeded,
-          recordsFailed,
-          errors: [],
-          estimatedDuration: result.totalProcessingTime || 0,
-          sampleData: []
-        };
+            onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
+            console.log('Sync completed successfully');
+            setTestCompleted(true);
+          } else {
+            // Job not complete yet
+            const testResult = {
+              success: false,
+              recordsProcessed: 0,
+              recordsSucceeded: 0,
+              recordsFailed: 0,
+              errors: [{ field: 'Status', message: `Job state: ${result.jobState}`, record: null }],
+              estimatedDuration: 0,
+              sampleData: []
+            };
 
-        // Update jobData with real API test results
-        onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
+            onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
+            setTestCompleted(true);
+          }
+        } else if (result.id && !result.jobId) {
+          // Format 2: Response has id but no jobId - make follow-up API call
+          try {
+            const statusResponse = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/jobStatus?jobId=${result.id}`);
 
-        console.log(`Test completed: ${recordsSucceeded}/${recordsProcessed} records succeeded`);
-        setTestCompleted(true);
+            if (statusResponse.ok) {
+              const statusResult = await statusResponse.json();
+              console.log('Job status response:', statusResult);
+
+              // Extract data from nested jobState object
+              const jobState = statusResult.jobState || {};
+              const recordsProcessed = jobState.numberRecordsProcessed || 0;
+              const recordsFailed = jobState.numberRecordsFailed || 0;
+              const recordsSucceeded = recordsProcessed - recordsFailed;
+
+              const testResult = {
+                success: recordsFailed === 0,
+                recordsProcessed,
+                recordsSucceeded,
+                recordsFailed,
+                errors: [],
+                estimatedDuration: jobState.totalProcessingTime || 0,
+                sampleData: []
+              };
+
+              onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
+              console.log(`Test completed: ${recordsSucceeded}/${recordsProcessed} records succeeded`);
+              setTestCompleted(true);
+            } else {
+              throw new Error(`Status check failed: ${statusResponse.status}`);
+            }
+          } catch (statusError) {
+            console.error('Failed to check job status:', statusError);
+
+            const testResult = {
+              success: false,
+              recordsProcessed: 0,
+              recordsSucceeded: 0,
+              recordsFailed: sampleSize,
+              errors: [{ field: 'API', message: 'Failed to check job status', record: null }],
+              estimatedDuration: 0,
+              sampleData: []
+            };
+
+            onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
+            setTestCompleted(true);
+          }
+        } else {
+          // Fallback: Handle legacy format or unexpected response
+          const recordsProcessed = result.numberRecordsProcessed || 0;
+          const recordsFailed = result.numberRecordsFailed || 0;
+          const recordsSucceeded = recordsProcessed - recordsFailed;
+
+          const testResult = {
+            success: recordsFailed === 0,
+            recordsProcessed,
+            recordsSucceeded,
+            recordsFailed,
+            errors: [],
+            estimatedDuration: result.totalProcessingTime || 0,
+            sampleData: []
+          };
+
+          onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
+          console.log(`Test completed: ${recordsSucceeded}/${recordsProcessed} records succeeded`);
+          setTestCompleted(true);
+        }
       } else {
         const errorData = await response.text();
         console.error('Test failed:', response.status, errorData);
