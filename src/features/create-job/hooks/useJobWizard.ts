@@ -50,6 +50,7 @@ const INITIAL_JOB_DATA: JobData = {
   syncAllFields: true,
   selectedFields: [],
   fieldMappings: {},
+  fieldMappingMetadata: {},
   transformations: {},
   schedule: 'manual' as ScheduleOption,
   tested: false
@@ -279,12 +280,13 @@ export const useJobWizard = () => {
   }, [updateJobData, markStepCompleted, state.jobData]);
 
   // Step 4: Configure Field Mappings
-  const updateFieldMappings = useCallback((mappings: FieldMapping, transformations: Record<string, Transformation>, selectedFields: string[], syncAllFields: boolean) => {
+  const updateFieldMappings = useCallback((mappings: FieldMapping, transformations: Record<string, Transformation>, selectedFields: string[], syncAllFields: boolean, metadata?: FieldMappingMetadata) => {
     updateJobData({
       fieldMappings: mappings,
       transformations,
       selectedFields,
-      syncAllFields
+      syncAllFields,
+      fieldMappingMetadata: metadata || {}
     });
 
     const hasRequiredMappings = Object.keys(mappings).length > 0;

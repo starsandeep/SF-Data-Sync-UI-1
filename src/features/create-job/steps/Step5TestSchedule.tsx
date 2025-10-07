@@ -159,12 +159,18 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       };
 
       // Convert fieldMappings object to API format array with proper field types
-      const fieldMappingArray = Object.entries(jobData.fieldMappings || {}).map(([sourceField, targetField]) => ({
-        source: sourceField,
-        sourceType: getFieldType(sourceField),
-        target: targetField,
-        targetType: getFieldType(targetField)
-      }));
+      // Only include fields where includeInSync is true
+      const fieldMappingArray = Object.entries(jobData.fieldMappings || {})
+        .filter(([sourceField]) => {
+          const metadata = jobData.fieldMappingMetadata?.[sourceField];
+          return metadata?.includeInSync === true;
+        })
+        .map(([sourceField, targetField]) => ({
+          source: sourceField,
+          sourceType: getFieldType(sourceField),
+          target: targetField,
+          targetType: getFieldType(targetField)
+        }));
 
       const testRequestBody = {
         name: `${jobData.name || 'TestSync'}`,
@@ -291,12 +297,18 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       };
 
       // Convert fieldMappings object to API format array with proper field types
-      const fieldMappingArray = Object.entries(jobData.fieldMappings || {}).map(([sourceField, targetField]) => ({
-        source: sourceField,
-        sourceType: getFieldType(sourceField),
-        target: targetField,
-        targetType: getFieldType(targetField)
-      }));
+      // Only include fields where includeInSync is true
+      const fieldMappingArray = Object.entries(jobData.fieldMappings || {})
+        .filter(([sourceField]) => {
+          const metadata = jobData.fieldMappingMetadata?.[sourceField];
+          return metadata?.includeInSync === true;
+        })
+        .map(([sourceField, targetField]) => ({
+          source: sourceField,
+          sourceType: getFieldType(sourceField),
+          target: targetField,
+          targetType: getFieldType(targetField)
+        }));
 
       const requestBody: any = {
         name: jobData.name,
@@ -323,6 +335,12 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       if (response.ok) {
         const result = await response.json();
         console.log('Job creation response:', result);
+
+        // Clear job wizard data from localStorage on successful job creation
+        localStorage.removeItem('job-wizard-draft');
+        localStorage.removeItem('jobWizard_sourceConnection');
+        localStorage.removeItem('jobWizard_targetConnection');
+        console.log('Job wizard data cleared from localStorage (draft, sourceConnection, targetConnection)');
 
         setJobCreationStatus('success');
         setJobCreationMessage('Job created successfully! Your sync job has been scheduled.');

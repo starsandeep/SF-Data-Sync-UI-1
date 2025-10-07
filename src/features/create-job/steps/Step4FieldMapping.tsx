@@ -1,7 +1,7 @@
 // Step 4: Field Mapping Component
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '../../../components/common/Button';
-import { FieldMapping } from '../types';
+import { FieldMapping, FieldMappingMetadata } from '../types';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -26,7 +26,7 @@ interface Step4FieldMappingProps {
     sourceObject?: string;
     targetObject?: string;
   };
-  onUpdateMappings: (mappings: FieldMapping, transformations: Record<string, any>, selectedFields: string[], syncAllFields: boolean) => void;
+  onUpdateMappings: (mappings: FieldMapping, transformations: Record<string, any>, selectedFields: string[], syncAllFields: boolean, metadata?: FieldMappingMetadata) => void;
   onNext: () => void;
   onPrevious: () => void;
   isLoading: boolean;
@@ -362,18 +362,29 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   const handleSaveMappings = useCallback(() => {
     const newMappings: FieldMapping = {};
     const newSelectedFields: string[] = [];
+    const metadata: FieldMappingMetadata = {};
 
     mappingRows.forEach(row => {
       if (row.targetField && row.targetField !== '') {
         newMappings[row.sourceField] = row.targetField;
         newSelectedFields.push(row.sourceField);
       }
+
+      // Always capture metadata for all mapped fields
+      if (row.targetField && row.targetField !== '') {
+        metadata[row.sourceField] = {
+          includeInSync: row.includeInSync,
+          isPrimaryKey: row.isPrimaryKey,
+          maskPII: row.maskPII,
+          isPII: row.isPII
+        };
+      }
     });
 
     // For now, no transformations are configured in this step
     const transformations = {};
 
-    onUpdateMappings(newMappings, transformations, newSelectedFields, syncAllFields);
+    onUpdateMappings(newMappings, transformations, newSelectedFields, syncAllFields, metadata);
   }, [mappingRows, syncAllFields, onUpdateMappings]);
 
   const handleNext = useCallback(() => {

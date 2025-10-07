@@ -43,6 +43,15 @@ export interface FieldMapping {
   [sourceField: string]: string; // source field -> target field
 }
 
+export interface FieldMappingMetadata {
+  [sourceField: string]: {
+    includeInSync: boolean;
+    isPrimaryKey: boolean;
+    maskPII: boolean;
+    isPII: boolean;
+  };
+}
+
 export interface Transformation {
   type: TransformationType;
   script?: string;
@@ -95,6 +104,7 @@ export interface JobData {
   syncAllFields: boolean;
   selectedFields: string[];
   fieldMappings: FieldMapping;
+  fieldMappingMetadata: FieldMappingMetadata;
   transformations: Record<string, Transformation>;
   sourceConnection: ConnectionData;
   targetConnection: ConnectionData;
