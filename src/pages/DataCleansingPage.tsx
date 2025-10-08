@@ -57,6 +57,8 @@ const DataCleansingPage: React.FC = () => {
   const [loadingObjects, setLoadingObjects] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportingReport, setExportingReport] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [loadingResults, setLoadingResults] = useState(false);
 
 
   // Available Salesforce Organizations
@@ -107,128 +109,6 @@ const DataCleansingPage: React.FC = () => {
     }
   ];
 
-  const mockResults: QualityResult = {
-    score: 74,
-    totalRecords: 45320,
-    cleanRecords: 32736,
-    issuesFound: 12584,
-    categories: {
-      'missing-data': {
-        name: 'Missing Data',
-        count: 3842,
-        issues: [
-          {
-            field: 'Email',
-            description: 'Missing email addresses in contact records',
-            suggestion: 'Use data enrichment services or contact validation',
-            count: 1523
-          },
-          {
-            field: 'Phone',
-            description: 'Missing phone numbers preventing outreach',
-            suggestion: 'Implement phone number collection in forms and web-to-lead',
-            count: 1184
-          },
-          {
-            field: 'Address',
-            description: 'Missing mailing addresses for physical outreach',
-            suggestion: 'Add address fields to forms and implement address validation',
-            count: 1135
-          }
-        ]
-      },
-      'inconsistent-formatting': {
-        name: 'Inconsistent Formatting',
-        count: 2156,
-        issues: [
-          {
-            field: 'Name',
-            description: 'Inconsistent name capitalization and formatting',
-            suggestion: 'Apply title case formatting and remove extra spaces',
-            count: 1078
-          },
-          {
-            field: 'Phone',
-            description: 'Phone numbers in multiple formats (e.g., (555) 123-4567, 555-123-4567, 5551234567)',
-            suggestion: 'Standardize to single format using validation rules',
-            count: 672
-          },
-          {
-            field: 'Title',
-            description: 'Job titles with inconsistent abbreviations and case',
-            suggestion: 'Create standardized title taxonomy and normalization rules',
-            count: 406
-          }
-        ]
-      },
-      'duplicate-records': {
-        name: 'Duplicate Records',
-        count: 2847,
-        issues: [
-          {
-            field: 'Email',
-            description: 'Duplicate contacts with identical email addresses',
-            suggestion: 'Merge duplicate records and implement duplicate prevention rules',
-            count: 1423
-          },
-          {
-            field: 'Name + Company',
-            description: 'Similar names at same company likely representing same person',
-            suggestion: 'Review matches and merge confirmed duplicates',
-            count: 856
-          },
-          {
-            field: 'Phone',
-            description: 'Multiple contacts sharing the same phone number',
-            suggestion: 'Verify relationships and consolidate where appropriate',
-            count: 568
-          }
-        ]
-      },
-      'orphan-contacts': {
-        name: 'Orphan Contacts',
-        count: 1923,
-        issues: [
-          {
-            field: 'AccountId',
-            description: 'Contacts not linked to any Account record',
-            suggestion: 'Associate contacts with appropriate accounts or create new accounts',
-            count: 1923
-          }
-        ]
-      },
-      'do-not-contact': {
-        name: 'Do Not Contact Violations',
-        count: 916,
-        issues: [
-          {
-            field: 'Email Opt-Out',
-            description: 'Contacts flagged as "Do Not Contact" but still included in campaigns',
-            suggestion: 'Exclude these contacts from marketing communications',
-            count: 516
-          },
-          {
-            field: 'Phone Opt-Out',
-            description: 'Contacts with phone opt-out flags but still receiving calls',
-            suggestion: 'Update call lists to respect phone communication preferences',
-            count: 400
-          }
-        ]
-      },
-      'generic-job-titles': {
-        name: 'Generic Job Titles',
-        count: 900,
-        issues: [
-          {
-            field: 'Title',
-            description: 'Contacts with generic titles like “Manager” or “Director”',
-            suggestion: 'Encourage more specific title information during data collection',
-            count: 900
-          }
-        ]
-      }
-    }
-  };
 
 
   // Handle organization selection
@@ -296,9 +176,27 @@ const DataCleansingPage: React.FC = () => {
           stepIndex++;
         } else {
           clearInterval(interval);
-          setTimeout(() => {
-            setResults(mockResults);
-            setStage('results');
+          setTimeout(async () => {
+            setLoadingResults(true);
+            setApiError(null);
+            try {
+              const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/dataquality-summary');
+              if (response.ok) {
+                const data = await response.json();
+                setResults(data);
+                setStage('results');
+              } else {
+                console.error('Failed to fetch data quality results:', response.statusText);
+                setApiError(`API Error: ${response.status} - ${response.statusText}`);
+                setStage('results');
+              }
+            } catch (error) {
+              console.error('Error fetching data quality results:', error);
+              setApiError(`Network Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              setStage('results');
+            } finally {
+              setLoadingResults(false);
+            }
           }, 500);
         }
       }, 500);
@@ -309,6 +207,7 @@ const DataCleansingPage: React.FC = () => {
 
   const handleObjectSelect = (objectName: string) => {
     setSelectedObject(objectName);
+    setApiError(null);
     setStage('processing');
   };
 
@@ -535,7 +434,33 @@ const DataCleansingPage: React.FC = () => {
   );
 
   const renderResults = () => {
-    if (!results) return null;
+    if (!results) {
+      return (
+        <div className="dc-results-screen">
+          <div className="dc-results-header">
+            <div className="dc-header-content">
+              <div className="dc-header-text">
+                <h2 className="dc-results-title">Data Quality Analysis Failed</h2>
+                <p className="dc-results-subtitle">Unable to retrieve analysis results</p>
+              </div>
+              <Button variant="outline" onClick={() => setStage('object-selection')}>
+                ← Back to Selection
+              </Button>
+            </div>
+          </div>
+          {apiError && (
+            <div className="dc-error-notification">
+              <div className="dc-error-content">
+                <span className="dc-error-icon">⚠️</span>
+                <div className="dc-error-text">
+                  <strong>Error Details:</strong> {apiError}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div className="dc-results-screen">
@@ -560,6 +485,20 @@ const DataCleansingPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* API Error Warning */}
+        {apiError && (
+          <div className="dc-error-notification">
+            <div className="dc-error-content">
+              <span className="dc-error-icon">⚠️</span>
+              <div className="dc-error-text">
+                <strong>API Connection Issue:</strong> {apiError}
+                <br />
+                <small>Unable to load data quality results. Please try again later.</small>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Quality Score Overview */}
         <div className="dc-score-section">
