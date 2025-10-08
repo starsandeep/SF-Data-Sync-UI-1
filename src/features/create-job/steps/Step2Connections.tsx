@@ -113,16 +113,16 @@ const ConnectionPanel: React.FC<ConnectionPanelProps> = ({
     <div className={`ds-connections-panel ${isFormValid ? 'ds-connections-ready' : ''}`}>
       <div className="ds-connections-panel-header">
         <h3 className="ds-connections-panel-title">
-          {title}
-           <img
+          <img
             src="/salesforce-logo.png"
             alt="Salesforce"
             style={{
-              height: '50px',
-              paddingLeft: '10px',
+              height: '33px',
+              paddingRight: '5px',
               verticalAlign: 'middle'
             }}
           />
+          {title}
         </h3>
       </div>
 
@@ -265,10 +265,10 @@ export const Step2Connections: React.FC<Step2ConnectionsProps> = ({
   }, [sourceConnection, targetConnection]);
 
   const canProceed = sourceConnection.organization &&
-                   sourceConnection.environment &&
-                   targetConnection.organization &&
-                   targetConnection.environment &&
-                   validationResult.isValid;
+    sourceConnection.environment &&
+    targetConnection.organization &&
+    targetConnection.environment &&
+    validationResult.isValid;
 
   return (
     <div className="step-container">
