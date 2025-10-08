@@ -8,14 +8,14 @@ import EditIcon from '@mui/icons-material/Edit';
 
 // API Response interfaces
 interface APIFieldMapping {
-  sourceField: string;
-  sourceLabel: string;
-  targetField: string;
-  score: number;
+  source: string;
+  sourceType: string;
+  target: string;
+  targetType: string;
 }
 
 interface APIResponse {
-  fieldMappings: APIFieldMapping[];
+  fieldMaping: APIFieldMapping[]; // Note: API has typo in property name
 }
 
 interface Step4FieldMappingProps {
@@ -44,48 +44,9 @@ interface MappingRow {
   maskPII: boolean; // Indicates if PII data should be masked during sync
 }
 
-// Available Salesforce fields for mapping (Account target object)
-const SALESFORCE_FIELDS = [
-  { value: 'Account_Name__c', label: 'Account_Name__c' },
-  { value: 'Account_Owner__c', label: 'Account_Owner__c' },
-  { value: 'Billing_Address_Line_1__c', label: 'Billing_Address_Line_1__c' },
-  { value: 'Billing_Address_Line_2__c', label: 'Billing_Address_Line_2__c' },
-  { value: 'Billing_City__c', label: 'Billing_City__c' },
-  { value: 'Billing_Country__c', label: 'Billing_Country__c' },
-  { value: 'Billing_StateProvince__c', label: 'Billing_StateProvince__c' },
-  { value: 'Billing_Street__c', label: 'Billing_Street__c' },
-  { value: 'Billing_ZipPostal_Code__c', label: 'Billing_ZipPostal_Code__c' },
-  { value: 'CreatedById', label: 'CreatedById' },
-  { value: 'Last_Activity__c', label: 'Last_Activity__c' },
-  { value: 'LastModifiedById', label: 'LastModifiedById' },
-  { value: 'Last_Modified_Date__c', label: 'Last_Modified_Date__c' },
-  { value: 'OwnerId', label: 'OwnerId' },
-  { value: 'Phone__c', label: 'Phone__c' },
-  { value: 'Rating__c', label: 'Rating__c' },
-  { value: 'Type__c', label: 'Type__c' },
-  { value: 'extid__c', label: 'extid__c' },
-  { value: '', label: '-- (Unmapped)' }
-];
+// Note: Target field options are now derived from API mappings
 
-// Default field mappings for Contact source to Contact__c target
-const DEFAULT_MAPPINGS: MappingRow[] = [
-  { sourceField: 'Id', sourceLabel: 'Id', targetField: 'extid__c', isEditing: false, confidenceScore: 99, isPrimaryKey: true, includeInSync: true, isPII: false, maskPII: false },
-  { sourceField: 'AccountId', sourceLabel: 'AccountId', targetField: 'Account.extid__c', isEditing: false, confidenceScore: 95, isPrimaryKey: false, includeInSync: true, isPII: false, maskPII: false },
-  { sourceField: 'FirstName', sourceLabel: 'FirstName', targetField: 'FirstName', isEditing: false, confidenceScore: 99, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'LastName', sourceLabel: 'LastName', targetField: 'LastName', isEditing: false, confidenceScore: 99, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'Phone', sourceLabel: 'Phone', targetField: 'phone', isEditing: false, confidenceScore: 90, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'Department', sourceLabel: 'Department', targetField: 'Department', isEditing: false, confidenceScore: 88, isPrimaryKey: false, includeInSync: false, isPII: false, maskPII: false },
-  { sourceField: 'Description', sourceLabel: 'Description', targetField: 'Description', isEditing: false, confidenceScore: 85, isPrimaryKey: false, includeInSync: false, isPII: false, maskPII: false },
-  { sourceField: 'Email', sourceLabel: 'Email', targetField: 'Email', isEditing: false, confidenceScore: 95, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'Fax', sourceLabel: 'Fax', targetField: 'Fax', isEditing: false, confidenceScore: 80, isPrimaryKey: false, includeInSync: false, isPII: true, maskPII: true },
-  { sourceField: 'Title', sourceLabel: 'Title', targetField: 'Title', isEditing: false, confidenceScore: 90, isPrimaryKey: false, includeInSync: true, isPII: false, maskPII: false },
-  { sourceField: 'preferred_language__c', sourceLabel: 'preferred_language__c', targetField: 'language_preferred__c', isEditing: false, confidenceScore: 85, isPrimaryKey: false, includeInSync: false, isPII: false, maskPII: false },
-  { sourceField: 'MailingStreet', sourceLabel: 'MailingStreet', targetField: 'MailingStreet', isEditing: false, confidenceScore: 92, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'MailingCity', sourceLabel: 'MailingCity', targetField: 'MailingCity', isEditing: false, confidenceScore: 92, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'MailingState', sourceLabel: 'MailingState', targetField: 'MailingState', isEditing: false, confidenceScore: 92, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'MailingPostalCode', sourceLabel: 'MailingPostalCode', targetField: 'MailingPostalCode', isEditing: false, confidenceScore: 92, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true },
-  { sourceField: 'MailingCountry', sourceLabel: 'MailingCountry', targetField: 'MailingCountry', isEditing: false, confidenceScore: 92, isPrimaryKey: false, includeInSync: true, isPII: true, maskPII: true }
-];
+// Note: Field mappings are now fetched from API endpoint instead of using hardcoded defaults
 
 // Helper functions for confidence scoring
 const getConfidenceLevel = (score: number): string => {
@@ -94,12 +55,27 @@ const getConfidenceLevel = (score: number): string => {
   return 'low';
 };
 
-// Helper function to detect PII fields
+// Helper function to detect PII fields intelligently
 const isPIIField = (fieldName: string): boolean => {
   const piiPatterns = [
-    /firstname/i, /lastname/i, /email/i, /phone/i, /fax/i,
-    /street/i, /address/i, /city/i, /state/i, /postal/i, /zip/i, /country/i,
-    /ssn/i, /social/i, /birthdate/i, /birth/i, /age/i
+    // Name fields
+    /\b(first.*name|last.*name|full.*name|given.*name|family.*name|name)\b/i,
+    // Email fields
+    /\b(email|e_mail|mail)\b/i,
+    // Phone/Communication fields
+    /\b(phone|fax|mobile|cell|telephone|tel)\b/i,
+    // Address fields
+    /\b(street|address|addr|city|state|province|postal|zip|country|region)\b/i,
+    // Personal identifiers
+    /\b(ssn|social.*security|tax.*id|driver.*license|passport|national.*id)\b/i,
+    // Date of birth and age
+    /\b(birth.*date|date.*birth|dob|age|birth.*year)\b/i,
+    // Financial fields
+    /\b(salary|income|wage|credit.*card|bank.*account|account.*number)\b/i,
+    // Health/Medical fields
+    /\b(medical|health|diagnosis|treatment|patient.*id|insurance)\b/i,
+    // Personal preferences
+    /\b(language.*preferred|preferred.*language|gender|ethnicity|race)\b/i
   ];
   return piiPatterns.some(pattern => pattern.test(fieldName));
 };
@@ -114,11 +90,8 @@ const isPrimaryKeyField = (fieldName: string): boolean => {
 
 // Helper function to determine if field should be included in sync by default
 const shouldIncludeInSync = (fieldName: string): boolean => {
-  const includePatterns = [
-    /^id$/i, /firstname/i, /lastname/i, /email/i, /phone/i, /title/i,
-    /street/i, /city/i, /state/i, /postal/i, /country/i, /accountid/i
-  ];
-  return includePatterns.some(pattern => pattern.test(fieldName));
+  // By default, all fields are included in sync
+  return true;
 };
 
 // API function to fetch field mappings
@@ -129,7 +102,7 @@ const fetchFieldMappings = async (objectName: string): Promise<APIFieldMapping[]
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data: APIResponse = await response.json();
-    return data.fieldMappings;
+    return data.fieldMaping; // Note: API has typo in property name
   } catch (error) {
     console.error('Error fetching field mappings:', error);
     // Return empty array on error, will fall back to default mappings
@@ -137,19 +110,24 @@ const fetchFieldMappings = async (objectName: string): Promise<APIFieldMapping[]
   }
 };
 
+// Note: Field names are displayed exactly as received from API
+
 // Transform API response to MappingRow format
 const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): MappingRow[] => {
-  return apiMappings.map(mapping => ({
-    sourceField: mapping.sourceField,
-    sourceLabel: mapping.sourceLabel,
-    targetField: mapping.targetField,
-    isEditing: false,
-    confidenceScore: mapping.score,
-    isPrimaryKey: isPrimaryKeyField(mapping.sourceField),
-    includeInSync: shouldIncludeInSync(mapping.sourceField),
-    isPII: isPIIField(mapping.sourceField),
-    maskPII: isPIIField(mapping.sourceField) // Default to mask if PII
-  }));
+  return apiMappings.map(mapping => {
+    const isPII = isPIIField(mapping.source);
+    return {
+      sourceField: mapping.source,
+      sourceLabel: mapping.source, // Use original field name as label
+      targetField: mapping.target,
+      isEditing: false,
+      confidenceScore: 100, // Default high confidence for API mappings
+      isPrimaryKey: isPrimaryKeyField(mapping.source),
+      includeInSync: shouldIncludeInSync(mapping.source),
+      isPII: isPII,
+      maskPII: isPII // Default to mask if PII
+    };
+  });
 };
 
 export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
@@ -166,13 +144,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   const [progress, setProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState('Initializing field analysis...');
 
-  const [mappingRows, setMappingRows] = useState<MappingRow[]>(() => {
-    // Initialize with default mappings or existing mappings
-    return DEFAULT_MAPPINGS.map(row => ({
-      ...row,
-      targetField: fieldMappings[row.sourceField] || row.targetField
-    }));
-  });
+  const [mappingRows, setMappingRows] = useState<MappingRow[]>([]);
 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempTargetField, setTempTargetField] = useState<string>('');
@@ -437,15 +409,10 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           Configure how {jobData?.sourceObject || 'Contact'} (source) fields map to {jobData?.targetObject || 'Contact__c'} (target) Salesforce fields.
           Some default mappings are pre-configured to get you started.
         </p>
-        <div className="mapping-info">
-          <span className="source-info">📊 Source: <strong>{jobData?.sourceObject || 'Contact'}</strong></span>
-          <span className="arrow">→</span>
-          <span className="target-info">🎯 Target: <strong>{jobData?.targetObject || 'Contact__c'}</strong></span>
-        </div>
       </div>
 
       <div className="field-mapping-table">
-        <div className="table-header">
+        <div className="table-header-fixed">
           <div className="column-header">Include in Sync</div>
           <div className="column-header">Primary Key</div>
           <div className="column-header">Mask PII</div>
@@ -453,6 +420,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           <div className="column-header">Target Field ({jobData?.targetObject || 'Contact__c'})</div>
           <div className="column-header">AI Confidence</div>
         </div>
+        <div className="table-body-scrollable">
 
         {mappingRows.map((row) => {
           const isDuplicate = validationResults.duplicateTargetFields.has(row.targetField) && row.targetField !== '';
@@ -513,11 +481,18 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                         className={`field-select ${isDuplicate ? 'error' : ''}`}
                         autoFocus
                       >
-                        {SALESFORCE_FIELDS.map((field) => (
-                          <option key={field.value} value={field.value}>
-                            {field.label}
-                          </option>
-                        ))}
+                        <option value="">-- (Unmapped)</option>
+                        {/* Generate unique target fields from current mappings */}
+                        {Array.from(new Set(mappingRows.map(r => r.targetField).filter(field => field)))
+                          .sort()
+                          .map((targetField) => (
+                            <option key={targetField} value={targetField}>
+                              {targetField}
+                            </option>
+                          ))
+                        }
+                        {/* Allow custom target field entry */}
+                        <option value="__custom__">+ Enter custom field...</option>
                       </select>
                       <div className="inline-actions">
                         <span
@@ -584,7 +559,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
             </div>
           );
         })}
-      </div>
+        </div> {/* End table-body-scrollable */}
+      </div> {/* End field-mapping-table */}
 
       {/* Additional validation messages at the bottom */}
       {validationResults.duplicateTargetFields.size > 0 && (
