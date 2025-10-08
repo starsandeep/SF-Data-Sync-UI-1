@@ -277,7 +277,17 @@ const DataCleansingPage: React.FC = () => {
             {/* Organization Dropdown */}
             <div className="dc-connections-form-group">
               <label htmlFor="dc-organization" className="dc-connections-form-label">
-                Organization <span className="dc-connections-required">*</span>
+                <span>
+                  <img
+                    src="/salesforce-logo.png"
+                    alt="Salesforce"
+                    style={{
+                      height: '20px',
+                      marginRight: '8px',
+                      verticalAlign: 'middle'
+                    }}
+                  />
+                </span>Organization <span className="dc-connections-required">*</span>
               </label>
               <select
                 id="dc-organization"

@@ -53,7 +53,7 @@ const INITIAL_JOB_DATA: JobData = {
   fieldMappings: {},
   fieldMappingMetadata: {},
   transformations: {},
-  schedule: 'manual' as ScheduleOption,
+  schedule: '6hours' as ScheduleOption,
   tested: false
 };
 

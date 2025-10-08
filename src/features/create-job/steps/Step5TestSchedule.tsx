@@ -52,7 +52,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const [sampleSize, setSampleSize] = useState<number>(jobData.sampleSize || 50);
 
   // Main Job Schedule State
-  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleOption>(jobData.schedule || 'manual');
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleOption>(jobData.schedule || '6hours');
 
   // API call state
   const [isCreatingJob, setIsCreatingJob] = useState(false);
@@ -109,15 +109,17 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${Math.floor(now.getMinutes() / 30) * 30 === 0 ? '00' : '30'}`;
       setTestStartTime(timeStr);
     }
-    if (!testEndDate && testStartDate) {
-      const endDateObj = new Date(testStartDate);
-      endDateObj.setHours(endDateObj.getHours() + 2); // 2 hours later for test
-      setTestEndDate(endDateObj.toISOString().split('T')[0]);
+    if (!testEndDate && testStartDate && testStartTime) {
+      // Create proper start datetime and add 2 hours
+      const startDateTime = new Date(`${testStartDate}T${testStartTime}:00`);
+      startDateTime.setHours(startDateTime.getHours() + 2);
+      setTestEndDate(startDateTime.toISOString().split('T')[0]);
     }
-    if (!testEndTime) {
-      const now = new Date();
-      now.setHours(now.getHours() + 3);
-      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${Math.floor(now.getMinutes() / 30) * 30 === 0 ? '00' : '30'}`;
+    if (!testEndTime && testStartDate && testStartTime) {
+      // Create proper start datetime and add 2 hours for end time
+      const startDateTime = new Date(`${testStartDate}T${testStartTime}:00`);
+      startDateTime.setHours(startDateTime.getHours() + 2);
+      const timeStr = `${startDateTime.getHours().toString().padStart(2, '0')}:${Math.floor(startDateTime.getMinutes() / 30) * 30 === 0 ? '00' : '30'}`;
       setTestEndTime(timeStr);
     }
   }, [testStartDate, testStartTime, testEndDate, testEndTime]);
@@ -820,7 +822,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
                       <div className="ds-schedule-preview-item">
                         <span className="ds-schedule-preview-label">Frequency</span>
                         <span className="ds-schedule-preview-value">
-                          {selectedSchedule === 'custom' && customCron ? customCron : SCHEDULE_OPTIONS.find(opt => opt.value === selectedSchedule)?.label}
+                          {SCHEDULE_OPTIONS.find(opt => opt.value === selectedSchedule)?.label}
                         </span>
                       </div>
                     </div>
