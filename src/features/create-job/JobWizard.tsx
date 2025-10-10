@@ -196,28 +196,6 @@ export const JobWizard: React.FC<JobWizardProps> = ({ onExit }) => {
               ))}
             </ol>
           </nav>
-
-          {/* Progress Summary */}
-          <div className="progress-summary" aria-live="polite">
-            <div className="progress-text">
-              Step {currentStep} of {steps.length}
-            </div>
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${(currentStep / steps.length) * 100}%` }}
-                aria-hidden="true"
-              />
-            </div>
-            <div className="progress-stats">
-              {steps.filter(s => s.isCompleted).length} completed
-              {steps.some(s => s.hasErrors) && (
-                <span className="error-count">
-                  • {steps.filter(s => s.hasErrors).length} with errors
-                </span>
-              )}
-            </div>
-          </div>
         </aside>
 
         {/* Main Content */}
