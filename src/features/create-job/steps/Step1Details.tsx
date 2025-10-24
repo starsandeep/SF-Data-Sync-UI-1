@@ -40,9 +40,6 @@ export const Step1Details: React.FC<Step1DetailsProps> = ({
     if (name.trim().length > 120) {
       return 'Data Sync Name must be less than 120 characters';
     }
-    if (name !== name.trim()) {
-      return 'Data Sync Name cannot have leading or trailing whitespace';
-    }
     return null;
   };
 
