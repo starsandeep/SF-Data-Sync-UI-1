@@ -498,7 +498,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const { minDate } = getMinDateTime();
 
   // Validation functions for Simulate
-  const isTestStartDateTimeValid = testStartDate && testStartTime && new Date(`${testStartDate}T${testStartTime}`) > new Date();
+  const isTestStartDateTimeValid = testStartDate && testStartTime;
   const isTestEndDateTimeValid = testEndDate && testEndTime && testStartDate && testStartTime &&
     new Date(`${testEndDate}T${testEndTime}`) > new Date(`${testStartDate}T${testStartTime}`);
   const isTestDateTimeValid = isTestStartDateTimeValid && isTestEndDateTimeValid;
@@ -594,11 +594,6 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               </div>
 
               {/* Validation Errors */}
-              {!isTestStartDateTimeValid && testStartDate && testStartTime && (
-                <div className="ds-schedule-error-message">
-                  Test start time must be in the future
-                </div>
-              )}
               {!isTestEndDateTimeValid && testEndDate && testEndTime && testStartDate && testStartTime && (
                 <div className="ds-schedule-error-message">
                   Test end time must be after start time
