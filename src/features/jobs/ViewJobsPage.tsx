@@ -45,7 +45,7 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
     setError(null);
 
     try {
-      const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/readJobs');
+      const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/readJobsSfdc');
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

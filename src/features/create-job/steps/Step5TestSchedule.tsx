@@ -410,7 +410,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       console.log('Creating job with request body:', requestBody);
 
       // Make API call to create the job
-      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/createJob?key=${encodeURIComponent(jobData.name || 'DefaultJob')}`, {
+      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/createJobSfdc?key=${encodeURIComponent(jobData.name || 'DefaultJob')}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
