@@ -148,6 +148,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempTargetField, setTempTargetField] = useState<string>('');
+  const [selectAllChecked, setSelectAllChecked] = useState<boolean>(false);
 
   // API call and loader effect with progress animation - 3 seconds total
   useEffect(() => {
@@ -211,6 +212,14 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
     return () => clearInterval(interval);
   }, [showLoader]);
+
+  // Update select all checkbox state when mappingRows change
+  useEffect(() => {
+    if (mappingRows.length > 0) {
+      const allChecked = mappingRows.every(row => row.includeInSync);
+      setSelectAllChecked(allChecked);
+    }
+  }, [mappingRows]);
 
   // Comprehensive validations
   const validationResults = useMemo(() => {
@@ -310,14 +319,40 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   }, []);
 
   const handleSyncInclusionToggle = useCallback((sourceField: string) => {
-    setMappingRows(prev =>
-      prev.map(row =>
+    setMappingRows(prev => {
+      const updated = prev.map(row =>
         row.sourceField === sourceField
           ? { ...row, includeInSync: !row.includeInSync }
           : row
-      )
-    );
+      );
+
+      // Update select all checkbox based on current state
+      const allChecked = updated.every(row => row.includeInSync);
+      const noneChecked = updated.every(row => !row.includeInSync);
+
+      if (allChecked) {
+        setSelectAllChecked(true);
+      } else if (noneChecked) {
+        setSelectAllChecked(false);
+      } else {
+        setSelectAllChecked(false); // Indeterminate state, show as unchecked
+      }
+
+      return updated;
+    });
   }, []);
+
+  const handleSelectAllToggle = useCallback(() => {
+    const newCheckedState = !selectAllChecked;
+    setSelectAllChecked(newCheckedState);
+
+    setMappingRows(prev =>
+      prev.map(row => ({
+        ...row,
+        includeInSync: newCheckedState
+      }))
+    );
+  }, [selectAllChecked]);
 
   const handlePIIMaskingToggle = useCallback((sourceField: string) => {
     setMappingRows(prev =>
@@ -413,7 +448,19 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
       <div className="field-mapping-table">
         <div className="table-header-fixed">
-          <div className="column-header">Include in Sync</div>
+          <div className="column-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input
+                type="checkbox"
+                checked={selectAllChecked}
+                onChange={handleSelectAllToggle}
+                className="select-all-checkbox"
+                title="Select/Unselect all rows"
+                aria-label="Select or unselect all rows for sync inclusion"
+              />
+              <span>Include in Sync</span>
+            </div>
+          </div>
           <div className="column-header">Primary Key</div>
           <div className="column-header">Mask PII</div>
           <div className="column-header">Source Field (<span style={{ color: '#3B82F6', fontWeight: '800', padding: '2px 6px'}}>{jobData?.sourceObject || 'Contact'}</span>)</div>
