@@ -3678,7 +3678,7 @@
 
 .field-mapping-table .table-header-fixed {
   display: grid;
-  grid-template-columns: 140px 115px 85px 1fr 1fr 125px;
+  grid-template-columns: 167px 125px 85px 1fr 1fr 130px;
   border-bottom: 2px solid var(--border-primary);
   position: sticky;
   top: 0;
@@ -3703,11 +3703,25 @@
   border-right: 1px solid var(--border-primary);
   position: relative;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .field-mapping-table .column-header:last-child {
   border-right: none;
 }
+
+.field-mapping-table .column-header > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Field Mapping Table Column Width Configuration
+   Widths are controlled by grid-template-columns in .table-header-fixed and .mapping-row
+   167px | 125px | 85px | 280px | 280px | 130px
+   Include in Sync | Primary Key | Mask PII | Source Field | Target Field | AI Confidence */
 
 /* Add subtle shine effect */
 .field-mapping-table .column-header:before {
@@ -3722,7 +3736,7 @@
 
 .mapping-row {
   display: grid;
-  grid-template-columns: 140px 115px 85px 1fr 1fr 125px;
+  grid-template-columns: 167px 125px 85px 1fr 1fr 130px;
   border-bottom: 1px solid var(--border-primary);
   transition: background-color 0.2s ease;
 }
