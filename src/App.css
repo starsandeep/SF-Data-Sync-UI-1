@@ -7855,7 +7855,76 @@
   border: 1px solid var(--border-primary);
 }
 
-/* Table Styles */
+/* Grid-based Table Styles */
+.ds-jobs-grid {
+  display: grid;
+  grid-template-columns: 220px 280px 250px 200px 200px 1fr 95px;
+  width: 100%;
+  font-size: 0.875rem;
+  background: var(--bg-card);
+}
+
+.ds-jobs-grid-header {
+  display: contents;
+  background: var(--bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ds-jobs-grid-header > div {
+  background: var(--bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 2px solid var(--border-primary);
+}
+
+.ds-jobs-grid-row {
+  display: contents;
+}
+
+.ds-jobs-grid-row > div {
+  border-bottom: 1px solid var(--border-primary);
+  transition: background-color 0.2s ease;
+}
+
+.ds-jobs-grid-row:hover > div {
+  background: var(--bg-secondary);
+}
+
+.ds-jobs-grid-row:last-child > div {
+  border-bottom: none;
+}
+
+.ds-jobs-grid-cell {
+  padding: var(--ds-spacing-sm);
+  vertical-align: top;
+  border-right: 1px solid var(--border-primary);
+}
+
+.ds-jobs-grid-cell:last-child {
+  border-right: none;
+}
+
+.ds-jobs-grid-header-cell {
+  padding: var(--ds-spacing-md);
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border-primary);
+  white-space: nowrap;
+}
+
+.ds-jobs-grid-header-cell:last-child {
+  border-right: none;
+}
+
+/* Legacy Table Styles (keeping for backward compatibility) */
 .ds-jobs-table {
   width: 100%;
   border-collapse: collapse;
@@ -7972,6 +8041,8 @@
 .ds-jobs-arrow {
   font-weight: 600;
   color: var(--text-secondary);
+  flex-shrink: 0;
+  font-size: 0.75rem;
 }
 
 /* Schedule Cell */
