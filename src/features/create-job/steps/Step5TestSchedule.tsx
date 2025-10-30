@@ -194,8 +194,12 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         name: `${jobData.name || 'TestSync'}`,
         schedule: {
           frequency: "30",
-          timeUnit: "MINUTES"
+          timeUnit: "MINUTES",
+          cronExpression: "0 0 * * * ?"
         },
+        isActive: true, // Set to true to run the test
+        sourceOrg: jobData.sourceOrg || "SalesMgmt",
+        targetOrg: jobData.targetOrg || "CaseMgmt",
         fromDate: testFromDate,
         toDate: testToDate,
         sourceObject: jobData.sourceObject || 'Contact',
@@ -392,9 +396,19 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
           targetType: getFieldType(targetField)
         }));
 
+      // Get schedule config with cron expression
+      const scheduleConfig = scheduleMapping[selectedSchedule];
+      const scheduleWithCron = {
+        ...scheduleConfig,
+        cronExpression: selectedSchedule === 'custom' ? customCron : "0 0 * * * ?"
+      };
+
       const requestBody: any = {
         name: jobData.name,
-        schedule: scheduleMapping[selectedSchedule],
+        schedule: scheduleWithCron,
+        isActive: true, // Set to false to create disabled job initially
+        sourceOrg: jobData.sourceOrg || "SalesMgmt", // Use from jobData or default
+        targetOrg: jobData.targetOrg || "CaseMgmt", // Use from jobData or default
         fromDate,
         sourceObject: jobData.sourceObject,
         targetObject: jobData.targetObject,

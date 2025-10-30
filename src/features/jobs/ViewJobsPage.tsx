@@ -9,33 +9,56 @@ interface ViewJobsPageProps {
 }
 
 interface JobData {
+  Id: string;
+  jobName: string | null;
   name: string;
-  schedule: {
-    frequency: string;
-    timeUnit: string;
-  };
-  fromDate: string;
-  toDate: string;
+  isActive: string;
+  jobSchedule: string | null;
+  jobFrequency: string | null;
+  sourceOrg: string;
+  targetOrg: string;
   sourceObject: string;
   targetObject: string;
-  extId: string;
-  fieldMaping: Array<{
-    source: string;
-    sourceType: string;
-    target: string;
-    targetType: string;
-  }>;
+  fromDate: string;
+  toDate: string;
+  jobDetails: {
+    name?: string;
+    schedule?: {
+      frequency?: string;
+      timeUnit?: string;
+      cronExpression?: string;
+      description?: string;
+    };
+    isActive?: boolean;
+    sourceOrg?: string;
+    targetOrg?: string;
+    fromDate?: string;
+    toDate?: string;
+    sourceObject?: string;
+    targetObject?: string;
+    extId?: string;
+    fieldMapping?: Array<{
+      source: string;
+      sourceType?: string;
+      target: string;
+      targetType?: string;
+    }>;
+    fieldMaping?: Array<{
+      source: string;
+      sourceType?: string;
+      target: string;
+      targetType?: string;
+    }>;
+  };
 }
 
-interface ApiResponse {
-  [jobName: string]: string; // JSON string that needs to be parsed
-}
+type ApiResponse = JobData[];
 
 export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
   onBackToDashboard,
   onCreateJob
 }) => {
-  const [jobs, setJobs] = useState<{ [key: string]: JobData }>({});
+  const [jobs, setJobs] = useState<JobData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,17 +76,8 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
 
       const data: ApiResponse = await response.json();
 
-      // Parse the JSON strings in the response
-      const parsedJobs: { [key: string]: JobData } = {};
-      Object.keys(data).forEach(jobName => {
-        try {
-          parsedJobs[jobName] = JSON.parse(data[jobName]);
-        } catch (parseError) {
-          console.error(`Failed to parse job data for ${jobName}:`, parseError);
-        }
-      });
-
-      setJobs(parsedJobs);
+      // No parsing needed - data is already in the correct format
+      setJobs(data);
     } catch (err) {
       console.error('Error fetching jobs:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch jobs');
@@ -86,47 +100,65 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
     });
   };
 
-  const formatSchedule = (schedule: JobData['schedule']) => {
-    const unit = schedule.timeUnit.toLowerCase();
-    const freq = schedule.frequency;
-    return `Every ${freq} ${unit}`;
+  const formatSchedule = (job: JobData) => {
+    // Use jobFrequency if available, otherwise try to construct from jobDetails
+    if (job.jobFrequency) {
+      return job.jobFrequency;
+    }
+
+    if (job.jobDetails.schedule?.frequency && job.jobDetails.schedule?.timeUnit) {
+      const unit = job.jobDetails.schedule.timeUnit.toLowerCase();
+      const freq = job.jobDetails.schedule.frequency;
+      return `Every ${freq} ${unit}`;
+    }
+
+    if (job.jobDetails.schedule?.cronExpression) {
+      return job.jobDetails.schedule.description || `Cron: ${job.jobDetails.schedule.cronExpression}`;
+    }
+
+    return 'Not scheduled';
   };
 
-  const handleEditJob = (jobName: string) => {
-    console.log('Edit job:', jobName);
+  const handleEditJob = (job: JobData) => {
+    console.log('Edit job:', job.name);
     // TODO: Implement edit functionality
-    alert(`Edit job: ${jobName}`);
+    alert(`Edit job: ${job.name}`);
   };
 
-  const handleDeleteJob = async (jobName: string) => {
-    console.log('Delete job:', jobName);
+  const handleDeleteJob = async (job: JobData) => {
+    console.log('Delete job:', job.name);
 
-    if (!confirm(`Are you sure you want to delete job "${jobName}"?`)) {
+    if (!confirm(`Are you sure you want to delete job "${job.name}"?`)) {
       return;
     }
 
     try {
       setIsLoading(true);
 
-      // Get the job data to send in the request body
-      const jobData = jobs[jobName];
-      if (!jobData) {
-        throw new Error('Job data not found');
-      }
+      // Get field mappings from either fieldMapping or fieldMaping
+      const fieldMappings = job.jobDetails.fieldMapping || job.jobDetails.fieldMaping || [];
 
       // Prepare the request body using the job data
       const requestBody = {
-        name: jobData.name,
-        schedule: jobData.schedule,
-        sourceObject: jobData.sourceObject,
-        targetObject: jobData.targetObject,
-        extId: jobData.extId,
-        fieldMaping: jobData.fieldMaping
+        name: job.name,
+        schedule: job.jobDetails.schedule || {
+          frequency: "30",
+          timeUnit: "MINUTES"
+        },
+        isActive: job.jobDetails.isActive || false,
+        sourceOrg: job.sourceOrg,
+        targetOrg: job.targetOrg,
+        fromDate: job.fromDate,
+        toDate: job.toDate,
+        sourceObject: job.sourceObject,
+        targetObject: job.targetObject,
+        extId: job.jobDetails.extId || 'extid__c',
+        fieldMaping: fieldMappings
       };
 
       console.log('Deleting job with request body:', requestBody);
 
-      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/deleteJob?key=${encodeURIComponent(jobData.name)}`, {
+      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/deleteJob?key=${encodeURIComponent(job.name)}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -153,6 +185,22 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
 
   return (
     <div className="ds-jobs-page">
+      <style>{`
+        .ds-jobs-table .ds-jobs-th:nth-child(7) {
+          width: 100px;
+          min-width: 100px;
+          max-width: 100px;
+        }
+           .ds-jobs-table .ds-jobs-th:nth-child(2) {
+          width: 250px;
+          min-width: 250px;
+          max-width: 250px;
+        }
+        .ds-jobs-arrow {
+          flex-shrink: 0;
+          font-size: 0.75rem;
+        }
+      `}</style>
       {/* Header Section */}
       <div className="ds-jobs-header">
         <div className="ds-jobs-header-content">
@@ -191,7 +239,7 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
             <div className="ds-jobs-spinner"></div>
             <p>Loading jobs...</p>
           </div>
-        ) : Object.keys(jobs).length === 0 ? (
+        ) : jobs.length === 0 ? (
           <div className="ds-jobs-empty">
             <div className="ds-jobs-empty-icon">📊</div>
             <h3>No jobs found</h3>
@@ -212,8 +260,9 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
               <table className="ds-jobs-table">
                 <thead className="ds-jobs-thead">
                   <tr className="ds-jobs-header-row">
-                    <th className="ds-jobs-th">Job Name</th>
+                    <th className="ds-jobs-th">Job Name & Status</th>
                     <th className="ds-jobs-th">Objects</th>
+                    <th className="ds-jobs-th">Organizations</th>
                     <th className="ds-jobs-th">Schedule</th>
                     <th className="ds-jobs-th">Duration</th>
                     <th className="ds-jobs-th">Field Mappings</th>
@@ -221,64 +270,94 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
                   </tr>
                 </thead>
                 <tbody className="ds-jobs-tbody">
-                  {Object.entries(jobs).map(([jobName, jobData]) => (
-                    <tr key={jobName} className="ds-jobs-row">
+                  {jobs.map((job) => (
+                    <tr key={job.Id} className="ds-jobs-row">
                       <td className="ds-jobs-td ds-jobs-name-cell">
-                        <div className="ds-jobs-name">{jobData.name}</div>
-                        <div className="ds-jobs-ext-id">ID: {jobData.extId}</div>
+                        <div className="ds-jobs-name">{job.name}</div>
+                        <div className="ds-jobs-ext-id">ID: {job.Id}</div>
+                        <div className="ds-jobs-status">
+                          <span className={`ds-jobs-status-badge ${job.isActive === 'true' ? 'active' : 'inactive'}`}>
+                            {job.isActive === 'true' ? '🟢 Active' : '🔴 Inactive'}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="ds-jobs-td ds-jobs-objects-cell">
                         <div className="ds-jobs-object-flow">
-                          <span className="ds-jobs-source">{jobData.sourceObject}</span>
+                          <span className="ds-jobs-source">{job.sourceObject}</span>
                           <span className="ds-jobs-arrow">→</span>
-                          <span className="ds-jobs-target">{jobData.targetObject}</span>
+                          <span className="ds-jobs-target">{job.targetObject}</span>
+                        </div>
+                      </td>
+
+                      <td className="ds-jobs-td ds-jobs-orgs-cell">
+                        <div className="ds-jobs-org-flow">
+                          <span className="ds-jobs-source-org">{job.sourceOrg}</span>
+                          <span className="ds-jobs-arrow">→</span>
+                          <span className="ds-jobs-target-org">{job.targetOrg}</span>
                         </div>
                       </td>
 
                       <td className="ds-jobs-td ds-jobs-schedule-cell">
                         <div className="ds-jobs-schedule">
-                          {formatSchedule(jobData.schedule)}
+                          {formatSchedule(job)}
                         </div>
+                        {job.jobSchedule && (
+                          <div className="ds-jobs-cron">
+                            Cron: {job.jobSchedule}
+                          </div>
+                        )}
                       </td>
 
                       <td className="ds-jobs-td ds-jobs-duration-cell">
                         <div className="ds-jobs-date-range">
-                          <div className="ds-jobs-from">From: {formatDate(jobData.fromDate)}</div>
-                          <div className="ds-jobs-to">To: {formatDate(jobData.toDate)}</div>
+                          <div className="ds-jobs-from">From: {formatDate(job.fromDate)}</div>
+                          <div className="ds-jobs-to">To: {formatDate(job.toDate)}</div>
                         </div>
                       </td>
 
                       <td className="ds-jobs-td ds-jobs-mappings-cell">
-                        <div className="ds-jobs-mappings-count">
-                          {jobData.fieldMaping.length} field{jobData.fieldMaping.length !== 1 ? 's' : ''}
-                        </div>
-                        <details className="ds-jobs-mappings-details">
-                          <summary className="ds-jobs-mappings-summary">View mappings</summary>
-                          <div className="ds-jobs-mappings-list">
-                            {jobData.fieldMaping.map((mapping, index) => (
-                              <div key={index} className="ds-jobs-mapping-item">
-                                <span className="ds-jobs-mapping-source">{mapping.source}</span>
-                                <span className="ds-jobs-mapping-arrow">→</span>
-                                <span className="ds-jobs-mapping-target">{mapping.target}</span>
+                        {(() => {
+                          const fieldMappings = job.jobDetails.fieldMapping || job.jobDetails.fieldMaping || [];
+                          return (
+                            <>
+                              <div className="ds-jobs-mappings-count">
+                                {fieldMappings.length} field{fieldMappings.length !== 1 ? 's' : ''}
                               </div>
-                            ))}
-                          </div>
-                        </details>
+                              <details className="ds-jobs-mappings-details">
+                                <summary className="ds-jobs-mappings-summary">View mappings</summary>
+                                <div className="ds-jobs-mappings-list">
+                                  {fieldMappings.map((mapping, index) => (
+                                    <div key={index} className="ds-jobs-mapping-item">
+                                      <span className="ds-jobs-mapping-source">{mapping.source}</span>
+                                      <span className="ds-jobs-mapping-arrow">→</span>
+                                      <span className="ds-jobs-mapping-target">{mapping.target}</span>
+                                      {mapping.sourceType && mapping.targetType && (
+                                        <div className="ds-jobs-mapping-types">
+                                          <span className="ds-jobs-mapping-type">({mapping.sourceType} → {mapping.targetType})</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              </details>
+                            </>
+                          );
+                        })()}
                       </td>
 
                       <td className="ds-jobs-td ds-jobs-actions-cell">
                         <div className="ds-jobs-actions">
                           <span
                             className="action-icon edit-icon"
-                            onClick={() => handleEditJob(jobName)}
+                            onClick={() => handleEditJob(job)}
                             aria-label="Edit job"
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                handleEditJob(jobName);
+                                handleEditJob(job);
                               }
                             }}
                           >
@@ -286,14 +365,14 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
                           </span>
                           <span
                             className={`action-icon delete-icon ${isLoading ? 'disabled' : ''}`}
-                            onClick={isLoading ? undefined : () => handleDeleteJob(jobName)}
+                            onClick={isLoading ? undefined : () => handleDeleteJob(job)}
                             aria-label="Delete job"
                             role="button"
                             tabIndex={isLoading ? -1 : 0}
                             onKeyDown={isLoading ? undefined : (e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                handleDeleteJob(jobName);
+                                handleDeleteJob(job);
                               }
                             }}
                           >
@@ -309,7 +388,7 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
 
             <div className="ds-jobs-footer">
               <div className="ds-jobs-count">
-                {Object.keys(jobs).length} job{Object.keys(jobs).length !== 1 ? 's' : ''} found
+                {jobs.length} job{jobs.length !== 1 ? 's' : ''} found
               </div>
             </div>
           </div>

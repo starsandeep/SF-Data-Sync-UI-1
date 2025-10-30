@@ -101,6 +101,8 @@ export interface JobData {
   selectedObject: string; // Keep for backward compatibility
   sourceObject: string;
   targetObject: string;
+  sourceOrg?: string;
+  targetOrg?: string;
   syncAllFields: boolean;
   selectedFields: string[];
   fieldMappings: FieldMapping;
