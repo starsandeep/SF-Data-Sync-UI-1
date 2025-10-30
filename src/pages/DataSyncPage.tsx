@@ -1,7 +1,51 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { JobWizard } from '../features/create-job/JobWizard';
 import { ViewJobsPage } from '../features/jobs/ViewJobsPage';
+
+interface JobApiData {
+  Id: string;
+  jobName: string | null;
+  name: string;
+  isActive: string;
+  jobSchedule: string | null;
+  jobFrequency: string | null;
+  sourceOrg: string;
+  targetOrg: string;
+  sourceObject: string;
+  targetObject: string;
+  fromDate: string;
+  toDate: string;
+  jobDetails: {
+    name?: string;
+    schedule?: {
+      frequency?: string;
+      timeUnit?: string;
+      cronExpression?: string;
+      description?: string;
+    };
+    isActive?: boolean;
+    sourceOrg?: string;
+    targetOrg?: string;
+    fromDate?: string;
+    toDate?: string;
+    sourceObject?: string;
+    targetObject?: string;
+    extId?: string;
+    fieldMapping?: Array<{
+      source: string;
+      sourceType?: string;
+      target: string;
+      targetType?: string;
+    }>;
+    fieldMaping?: Array<{
+      source: string;
+      sourceType?: string;
+      target: string;
+      targetType?: string;
+    }>;
+  };
+}
 
 interface StatCardProps {
   icon?: string;
@@ -33,6 +77,38 @@ const StatCard: React.FC<StatCardProps> = ({ icon, title, number, change, onClic
 
 const DataSyncDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [jobs, setJobs] = useState<JobApiData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchJobs = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/readJobsSfdc');
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data: JobApiData[] = await response.json();
+      setJobs(data);
+    } catch (err) {
+      console.error('Error fetching jobs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch jobs');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const totalJobs = jobs.length;
+  const activeJobs = jobs.filter(job => job.isActive === 'true').length;
+  const inactiveJobs = jobs.filter(job => job.isActive === 'false').length;
 
   const handleCreateNewJob = () => {
     // Clear localStorage items for a fresh start
@@ -48,10 +124,32 @@ const DataSyncDashboard: React.FC = () => {
     <div className="ds-dashboard">
       {/* Statistics Dashboard */}
       <div className="ds-stats-section">
+        {error && (
+          <div className="ds-error-message" style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
+            Error loading job statistics: {error}
+          </div>
+        )}
         <div className="ds-stats-grid">
-          <StatCard title="Total Jobs" number="12" change="+2 this week" onClick={() => navigate('/data-sync/job-details')} clickable={true} />
-          <StatCard title="Active Jobs" number="8" change="" onClick={() => navigate('/data-sync/job-details')} clickable={true} />
-          <StatCard title="Inactive Jobs" number="4" change="" clickable={false} />
+          <StatCard
+            title="Total Jobs"
+            number={isLoading ? "..." : totalJobs.toString()}
+            change=""
+            onClick={() => navigate('/data-sync/job-details')}
+            clickable={true}
+          />
+          <StatCard
+            title="Active Jobs"
+            number={isLoading ? "..." : activeJobs.toString()}
+            change=""
+            onClick={() => navigate('/data-sync/job-details')}
+            clickable={true}
+          />
+          <StatCard
+            title="Inactive Jobs"
+            number={isLoading ? "..." : inactiveJobs.toString()}
+            change=""
+            clickable={false}
+          />
         </div>
       </div>
       {/* Professional Introduction */}
