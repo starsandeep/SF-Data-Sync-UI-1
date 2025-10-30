@@ -35,7 +35,9 @@ interface Step4FieldMappingProps {
 interface MappingRow {
   sourceField: string;
   sourceLabel: string;
+  sourceType: string;
   targetField: string;
+  targetType: string;
   isEditing: boolean;
   confidenceScore: number; // AI confidence score (0-100)
   isPrimaryKey: boolean; // Indicates if this field is part of primary key combination
@@ -119,7 +121,9 @@ const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): Mapp
     return {
       sourceField: mapping.source,
       sourceLabel: mapping.source, // Use original field name as label
+      sourceType: mapping.sourceType,
       targetField: mapping.target,
+      targetType: mapping.targetType,
       isEditing: false,
       confidenceScore: 100, // Default high confidence for API mappings
       isPrimaryKey: isPrimaryKeyField(mapping.source),
@@ -174,7 +178,14 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           // Update with API data while preserving any existing customizations
           return transformedMappings.map(apiRow => {
             const existingRow = prev.find(row => row.sourceField === apiRow.sourceField);
-            return existingRow ? { ...apiRow, ...existingRow } : apiRow;
+            // Ensure all properties from apiRow are preserved, then override with existing customizations
+            return existingRow ? {
+              ...apiRow,
+              ...existingRow,
+              // Ensure type fields are preserved from API
+              sourceType: apiRow.sourceType,
+              targetType: apiRow.targetType
+            } : apiRow;
           });
         });
       }
@@ -513,6 +524,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                     {row.sourceLabel}
                     {row.isPII && <span className="pii-indicator" title="Contains Personally Identifiable Information">🔒</span>}
                   </span>
+                  <span className="field-type">({row.sourceType})</span>
                   {isInvalidSource && <span className="error-indicator"> (Invalid)</span>}
                   {isEmptySource && <span className="error-indicator"> (Empty)</span>}
                 </div>
@@ -580,7 +592,10 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                         }
                       }}
                     >
-                      {row.targetField || 'Click to map'}
+                      <span className="field-name">
+                        {row.targetField || 'Click to map'}
+                      </span>
+                      {row.targetField && <span className="field-type">({row.targetType})</span>}
                       {isDuplicate && <span className="duplicate-indicator"> (Duplicate)</span>}
                     </div>
                     <div className="inline-actions">

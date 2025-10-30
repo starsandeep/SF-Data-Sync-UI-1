@@ -3723,6 +3723,23 @@
    167px | 125px | 85px | 280px | 280px | 130px
    Include in Sync | Primary Key | Mask PII | Source Field | Target Field | AI Confidence */
 
+/* Field Type Display Styling */
+.field-mapping-table .field-type {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-left: 0.5rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.field-mapping-table .field-name {
+  font-weight: 500;
+}
+
+.field-mapping-table .field-label {
+  display: flex;
+}
+
 /* Add subtle shine effect */
 .field-mapping-table .column-header:before {
   content: '';
