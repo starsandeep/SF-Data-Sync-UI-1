@@ -2,18 +2,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../components/common/Button';
-import { Header } from '../../components/layout/Header';
 import { useJobWizard } from './hooks/useJobWizard';
 import { Step1Details } from './steps/Step1Details';
 import { Step2Connections } from './steps/Step2Connections';
 import { Step3ObjectSelection } from './steps/Step3ObjectSelection';
 import { Step4FieldMapping } from './steps/Step4FieldMapping';
-import { Step6TestSchedule } from './steps/Step6TestSchedule';
+import { Step5TestSchedule } from './steps/Step5TestSchedule';
 // TODO: Import remaining steps when created
 // import { Step5Validation } from './steps/Step5Validation';
 import '../../App.css';
 
-export const JobWizard: React.FC = () => {
+interface JobWizardProps {
+  onExit?: () => void;
+}
+
+export const JobWizard: React.FC<JobWizardProps> = ({ onExit }) => {
   const navigate = useNavigate();
   const {
     currentStep,
@@ -29,11 +32,10 @@ export const JobWizard: React.FC = () => {
     connectToOrg,
     selectObject,
     updateFieldMappings,
-    validateFields,
     testJob,
     updateSchedule,
+    updateJobData,
     createJob,
-    saveAsDraft,
     clearDraft,
     setError
   } = useJobWizard();
@@ -41,13 +43,19 @@ export const JobWizard: React.FC = () => {
   const handleExit = () => {
     if (isDirty) {
       const confirmExit = window.confirm(
-        'You have unsaved changes. Would you like to save as draft before leaving?'
+        'You have unsaved changes. Are you sure you want to exit?'
       );
-      if (confirmExit) {
-        saveAsDraft();
+      if (!confirmExit) {
+        return;
       }
     }
-    navigate('/dashboard');
+
+    // Use onExit callback if provided, otherwise navigate to dashboard
+    if (onExit) {
+      onExit();
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   const handleStepClick = (stepNumber: number) => {
@@ -56,7 +64,7 @@ export const JobWizard: React.FC = () => {
     const currentStepData = steps[currentStep - 1];
 
     if (targetStep.isCompleted || stepNumber === currentStep ||
-        (stepNumber === currentStep + 1 && currentStepData.isCompleted)) {
+      (stepNumber === currentStep + 1 && currentStepData.isCompleted)) {
       goToStep(stepNumber);
     }
   };
@@ -77,20 +85,17 @@ export const JobWizard: React.FC = () => {
       case 2:
         return (
           <Step2Connections
-            sourceConnection={jobData.sourceConnection}
-            targetConnection={jobData.targetConnection}
-            onConnect={connectToOrg}
             onNext={nextStep}
             onPrevious={previousStep}
             isLoading={isLoading}
-            error={error}
           />
         );
 
       case 3:
         return (
           <Step3ObjectSelection
-            selectedObject={jobData.selectedObject}
+            sourceObject={jobData.sourceObject}
+            targetObject={jobData.targetObject}
             onSelectObject={selectObject}
             onNext={nextStep}
             onPrevious={previousStep}
@@ -104,6 +109,7 @@ export const JobWizard: React.FC = () => {
             fieldMappings={jobData.fieldMappings}
             selectedFields={jobData.selectedFields}
             syncAllFields={jobData.syncAllFields}
+            jobData={jobData}
             onUpdateMappings={updateFieldMappings}
             onNext={nextStep}
             onPrevious={previousStep}
@@ -112,40 +118,30 @@ export const JobWizard: React.FC = () => {
         );
 
       case 5:
-        // TODO: Implement Step5Validation
         return (
-          <div className="step-container">
-            <div className="step-header">
-              <h4 className="step-title">Field Validation</h4>
-              <p className="step-description">Validate field compatibility and mappings</p>
-            </div>
-            <div className="coming-soon-content">
-              <p>🚧 Step 5: Field Validation & Compatibility</p>
-              <p>This step will include:</p>
-              <ul>
-                <li>Field type compatibility checking</li>
-                <li>Validation results display</li>
-                <li>Error resolution suggestions</li>
-                <li>Re-validation capabilities</li>
-              </ul>
-            </div>
-            <div className="step-actions">
-              <Button variant="outline" onClick={previousStep}>Previous</Button>
-              <Button variant="primary" onClick={nextStep}>Continue to Testing</Button>
-            </div>
-          </div>
-        );
-
-      case 6:
-        return (
-          <Step6TestSchedule
+          <Step5TestSchedule
             jobData={jobData}
-            onTest={testJob}
             onUpdateSchedule={updateSchedule}
+            onUpdateTestResult={(testResult, tested, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime) => {
+              updateJobData({
+                testResult,
+                tested,
+                sampleSize,
+                testStartDate,
+                testStartTime,
+                testEndDate,
+                testEndTime
+              });
+            }}
             onNext={async () => {
               const result = await createJob();
               if (result.success) {
-                navigate('/jobs');
+                // Use onExit callback if provided, otherwise navigate to jobs
+                if (onExit) {
+                  onExit();
+                } else {
+                  navigate('/jobs');
+                }
               }
             }}
             onPrevious={previousStep}
@@ -164,34 +160,7 @@ export const JobWizard: React.FC = () => {
   };
 
   return (
-    <div className="job-wizard" role="main" aria-labelledby="wizard-heading">
-      <Header
-        title="Salesforce Data Synchronization Platform"
-        subtitle="Create a new data synchronization job"
-      />
-
-      {/* Wizard Header */}
-      <header className="wizard-header">
-        <h3 id="wizard-heading">Create Sync Job</h3>
-        <div className="header-actions">
-          <Button
-            variant="outline"
-            onClick={saveAsDraft}
-            disabled={!isDirty}
-            aria-label="Save current progress as draft"
-          >
-            Save Draft
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={handleExit}
-            aria-label="Exit wizard and return to dashboard"
-          >
-            Exit
-          </Button>
-        </div>
-      </header>
-
+    <div className="wizard-layout" role="main" aria-labelledby="wizard-heading">
       <div className="wizard-main">
         {/* Sidebar with Progress Stepper */}
         <aside className="wizard-sidebar" aria-label="Job creation progress">
@@ -200,9 +169,8 @@ export const JobWizard: React.FC = () => {
               {steps.map((step) => (
                 <li
                   key={step.id}
-                  className={`stepper-item ${step.isActive ? 'active' : ''} ${
-                    step.isCompleted ? 'completed' : ''
-                  } ${step.hasErrors ? 'has-errors' : ''}`}
+                  className={`stepper-item ${step.isActive ? 'active' : ''} ${step.isCompleted ? 'completed' : ''
+                    } ${step.hasErrors ? 'has-errors' : ''}`}
                   role="presentation"
                 >
                   <button
@@ -214,9 +182,8 @@ export const JobWizard: React.FC = () => {
                       step.id !== currentStep + 1
                     }
                     aria-current={step.isActive ? 'step' : undefined}
-                    aria-label={`Step ${step.id}: ${step.title}${
-                      step.isCompleted ? ' (completed)' : ''
-                    }${step.hasErrors ? ' (has errors)' : ''}`}
+                    aria-label={`Step ${step.id}: ${step.title}${step.isCompleted ? ' (completed)' : ''
+                      }${step.hasErrors ? ' (has errors)' : ''}`}
                   >
                     {step.isCompleted ? '✓' : step.id}
                   </button>
@@ -228,32 +195,24 @@ export const JobWizard: React.FC = () => {
               ))}
             </ol>
           </nav>
-
-          {/* Progress Summary */}
-          <div className="progress-summary" aria-live="polite">
-            <div className="progress-text">
-              Step {currentStep} of {steps.length}
-            </div>
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${(currentStep / steps.length) * 100}%` }}
-                aria-hidden="true"
-              />
-            </div>
-            <div className="progress-stats">
-              {steps.filter(s => s.isCompleted).length} completed
-              {steps.some(s => s.hasErrors) && (
-                <span className="error-count">
-                  • {steps.filter(s => s.hasErrors).length} with errors
-                </span>
-              )}
-            </div>
-          </div>
         </aside>
 
         {/* Main Content */}
         <main className="wizard-content">
+          {/* Wizard Header moved inside content */}
+          <header className="wizard-header">
+            <h3 id="wizard-heading"></h3>
+            <div className="header-actions">
+              <Button
+                variant="secondary"
+                onClick={handleExit}
+                aria-label="Exit wizard and return to dashboard"
+              >
+                Exit
+              </Button>
+            </div>
+          </header>
+
           {error && (
             <div className="error-banner" role="alert" aria-live="assertive">
               <button

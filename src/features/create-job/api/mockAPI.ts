@@ -4,7 +4,6 @@
 import {
   ConnectOrgRequest,
   ConnectOrgResponse,
-  ListObjectsRequest,
   ListObjectsResponse,
   GetFieldsRequest,
   GetFieldsResponse,
@@ -168,20 +167,21 @@ export const mockSalesforceAPI = {
 
     // Simulate successful connection
     const orgNames = {
-      production: 'Production Org (ABC Corp)',
-      sandbox: 'Full Sandbox (ABC Corp)',
-      developer: 'Developer Edition (ABC Corp)'
+      'stage-sandbox': 'Stage Sandbox (ABC Corp)',
+      'pre-prod-sandbox': 'Pre-Prod Sandbox (ABC Corp)',
+      'qa-sandbox': 'QA Sandbox (ABC Corp)',
+      'prod-sandbox': 'Prod Sandbox (ABC Corp)'
     };
 
     return {
       success: true,
-      orgName: orgNames[request.environment],
-      orgId: `00D${Math.random().toString(36).substr(2, 15)}`
+      orgName: orgNames[request.environment as keyof typeof orgNames],
+      orgId: `00D${Math.random().toString(36).substring(2, 17)}`
     };
   },
 
   // TODO: Integrate with backend API - GET /api/salesforce/:connectionId/objects
-  async listObjects(request: ListObjectsRequest): Promise<ListObjectsResponse> {
+  async listObjects(): Promise<ListObjectsResponse> {
     await mockDelay(1500);
 
     return {
@@ -318,7 +318,7 @@ export const mockJobsAPI = {
       };
     }
 
-    const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
 
     return {
       success: true,
@@ -330,6 +330,8 @@ export const mockJobsAPI = {
         sourceConnection: request.sourceConnection,
         targetConnection: request.targetConnection,
         selectedObject: request.object,
+        sourceObject: request.object,
+        targetObject: request.object,
         syncAllFields: Object.keys(request.mappings).length === (MOCK_FIELDS[request.object]?.length || 0),
         selectedFields: Object.keys(request.mappings),
         fieldMappings: request.mappings,

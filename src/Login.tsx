@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import { Input } from './components/common/Input'
 import { Button } from './components/common/Button'
 import { validateFieldRealTime } from './utils/validation'
+import { FEATURE_FLAGS } from './utils/constants'
 import './App.css'
 
 function Login() {
@@ -15,6 +16,13 @@ function Login() {
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  // Redirect to home if login is disabled
+  useEffect(() => {
+    if (!FEATURE_FLAGS.ENABLE_LOGIN) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   const handleFieldChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -69,17 +77,24 @@ function Login() {
   };
 
   return (
-    <div className="App">
-      <header className="App-header">
+    <div className="auth-page-layout">
+      <header className="App-header fixed-header">
         <div className="header-left">
-          <h1>SF Data Sync Pro</h1>
+          <div className="header-brand">
+            <img
+              src="/Relanto.png"
+              alt="Relanto Logo"
+              className="header-logo"
+            />
+            <h1>R-DataX</h1>
+          </div>
           <p>Login to your account</p>
         </div>
         <div className="header-buttons">
           <button className="btn btn-secondary" onClick={goBack}>Back</button>
         </div>
       </header>
-      <main className="App-main">
+      <main className="scrollable-content">
         <div className="login-container">
           <h2>Welcome Back</h2>
           {error && (

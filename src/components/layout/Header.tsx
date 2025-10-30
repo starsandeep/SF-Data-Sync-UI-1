@@ -2,6 +2,10 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../common/Button';
+import { ThemeToggle } from '../common/ThemeToggle';
+import { FEATURE_FLAGS } from '../../utils/constants';
+import { Avatar } from '@mui/material';
+import { Person } from '@mui/icons-material';
 
 interface HeaderProps {
   title?: string;
@@ -9,7 +13,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = "Salesforce Data Synchronization Platform",
+  title = "R-DataX",
   subtitle
 }) => {
   const { user, logout } = useAuth();
@@ -24,27 +28,52 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="dashboard-header">
+    <header className="dashboard-header fixed-header">
       <div className="header-left">
-        <h1
-          className="header-title clickable"
-          onClick={handleTitleClick}
-          style={{ cursor: 'pointer' }}
-          title="Go to Dashboard"
-        >
-          {title}
-        </h1>
+        <div className="header-brand" onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+          <img
+            src="/Relanto.png"
+            alt="Relanto Logo"
+            className="header-logo"
+            title="Go to Dashboard"
+          />
+          <h1
+            className="header-title clickable"
+            title="Go to Dashboard"
+          >
+            {title}
+          </h1>
+        </div>
         <p className="header-subtitle">
-          {subtitle || `Welcome back, ${user?.fullName}`}
+          {subtitle || (FEATURE_FLAGS.ENABLE_LOGIN ? `Welcome back, ${user?.fullName}` : '')}
         </p>
       </div>
       <div className="header-buttons">
-        <Button variant="outline" onClick={handleSettingsClick}>
-          Settings
-        </Button>
-        <Button variant="secondary" onClick={logout}>
-          Logout
-        </Button>
+        <div className="user-info">
+          <Avatar
+            sx={{
+              width: 40,
+              height: 40,
+              bgcolor: '#007bff',
+              color: 'white',
+              fontSize: '1rem'
+            }}
+          >
+            <Person />
+          </Avatar>
+        </div>
+        <ThemeToggle />
+        {/* Settings and Logout buttons - only show when feature flag is enabled */}
+        {FEATURE_FLAGS.ENABLE_LOGIN && (
+          <>
+            <Button variant="outline" onClick={handleSettingsClick}>
+              Settings
+            </Button>
+            <Button variant="secondary" onClick={logout}>
+              Logout
+            </Button>
+          </>
+        )}
       </div>
     </header>
   );

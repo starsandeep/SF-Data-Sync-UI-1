@@ -34,7 +34,7 @@ const meta: Meta<typeof JobWizard> = {
     layout: 'fullscreen',
     docs: {
       description: {
-        component: 'Complete 6-step job creation wizard for Salesforce data synchronization.',
+        component: 'Complete 5-Step job creation wizard for Salesforce data synchronization.',
       },
     },
   },
@@ -115,7 +115,7 @@ export const Step1WithData: StoryObj<typeof Step1Details> = {
 export const Step1Loading: StoryObj<typeof Step1Details> = {
   ...step1Meta,
   args: {
-    jobName: 'Test Job',
+    jobName: 'Simulate',
     jobDescription: '',
     onUpdate: step1Meta.args!.onUpdate,
     onNext: step1Meta.args!.onNext,

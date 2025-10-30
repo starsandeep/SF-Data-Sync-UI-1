@@ -1,23 +1,12 @@
 // Types and interfaces for the Job Creation Wizard
 
-export type Environment = 'production' | 'sandbox' | 'developer';
-
 export type ScheduleOption = 'manual' | '30min' | '1hour' | '2hours' | '6hours' | '12hours' | 'daily' | 'weekly' | '2weeks' | 'monthly' | 'custom';
+
+export type Environment = 'stage-sandbox' | 'pre-prod-sandbox' | 'qa-sandbox' | 'prod-sandbox';
 
 export type ValidationStatus = 'valid' | 'warning' | 'incompatible';
 
 export type TransformationType = 'none' | 'script' | 'builtin';
-
-export interface ConnectionData {
-  username: string;
-  password: string;
-  securityToken?: string;
-  environment: Environment;
-  orgName?: string;
-  isConnected?: boolean;
-  connectionTimestamp?: string;
-  connectionError?: string;
-}
 
 export interface SalesforceObject {
   name: string;
@@ -54,6 +43,15 @@ export interface FieldMapping {
   [sourceField: string]: string; // source field -> target field
 }
 
+export interface FieldMappingMetadata {
+  [sourceField: string]: {
+    includeInSync: boolean;
+    isPrimaryKey: boolean;
+    maskPII: boolean;
+    isPII: boolean;
+  };
+}
+
 export interface Transformation {
   type: TransformationType;
   script?: string;
@@ -85,23 +83,51 @@ export interface TestResult {
   sampleData?: any[];
 }
 
+export interface ConnectionData {
+  username: string;
+  password: string;
+  securityToken: string;
+  environment: Environment;
+  isConnected: boolean;
+  orgName?: string;
+  connectionTimestamp?: string;
+  connectionError?: string;
+}
+
 export interface JobData {
   id?: string;
   name: string;
   description?: string;
-  sourceConnection: ConnectionData;
-  targetConnection: ConnectionData;
-  selectedObject: string;
+  selectedObject: string; // Keep for backward compatibility
+  sourceObject: string;
+  targetObject: string;
+  sourceOrg?: string;
+  targetOrg?: string;
   syncAllFields: boolean;
   selectedFields: string[];
   fieldMappings: FieldMapping;
+  fieldMappingMetadata: FieldMappingMetadata;
   transformations: Record<string, Transformation>;
+  sourceConnection: ConnectionData;
+  targetConnection: ConnectionData;
+
+  // Simulate Schedule
+  testStartDate?: string;
+  testStartTime?: string;
+  testEndDate?: string;
+  testEndTime?: string;
+  sampleSize?: number;
+  tested: boolean;
+  testResult?: TestResult;
+
+  // Main Job Schedule
   schedule: ScheduleOption;
   customCron?: string;
   startDate?: string;
   startTime?: string;
-  tested: boolean;
-  testResult?: TestResult;
+  endDate?: string;
+  endTime?: string;
+
   validationResults?: FieldValidationResult[];
 }
 
@@ -128,7 +154,7 @@ export interface WizardState {
 export interface ConnectOrgRequest {
   username: string;
   password: string;
-  securityToken?: string;
+  securityToken: string;
   environment: Environment;
   type: 'source' | 'target';
 }
@@ -162,8 +188,6 @@ export interface GetFieldsResponse {
 }
 
 export interface ValidateFieldsRequest {
-  sourceOrg: ConnectionData;
-  targetOrg: ConnectionData;
   object: string;
   mappings: FieldMapping;
   transformations: Record<string, Transformation>;
@@ -231,9 +255,3 @@ export const SCHEDULE_OPTIONS = [
   { value: 'custom', label: 'Custom (Cron)', description: 'Custom cron expression' }
 ] as const;
 
-// Environment options
-export const ENVIRONMENT_OPTIONS = [
-  { value: 'production', label: 'Production', description: 'Live production environment' },
-  { value: 'sandbox', label: 'Sandbox', description: 'Testing/staging environment' },
-  { value: 'developer', label: 'Developer', description: 'Development environment' }
-] as const;

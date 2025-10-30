@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/common/Button';
-import { Header } from '../components/layout/Header';
 import '../App.css';
 
 // Mock data for demonstration
@@ -61,10 +60,7 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="dashboard">
-      <Header />
-
-      <main className="dashboard-main">
+      <main className="scrollable-content">
         <div className="dashboard-container">
           {/* Stats Cards */}
           <div className="stats-grid">
@@ -81,15 +77,13 @@ const Dashboard: React.FC = () => {
               <div className="stat-content">
                 <h3>Active Jobs</h3>
                 <p className="stat-number">8</p>
-                <span className="stat-change">Running smoothly</span>
               </div>
             </div>
             <div className="stat-card">
               <div className="stat-icon">⚠️</div>
               <div className="stat-content">
-                <h3>Failed Jobs</h3>
-                <p className="stat-number">1</p>
-                <span className="stat-change">Needs attention</span>
+                <h3>Inactive Jobs</h3>
+                <p className="stat-number">4</p>
               </div>
             </div>
           </div>
@@ -120,6 +114,14 @@ const Dashboard: React.FC = () => {
                 onClick={() => console.log('View reports')}
               >
                 View Reports
+              </Button>
+
+              <Button
+                variant="outline"
+                size="large"
+                onClick={() => navigate('/data-cleansing')}
+              >
+                Data Cleansing
               </Button>
             </div>
           </div>
@@ -161,7 +163,7 @@ const Dashboard: React.FC = () => {
                           <Button
                             variant="outline"
                             size="small"
-                            onClick={() => console.log(`View job ${job.id}`)}
+                            onClick={() => navigate('/data-sync/job-details')}
                           >
                             View
                           </Button>
@@ -186,7 +188,7 @@ const Dashboard: React.FC = () => {
             <h3>🚀 Coming Soon</h3>
             <div className="feature-preview">
               <ul>
-                <li>6-Step Job Creation Wizard</li>
+                <li>5-Step Job Creation Wizard</li>
                 <li>Real-time Job Monitoring</li>
                 <li>Salesforce Connection Management</li>
                 <li>Advanced Field Mapping</li>
@@ -197,7 +199,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </main>
-    </div>
   );
 };
 

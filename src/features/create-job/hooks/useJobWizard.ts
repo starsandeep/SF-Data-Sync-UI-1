@@ -7,6 +7,7 @@ import {
   ConnectOrgRequest,
   ConnectionData,
   FieldMapping,
+  FieldMappingMetadata,
   Transformation,
   Environment,
   ScheduleOption
@@ -20,12 +21,11 @@ const trackEvent = (event: string, data?: any) => {
 };
 
 const WIZARD_STEPS: WizardStep[] = [
-  { id: 1, title: 'Job Details', description: 'Basic job information', icon: 'info', isCompleted: false, isActive: true, hasErrors: false },
+  { id: 1, title: 'Data Sync Config', description: 'Sync job information', icon: 'info', isCompleted: false, isActive: true, hasErrors: false },
   { id: 2, title: 'Connections', description: 'Source and target orgs', icon: 'link', isCompleted: false, isActive: false, hasErrors: false },
-  { id: 3, title: 'Object Selection', description: 'Choose Salesforce object', icon: 'database', isCompleted: false, isActive: false, hasErrors: false },
+  { id: 3, title: 'Object Selection', description: 'Choose Object', icon: 'database', isCompleted: false, isActive: false, hasErrors: false },
   { id: 4, title: 'Field Mapping', description: 'Map source to target fields', icon: 'arrow-right', isCompleted: false, isActive: false, hasErrors: false },
-  { id: 5, title: 'Validation', description: 'Validate field compatibility', icon: 'check-circle', isCompleted: false, isActive: false, hasErrors: false },
-  { id: 6, title: 'Test & Schedule', description: 'Test job and set schedule', icon: 'play', isCompleted: false, isActive: false, hasErrors: false }
+  { id: 5, title: 'Simulate', description: 'Simulate and set schedule', icon: 'play', isCompleted: false, isActive: false, hasErrors: false }
 ];
 
 const INITIAL_JOB_DATA: JobData = {
@@ -35,22 +35,25 @@ const INITIAL_JOB_DATA: JobData = {
     username: '',
     password: '',
     securityToken: '',
-    environment: 'production' as Environment,
+    environment: 'stage-sandbox' as Environment,
     isConnected: false
   },
   targetConnection: {
     username: '',
     password: '',
     securityToken: '',
-    environment: 'sandbox' as Environment,
+    environment: 'pre-prod-sandbox' as Environment,
     isConnected: false
   },
-  selectedObject: '',
+  selectedObject: '', // Keep for backward compatibility
+  sourceObject: '',
+  targetObject: '',
   syncAllFields: true,
   selectedFields: [],
   fieldMappings: {},
+  fieldMappingMetadata: {},
   transformations: {},
-  schedule: 'manual' as ScheduleOption,
+  schedule: '6hours' as ScheduleOption,
   tested: false
 };
 
@@ -90,15 +93,6 @@ export const useJobWizard = () => {
     };
   });
 
-  // Save draft to localStorage whenever jobData changes
-  useEffect(() => {
-    if (state.isDirty) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        currentStep: state.currentStep,
-        jobData: state.jobData
-      }));
-    }
-  }, [state.jobData, state.currentStep, state.isDirty]);
 
   const updateJobData = useCallback((updates: Partial<JobData>) => {
     setState(prev => ({
@@ -172,7 +166,7 @@ export const useJobWizard = () => {
         username: '',
         password: '',
         securityToken: '',
-        environment: connectionData.environment || (type === 'source' ? 'production' : 'sandbox'),
+        environment: connectionData.environment || (type === 'source' ? 'stage-sandbox' : 'pre-prod-sandbox'),
         isConnected: false
       };
 
@@ -244,35 +238,47 @@ export const useJobWizard = () => {
     }
   }, [state.jobData, updateJobData, markStepCompleted, setLoading, setError]);
 
-  // Step 3: Select Salesforce Object
-  const selectObject = useCallback(async (objectName: string) => {
-    updateJobData({ selectedObject: objectName });
-    markStepCompleted(3, false);
+  // Step 3: Select Salesforce Objects
+  const selectObject = useCallback(async (objectName: string, type: 'source' | 'target') => {
+    const updates = type === 'source'
+      ? { sourceObject: objectName, selectedObject: objectName } // Keep selectedObject in sync for backward compatibility
+      : { targetObject: objectName };
+
+    updateJobData(updates);
+
+    // Check if both objects are selected to mark step as completed
+    const currentData = state.jobData;
+    const sourceSelected = type === 'source' ? objectName : currentData.sourceObject;
+    const targetSelected = type === 'target' ? objectName : currentData.targetObject;
+    const bothSelected = sourceSelected && targetSelected;
+
+    markStepCompleted(3, !bothSelected);
 
     // Pre-fetch fields for the selected object
     try {
       const fieldsResponse = await mockSalesforceAPI.getFields({
-        connectionId: 'source', // In real implementation, use actual connection ID
+        connectionId: type, // In real implementation, use actual connection ID
         objectName
       });
 
       if (fieldsResponse.success) {
         // Cache fields for later use
         // In a real implementation, you might want to store this in a separate state or context
-        trackEvent('wizard.object_selected', { objectName, fieldCount: fieldsResponse.fields.length });
+        trackEvent('wizard.object_selected', { objectName, type, fieldCount: fieldsResponse.fields.length });
       }
     } catch (error) {
       console.warn('Failed to pre-fetch fields:', error);
     }
-  }, [updateJobData, markStepCompleted]);
+  }, [updateJobData, markStepCompleted, state.jobData]);
 
   // Step 4: Configure Field Mappings
-  const updateFieldMappings = useCallback((mappings: FieldMapping, transformations: Record<string, Transformation>, selectedFields: string[], syncAllFields: boolean) => {
+  const updateFieldMappings = useCallback((mappings: FieldMapping, transformations: Record<string, Transformation>, selectedFields: string[], syncAllFields: boolean, metadata?: FieldMappingMetadata) => {
     updateJobData({
       fieldMappings: mappings,
       transformations,
       selectedFields,
-      syncAllFields
+      syncAllFields,
+      fieldMappingMetadata: metadata || {}
     });
 
     const hasRequiredMappings = Object.keys(mappings).length > 0;
@@ -285,60 +291,8 @@ export const useJobWizard = () => {
     });
   }, [updateJobData, markStepCompleted]);
 
-  // Step 5: Validate Fields
-  const validateFields = useCallback(async () => {
-    if (!state.jobData.selectedObject || Object.keys(state.jobData.fieldMappings).length === 0) {
-      setError('Please select an object and configure field mappings first');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await mockSalesforceAPI.validateFields({
-        sourceOrg: state.jobData.sourceConnection,
-        targetOrg: state.jobData.targetConnection,
-        object: state.jobData.selectedObject,
-        mappings: state.jobData.fieldMappings,
-        transformations: state.jobData.transformations
-      });
-
-      if (response.success) {
-        updateJobData({ validationResults: response.results });
-
-        const hasErrors = response.results.some(result => result.status === 'incompatible');
-        const hasWarnings = response.results.some(result => result.status === 'warning');
-
-        markStepCompleted(5, hasErrors);
-
-        trackEvent('wizard.validation_completed', {
-          totalFields: response.results.length,
-          validFields: response.results.filter(r => r.status === 'valid').length,
-          warningFields: response.results.filter(r => r.status === 'warning').length,
-          errorFields: response.results.filter(r => r.status === 'incompatible').length
-        });
-
-        if (hasErrors) {
-          setError('Some field mappings are incompatible. Please review and fix the errors.');
-        } else if (hasWarnings) {
-          setError('Some field mappings have warnings. Please review before proceeding.');
-        }
-      } else {
-        setError(response.error || 'Validation failed');
-        markStepCompleted(5, true);
-      }
-    } catch (error) {
-      console.error('Validation error:', error);
-      setError('Network error occurred during validation');
-      markStepCompleted(5, true);
-    } finally {
-      setLoading(false);
-    }
-  }, [state.jobData, updateJobData, markStepCompleted, setLoading, setError]);
-
-  // Step 6: Test Job
-  const testJob = useCallback(async (sampleSize: number = 100) => {
+  // Step 5: Simulate
+  const testJob = useCallback(async (sampleSize: number = 100, testStartDate?: string, testStartTime?: string, testEndDate?: string, testEndTime?: string) => {
     setLoading(true);
     setError(null);
 
@@ -350,8 +304,16 @@ export const useJobWizard = () => {
       });
 
       if (response.success) {
-        updateJobData({ testResult: response.result, tested: true });
-        markStepCompleted(6, !response.result.success);
+        updateJobData({
+          testResult: response.result,
+          tested: true,
+          sampleSize,
+          testStartDate,
+          testStartTime,
+          testEndDate,
+          testEndTime
+        });
+        markStepCompleted(5, !response.result.success);
 
         trackEvent('wizard.job_tested', {
           success: response.result.success,
@@ -365,26 +327,28 @@ export const useJobWizard = () => {
         }
       } else {
         setError(response.error || 'Job test failed');
-        markStepCompleted(6, true);
+        markStepCompleted(5, true);
       }
     } catch (error) {
       console.error('Test error:', error);
       setError('Network error occurred during job test');
-      markStepCompleted(6, true);
+      markStepCompleted(5, true);
     } finally {
       setLoading(false);
     }
   }, [state.jobData, updateJobData, markStepCompleted, setLoading, setError]);
 
-  // Step 6: Update Schedule
-  const updateSchedule = useCallback((schedule: ScheduleOption, startDate?: string, startTime?: string, customCron?: string) => {
+  // Step 5: Update Schedule
+  const updateSchedule = useCallback((schedule: ScheduleOption, startDate?: string, startTime?: string, customCron?: string, endDate?: string, endTime?: string) => {
     updateJobData({
       schedule,
       startDate,
       startTime,
+      endDate,
+      endTime,
       customCron
     });
-    markStepCompleted(6, false);
+    markStepCompleted(5, false);
   }, [updateJobData, markStepCompleted]);
 
   // Final: Create Job
@@ -432,14 +396,6 @@ export const useJobWizard = () => {
     }
   }, [state.jobData, setLoading, setError]);
 
-  // Save as draft
-  const saveAsDraft = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      currentStep: state.currentStep,
-      jobData: state.jobData
-    }));
-    trackEvent('wizard.saved_as_draft', { currentStep: state.currentStep });
-  }, [state.currentStep, state.jobData]);
 
   // Clear draft
   const clearDraft = useCallback(() => {
@@ -473,11 +429,9 @@ export const useJobWizard = () => {
     connectToOrg,
     selectObject,
     updateFieldMappings,
-    validateFields,
     testJob,
     updateSchedule,
     createJob,
-    saveAsDraft,
     clearDraft,
 
     // Utilities

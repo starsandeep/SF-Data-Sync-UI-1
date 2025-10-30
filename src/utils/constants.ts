@@ -1,5 +1,10 @@
 // Application constants
 
+// Feature flags
+export const FEATURE_FLAGS = {
+  ENABLE_LOGIN: false, // Set to true to enable login/signup functionality
+} as const;
+
 // Session and authentication
 export const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 export const SESSION_STORAGE_KEY = 'sf_sync_session';
@@ -53,7 +58,7 @@ export const WIZARD_STEPS = [
   { id: 3, label: 'Objects', icon: 'database', route: '/jobs/create/objects' },
   { id: 4, label: 'Field Mapping', icon: 'mapping', route: '/jobs/create/mapping' },
   { id: 5, label: 'Validation', icon: 'check', route: '/jobs/create/validation' },
-  { id: 6, label: 'Test & Schedule', icon: 'calendar', route: '/jobs/create/schedule' }
+  { id: 6, label: 'Simulate', icon: 'calendar', route: '/jobs/create/schedule' }
 ];
 
 // Validation statuses

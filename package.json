@@ -1,7 +1,7 @@
 {
-  "name": "sf-data-sync-pro",
+  "name": "r-data-x",
   "version": "1.0.0",
-  "description": "SF Data Sync Pro - A React application for Salesforce data synchronization",
+  "description": "R-DataX - A React application for data management and synchronization",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,12 @@
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
     "react": "^18.2.0",
+    "react-circular-progressbar": "^2.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^7.9.1"
   },
@@ -28,7 +33,7 @@
   },
   "keywords": [
     "react",
-    "salesforce",
+    "data-management",
     "data-sync",
     "typescript"
   ],
