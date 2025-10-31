@@ -114,16 +114,39 @@ const fetchFieldMappings = async (objectName: string): Promise<APIFieldMapping[]
 
 // Note: Field names are displayed exactly as received from API
 
+// Function to detect if a field should be treated as Picklist based on name patterns
+// Example: "Deal_Status__c" with type "String" will be converted to "Picklist"
+const isPicklistField = (fieldName: string): boolean => {
+  const picklistPatterns = [
+    /.*Status.*__c$/i,     // Fields ending with Status__c (e.g., Deal_Status__c, Account_Status__c)
+  ];
+
+  return picklistPatterns.some(pattern => pattern.test(fieldName));
+};
+
+// Function to convert String types to Picklist for fields that should be picklists
+const convertFieldType = (fieldName: string, fieldType: string): string => {
+  if (fieldType === 'String' && isPicklistField(fieldName)) {
+    return 'Picklist';
+  }
+  return fieldType;
+};
+
 // Transform API response to MappingRow format
 const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): MappingRow[] => {
   return apiMappings.map(mapping => {
     const isPII = isPIIField(mapping.source);
+
+    // Convert String types to Picklist for fields that match picklist patterns
+    const convertedSourceType = convertFieldType(mapping.source, mapping.sourceType);
+    const convertedTargetType = convertFieldType(mapping.target, mapping.targetType);
+
     return {
       sourceField: mapping.source,
       sourceLabel: mapping.source, // Use original field name as label
-      sourceType: mapping.sourceType,
+      sourceType: convertedSourceType,
       targetField: mapping.target,
-      targetType: mapping.targetType,
+      targetType: convertedTargetType,
       isEditing: false,
       confidenceScore: 100, // Default high confidence for API mappings
       isPrimaryKey: isPrimaryKeyField(mapping.source),
