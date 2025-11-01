@@ -692,6 +692,48 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     const totalMappings = targetFields.length;
     const maxRecommendedMappings = 50; // Salesforce API limits
 
+    // Helper function to check if a row has errors (defined within useMemo to avoid circular dependency)
+    const hasRowErrors = (row: MappingRow): boolean => {
+      const sourceField = row.sourceField;
+      const targetField = row.targetField;
+
+      // Check for critical validation errors
+      const isDuplicate = duplicateTargetFields.has(targetField) && targetField !== '';
+      const isInvalidSource = invalidSourceFields.some((f: any) => f.sourceField === sourceField);
+      const isEmptySource = !sourceField || sourceField.trim() === '';
+
+      if (isDuplicate || isInvalidSource || isEmptySource) {
+        return true;
+      }
+
+      // Check for picklist errors
+      const hasPicklistError = picklistMismatches.some(m =>
+        m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
+      );
+
+      if (hasPicklistError) {
+        return true;
+      }
+
+      // Check for character limit errors
+      const hasCharacterLimitError = characterLimitMismatches.some(m =>
+        m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
+      );
+
+      if (hasCharacterLimitError) {
+        return true;
+      }
+
+      return false;
+    };
+
+    // Check for rows with errors that are included in sync
+    const syncIncludedErrorRows = mappingRows.filter(row =>
+      row.includeInSync && hasRowErrors(row)
+    );
+
+    const hasSyncIncludedErrors = syncIncludedErrorRows.length > 0;
+
     return {
       duplicateTargetFields,
       hasAnyMapping,
@@ -700,13 +742,16 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       unmappedFields,
       totalMappings,
       maxRecommendedMappings,
+      syncIncludedErrorRows,
+      hasSyncIncludedErrors,
       isValid: duplicateTargetFields.size === 0 &&
                hasAnyMapping &&
                emptySourceFields.length === 0 &&
                invalidSourceFields.length === 0 &&
-               totalMappings <= maxRecommendedMappings
+               totalMappings <= maxRecommendedMappings &&
+               !hasSyncIncludedErrors
     };
-  }, [mappingRows]);
+  }, [mappingRows, picklistMismatches, characterLimitMismatches]);
 
   const handleEditStart = useCallback((sourceField: string, currentTargetField: string) => {
     setEditingField(sourceField);
@@ -841,6 +886,50 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       )
     );
   }, []);
+
+  // Helper function to determine issue severity for a row
+  const getRowIssueClass = useCallback((row: MappingRow): string => {
+    const sourceField = row.sourceField;
+    const targetField = row.targetField;
+
+    // Check for critical validation errors
+    const isDuplicate = validationResults.duplicateTargetFields.has(targetField) && targetField !== '';
+    const isInvalidSource = validationResults.invalidSourceFields.some((f: any) => f.sourceField === sourceField);
+    const isEmptySource = !sourceField || sourceField.trim() === '';
+
+    // Check for picklist errors
+    const hasPicklistError = picklistMismatches.some(m =>
+      m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
+    );
+
+    // Check for character limit errors
+    const hasCharacterLimitError = characterLimitMismatches.some(m =>
+      m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
+    );
+
+    if (isDuplicate || isInvalidSource || isEmptySource || hasPicklistError || hasCharacterLimitError) {
+      return 'has-error';
+    }
+
+    // Check for warnings
+    const hasPicklistWarning = picklistMismatches.some(m =>
+      m.sourceField === sourceField && m.targetField === targetField && m.severity === 'warning'
+    );
+
+    const hasCharacterLimitWarning = characterLimitMismatches.some(m =>
+      m.sourceField === sourceField && m.targetField === targetField && m.severity === 'warning'
+    );
+
+    const hasMissingFieldWarning = missingFieldMismatches.some(m =>
+      m.sourceField === sourceField && m.severity === 'warning'
+    );
+
+    if (hasPicklistWarning || hasCharacterLimitWarning || hasMissingFieldWarning) {
+      return 'has-warning';
+    }
+
+    return '';
+  }, [validationResults, picklistMismatches, characterLimitMismatches, missingFieldMismatches]);
 
   // Convert mismatches to Issues format for CompactFieldMappingIssues
   const convertToIssues = useCallback((): Issue[] => {
@@ -1007,11 +1096,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           const isDuplicate = validationResults.duplicateTargetFields.has(row.targetField) && row.targetField !== '';
           const isInvalidSource = validationResults.invalidSourceFields.some(f => f.sourceField === row.sourceField);
           const isEmptySource = !row.sourceField || row.sourceField.trim() === '';
+          const issueClass = getRowIssueClass(row);
 
           return (
             <div
               key={row.sourceField}
-              className={`mapping-row ${row.isEditing ? 'editing' : ''} ${isDuplicate ? 'duplicate' : ''} ${isInvalidSource ? 'invalid-source' : ''} ${isEmptySource ? 'empty-source' : ''}`}
+              className={`mapping-row ${row.isEditing ? 'editing' : ''} ${isDuplicate ? 'duplicate' : ''} ${isInvalidSource ? 'invalid-source' : ''} ${isEmptySource ? 'empty-source' : ''} ${issueClass}`}
             >
               <div className="sync-inclusion-cell">
                 <input
@@ -1170,6 +1260,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       {validationResults.totalMappings > validationResults.maxRecommendedMappings && (
         <div className="warning-message" role="alert">
           <strong>Too many mappings:</strong> Consider reducing the number of field mappings for better performance.
+        </div>
+      )}
+
+      {validationResults.hasSyncIncludedErrors && (
+        <div className="error-message" role="alert">
+          <strong>Critical field errors detected:</strong> Fields with errors that are included in sync must be resolved before simulation. Please fix the highlighted field issues or exclude them from sync.
         </div>
       )}
 
