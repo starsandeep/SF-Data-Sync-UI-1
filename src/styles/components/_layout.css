@@ -1,0 +1,48 @@
+/* App Layout Components */
+.App {
+  text-align: center;
+  /* min-height: 100vh; */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  /* display: flex; */
+  /* flex-direction: column; */
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.App-header {
+  padding: 1rem;
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.header-left {
+  text-align: left;
+}
+
+.App-header h1 {
+  font-size: 26px;
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-shadow: none;
+  transition: color 0.3s ease;
+}
+
+.App-header p {
+  font-size: 1.2rem;
+  margin: 0.5rem 0 0 0;
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
+}
+
+.App-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bg-primary);
+}
