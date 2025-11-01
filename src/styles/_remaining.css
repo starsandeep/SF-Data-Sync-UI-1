@@ -451,7 +451,7 @@
 }
 
 .btn-medium {
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1.17648;
   padding: 5px 15px;
   min-width: 30px;
@@ -7954,8 +7954,8 @@
 .ds-schedule-layout {
   display: flex;
   flex-direction: column;
-  gap: var(--ds-spacing-lg);
-  margin-bottom: var(--ds-spacing-lg);
+  gap: var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-md);
 }
 
 /* Section Cards */
@@ -7963,7 +7963,7 @@
   background: var(--bg-card);
   border: 1px solid var(--border-primary);
   border-radius: var(--ds-radius-lg);
-  padding: var(--ds-spacing-lg);
+  padding: var(--ds-spacing-md);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
 }
@@ -7977,7 +7977,7 @@
 .ds-schedule-section-header {
   display: flex;
   align-items: flex-start;
-  margin-bottom: var(--ds-spacing-lg);
+  margin-bottom: var(--ds-spacing-md);
   gap: var(--ds-spacing-sm);
 }
 
@@ -8007,7 +8007,7 @@
 /* Test Duration Grid */
 .ds-schedule-test-duration {
   margin-bottom: var(--ds-spacing-sm);
-  padding: var(--ds-spacing-md);
+  padding: var(--ds-spacing-sm);
   background: var(--bg-primary);
   border: 1px solid var(--border-secondary);
   border-radius: var(--ds-radius-sm);
@@ -8092,7 +8092,6 @@
   display: flex;
   align-items: flex-end;
   gap: var(--ds-spacing-md);
-  margin-bottom: var(--ds-spacing-md);
 }
 
 .ds-schedule-sample-control {
@@ -8180,7 +8179,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--ds-spacing-xs);
-  margin-bottom: var(--ds-spacing-lg);
+  margin-bottom: var(--ds-spacing-sm);
 }
 
 .ds-schedule-cron-help {
@@ -8193,14 +8192,14 @@
 /* Job Duration */
 .ds-schedule-job-duration {
   border-top: 1px solid var(--border-secondary);
-  padding-top: var(--ds-spacing-lg);
+  padding-top: var(--ds-spacing-sm);
 }
 
 .ds-schedule-duration-header {
   display: flex;
   align-items: center;
   gap: var(--ds-spacing-xs);
-  margin-bottom: var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-sm);
 }
 
 .ds-schedule-duration-icon {
@@ -8225,7 +8224,7 @@
   display: flex;
   flex-direction: row;
   gap: var(--ds-spacing-md);
-  padding: var(--ds-spacing-md);
+  padding: var(--ds-spacing-sm);
   background: var(--bg-primary);
   border: 1px solid var(--border-secondary);
   border-radius: var(--ds-radius-sm);
@@ -8414,7 +8413,7 @@
   display: flex;
   align-items: flex-start;
   gap: var(--ds-spacing-md);
-  padding-top: var(--ds-spacing-lg);
+  padding-top: var(--ds-spacing-sm);
   border-top: 1px solid var(--border-secondary);
 }
 

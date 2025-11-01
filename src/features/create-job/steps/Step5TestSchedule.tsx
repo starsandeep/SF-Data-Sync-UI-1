@@ -674,6 +674,134 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
           </div>
         </div>
 
+        <div className="ds-schedule-test-section">
+          <div className="ds-schedule-section-card">
+            <div className="ds-schedule-section-header">
+              <div className="ds-schedule-section-icon">🏃</div>
+              <div className="ds-schedule-section-info">
+                <h3 className="ds-schedule-section-title">One Time Run</h3>
+                <p className="ds-schedule-section-subtitle">
+                  This will run the data sync job once at the specified time. It will take 1 or 2 records to test.
+                </p>
+              </div>
+            </div>
+
+            {/* Test Duration - Inline Layout */}
+            <div className="ds-schedule-test-duration">
+              <div className="ds-schedule-duration-grid">
+                <div className="ds-schedule-grid-item">
+                  <label className="ds-schedule-grid-label">
+                    <span className="ds-schedule-group-icon">🚀</span>
+                    Start
+                  </label>
+                  <div className="ds-schedule-grid-controls">
+                    <input
+                      type="date"
+                      className="ds-schedule-date-input"
+                      value={testStartDate}
+                      min={minDate}
+                      onChange={(e) => setTestStartDate(e.target.value)}
+                      required
+                    />
+                    <select
+                      className="ds-schedule-time-select"
+                      value={testStartTime}
+                      onChange={(e) => setTestStartTime(e.target.value)}
+                      required
+                    >
+                      {timeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="ds-schedule-grid-item">
+                  <label className="ds-schedule-grid-label">
+                    <span className="ds-schedule-group-icon">🏁</span>
+                    End
+                  </label>
+                  <div className="ds-schedule-grid-controls">
+                    <input
+                      type="date"
+                      className="ds-schedule-date-input"
+                      value={testEndDate}
+                      min={testStartDate || minDate}
+                      onChange={(e) => setTestEndDate(e.target.value)}
+                      required
+                    />
+                    <select
+                      className="ds-schedule-time-select"
+                      value={testEndTime}
+                      onChange={(e) => setTestEndTime(e.target.value)}
+                      required
+                    >
+                      {timeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Validation Errors */}
+              {!isTestEndDateTimeValid && testEndDate && testEndTime && testStartDate && testStartTime && (
+                <div className="ds-schedule-error-message">
+                  Test end time must be after start time
+                </div>
+              )}
+            </div>
+
+            {/* Test Controls - Compact */}
+            <div className="ds-schedule-test-controls">
+              <div className="ds-schedule-sample-control">
+              </div>
+              <Button
+                variant="primary"
+                onClick={handleTestJob}
+                disabled={isTestRunning || isLoading || !isTestDateTimeValid}
+                loading={isTestRunning}
+                className="ds-schedule-test-button"
+              >
+                {isTestRunning ? 'Running...' : '1 Time Run'}
+              </Button>
+            </div>
+
+            {/* Test Results - Compact */}
+            {testCompleted && jobData.testResult && (
+              <div className="ds-schedule-test-results">
+                <div className="ds-schedule-result-header">
+                  <span className="ds-schedule-result-icon">
+                    {jobData.testResult.success ? '✅' : '⚠️'}
+                  </span>
+                  <span className="ds-schedule-result-status">
+                    {jobData.testResult.success ? 'Test Successful' : 'Issues Found'}
+                  </span>
+                </div>
+                <div className="ds-schedule-result-stats">
+                  <div className="ds-schedule-stat">
+                    <span className="ds-schedule-stat-value">{jobData.testResult.recordsProcessed}</span>
+                    <span className="ds-schedule-stat-label">Processed</span>
+                  </div>
+                  <div className="ds-schedule-stat success">
+                    <span className="ds-schedule-stat-value">{jobData.testResult.recordsSucceeded}</span>
+                    <span className="ds-schedule-stat-label">Success</span>
+                  </div>
+                  {jobData.testResult.recordsFailed > 0 && (
+                    <div className="ds-schedule-stat error">
+                      <span className="ds-schedule-stat-value">{jobData.testResult.recordsFailed}</span>
+                      <span className="ds-schedule-stat-label">Failed</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Schedule Section */}
         <div className="ds-schedule-schedule-section">
           <div className="ds-schedule-section-card">
@@ -681,9 +809,6 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               <div className="ds-schedule-section-icon">⏰</div>
               <div className="ds-schedule-section-info">
                 <h3 className="ds-schedule-section-title">Schedule</h3>
-                <p className="ds-schedule-section-subtitle">
-                  Choose how often to run this job
-                </p>
               </div>
             </div>
 
