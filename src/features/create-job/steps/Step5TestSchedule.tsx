@@ -540,7 +540,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               <div className="ds-schedule-section-info">
                 <h3 className="ds-schedule-section-title">Simulate</h3>
                 <p className="ds-schedule-section-subtitle">
-                  Simulate sample records to verify data sync
+                  Run a test sync with sample records to validate your configuration before the full sync.
                 </p>
               </div>
             </div>
@@ -615,21 +615,8 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
             </div>
 
             {/* Test Controls - Compact */}
-            <div className="ds-schedule-test-controls">
+            <div className="ds-schedule-test-controls" style={{ marginTop: '1rem' }}>
               <div className="ds-schedule-sample-control">
-                <label className="ds-schedule-control-label">Sample Size</label>
-                <select
-                  className="ds-schedule-sample-select"
-                  value={sampleSize}
-                  onChange={(e) => setSampleSize(parseInt(e.target.value) || 0)}
-                  disabled={isTestRunning}
-                >
-                  <option value={50}>50 records</option>
-                  <option value={100}>100 records</option>
-                  <option value={200}>200 records</option>
-                  <option value={500}>500 records</option>
-                  <option value={1000}>1000 records</option>
-                </select>
               </div>
               <Button
                 variant="primary"
@@ -681,7 +668,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               <div className="ds-schedule-section-info">
                 <h3 className="ds-schedule-section-title">One Time Run</h3>
                 <p className="ds-schedule-section-subtitle">
-                  This will run the data sync job once at the specified time. It will take 1 or 2 records to test.
+                  This will run the data sync job once at the specified time.
                 </p>
               </div>
             </div>
@@ -758,6 +745,19 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
             {/* Test Controls - Compact */}
             <div className="ds-schedule-test-controls">
               <div className="ds-schedule-sample-control">
+                 <label className="ds-schedule-control-label">Sample Size</label>
+                <select
+                  className="ds-schedule-sample-select"
+                  value={sampleSize}
+                  onChange={(e) => setSampleSize(parseInt(e.target.value) || 0)}
+                  disabled={isTestRunning}
+                >
+                  <option value={50}>50 records</option>
+                  <option value={100}>100 records</option>
+                  <option value={200}>200 records</option>
+                  <option value={500}>500 records</option>
+                  <option value={1000}>1000 records</option>
+                </select>
               </div>
               <Button
                 variant="primary"

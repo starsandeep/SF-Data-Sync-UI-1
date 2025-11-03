@@ -1193,8 +1193,8 @@
 
 .step-header {
   text-align: left;
-  margin-bottom: var(--ds-spacing-md);
-  padding-bottom: var(--ds-spacing-md);
+  margin-bottom: var(--ds-spacing-sm);
+  padding-bottom: var(--ds-spacing-sm);
   border-bottom: 1px solid var(--border-secondary);
 }
 
