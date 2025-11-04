@@ -69,6 +69,9 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
 
   const [testCompleted, setTestCompleted] = useState<boolean>(false);
   const [isTestRunning, setIsTestRunning] = useState<boolean>(false);
+  const [isOneTimeRunning, setIsOneTimeRunning] = useState<boolean>(false);
+  const [simulationCompleted, setSimulationCompleted] = useState<boolean>(false);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
 
   // Check if there's a valid previous test result on component mount
   useEffect(() => {
@@ -156,14 +159,54 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
     );
   }, [selectedSchedule, startDate, startTime, customCron, endDate, endTime, includeEndDate, onUpdateSchedule]);
 
-  const handleTestJob = async () => {
+  const handleRunSimulation = async () => {
     if (!isTestDateTimeValid) {
       return;
     }
 
-    // Reset test state when starting a new simulation
-    setTestCompleted(false);
+    // Reset simulation state when starting a new simulation
+    setSimulationCompleted(false);
     setIsTestRunning(true);
+
+    try {
+      // Mock simulation - simulate delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Mock JSON data for synced record IDs
+      const mockSyncedRecords = {
+        success: true,
+        syncedRecords: [
+          { id: "REC001", status: "synced", timestamp: new Date().toISOString() },
+          { id: "REC002", status: "synced", timestamp: new Date().toISOString() }
+        ],
+        totalRecords: 2,
+        message: "Simulation completed successfully"
+      };
+
+      // Store simulation result separately
+      setSimulationResult(mockSyncedRecords);
+      setSimulationCompleted(true);
+    } catch (error) {
+      console.error('Simulation error:', error);
+      setSimulationResult({
+        success: false,
+        message: "Simulation failed",
+        syncedRecords: []
+      });
+      setSimulationCompleted(true);
+    } finally {
+      setIsTestRunning(false);
+    }
+  };
+
+  const handleOneTimeRun = async () => {
+    if (!isTestDateTimeValid) {
+      return;
+    }
+
+    // Reset test state when starting a new one-time run
+    setTestCompleted(false);
+    setIsOneTimeRunning(true);
     try {
       // Create test date strings in UTC format with milliseconds
       const testFromDate = new Date(`${testStartDate}T${testStartTime}:00.000Z`).toISOString();
@@ -342,7 +385,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
       setTestCompleted(true);
     } finally {
-      setIsTestRunning(false);
+      setIsOneTimeRunning(false);
     }
   };
 
@@ -620,7 +663,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               </div>
               <Button
                 variant="primary"
-                onClick={handleTestJob}
+                onClick={handleRunSimulation}
                 disabled={isTestRunning || isLoading || !isTestDateTimeValid}
                 loading={isTestRunning}
                 className="ds-schedule-test-button"
@@ -629,33 +672,39 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               </Button>
             </div>
 
-            {/* Test Results - Compact */}
-            {testCompleted && jobData.testResult && (
+            {/* Simulation Results - Compact */}
+            {simulationCompleted && simulationResult && (
               <div className="ds-schedule-test-results">
                 <div className="ds-schedule-result-header">
                   <span className="ds-schedule-result-icon">
-                    {jobData.testResult.success ? '✅' : '⚠️'}
+                    {simulationResult.success ? '✅' : '⚠️'}
                   </span>
                   <span className="ds-schedule-result-status">
-                    {jobData.testResult.success ? 'Test Successful' : 'Issues Found'}
+                    {simulationResult.success ? 'Simulation Successful' : 'Issues Found'}
                   </span>
                 </div>
-                <div className="ds-schedule-result-stats">
-                  <div className="ds-schedule-stat">
-                    <span className="ds-schedule-stat-value">{jobData.testResult.recordsProcessed}</span>
-                    <span className="ds-schedule-stat-label">Processed</span>
+                {/* Display synced record IDs */}
+                {simulationResult.syncedRecords && simulationResult.syncedRecords.length > 0 && (
+                  <div className="ds-schedule-synced-records" style={{ marginTop: '1rem' }}>
+                    <h4 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '0.5rem' }}>Synced Record IDs:</h4>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {simulationResult.syncedRecords.map((record) => (
+                        <li key={record.id} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '0.5rem',
+                          backgroundColor: '#f8f9fa',
+                          borderRadius: '4px',
+                          marginBottom: '0.25rem'
+                        }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: '500' }}>{record.id}</span>
+                          <span style={{ color: '#28a745', fontSize: '12px' }}>✅ {record.status}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="ds-schedule-stat success">
-                    <span className="ds-schedule-stat-value">{jobData.testResult.recordsSucceeded}</span>
-                    <span className="ds-schedule-stat-label">Success</span>
-                  </div>
-                  {jobData.testResult.recordsFailed > 0 && (
-                    <div className="ds-schedule-stat error">
-                      <span className="ds-schedule-stat-value">{jobData.testResult.recordsFailed}</span>
-                      <span className="ds-schedule-stat-label">Failed</span>
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             )}
           </div>
@@ -761,18 +810,18 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               </div>
               <Button
                 variant="primary"
-                onClick={handleTestJob}
-                disabled={isTestRunning || isLoading || !isTestDateTimeValid}
-                loading={isTestRunning}
+                onClick={handleOneTimeRun}
+                disabled={isOneTimeRunning || isLoading || !isTestDateTimeValid}
+                loading={isOneTimeRunning}
                 className="ds-schedule-test-button"
               >
-                {isTestRunning ? 'Running...' : '1 Time Run'}
+                {isOneTimeRunning ? 'Running...' : '1 Time Run'}
               </Button>
             </div>
 
             {/* Test Results - Compact */}
             {testCompleted && jobData.testResult && (
-              <div className="ds-schedule-test-results">
+              <div className="ds-schedule-test-results" style={{marginTop: '1rem'}}>
                 <div className="ds-schedule-result-header">
                   <span className="ds-schedule-result-icon">
                     {jobData.testResult.success ? '✅' : '⚠️'}
