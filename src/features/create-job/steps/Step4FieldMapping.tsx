@@ -7,6 +7,7 @@ import { FieldMapping, FieldMappingMetadata } from '../types';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import ListIcon from '@mui/icons-material/List';
 
 // API Response interfaces
 interface APIFieldMapping {
@@ -300,9 +301,11 @@ const validateMissingFields = (
 ): MissingFieldMismatch | null => {
   // If sourceField exists but targetField is empty, it's a missing field
   if (sourceField && sourceField.trim() !== '' && (!targetField || targetField.trim() === '')) {
+    // Make Last_Viewed_Date specifically an error, others remain warnings
+    const severity = sourceField === 'Last_Viewed_Date' ? 'error' : 'warning';
     return {
       sourceField,
-      severity: 'warning'
+      severity
     };
   }
 
@@ -418,6 +421,68 @@ const PicklistMappingDialog: React.FC<PicklistMappingDialogProps> = ({
   );
 };
 
+// Function to calculate AI confidence based on validation issues
+const calculateConfidenceScore = (
+  sourceField: string,
+  targetField: string,
+  sourceType: string,
+  targetType: string,
+  picklistMismatches: PicklistMismatch[],
+  characterLimitMismatches: CharacterLimitMismatch[],
+  missingFieldMismatches: MissingFieldMismatch[]
+): number => {
+  let confidence = 100; // Start with perfect confidence
+
+  // Check for missing field (unmapped)
+  if (!targetField || targetField.trim() === '') {
+    confidence -= 60; // Major penalty for unmapped fields
+  }
+
+  // Check for type mismatches
+  if (sourceType !== targetType && targetField) {
+    confidence -= 20; // Penalty for type mismatch
+  }
+
+  // Check for picklist issues
+  const picklistIssue = picklistMismatches.find(m =>
+    m.sourceField === sourceField && m.targetField === targetField
+  );
+  if (picklistIssue) {
+    if (picklistIssue.severity === 'error') {
+      confidence -= 30; // High penalty for picklist errors
+    } else {
+      confidence -= 15; // Medium penalty for picklist warnings
+    }
+  }
+
+  // Check for character limit issues
+  const characterLimitIssue = characterLimitMismatches.find(m =>
+    m.sourceField === sourceField && m.targetField === targetField
+  );
+  if (characterLimitIssue) {
+    if (characterLimitIssue.severity === 'error') {
+      confidence -= 25; // High penalty for character limit errors
+    } else {
+      confidence -= 10; // Low penalty for character limit warnings
+    }
+  }
+
+  // Check for missing field issues
+  const missingFieldIssue = missingFieldMismatches.find(m =>
+    m.sourceField === sourceField
+  );
+  if (missingFieldIssue) {
+    if (missingFieldIssue.severity === 'error') {
+      confidence -= 50; // Very high penalty for error-level missing fields (like Last_Viewed_Date)
+    } else {
+      confidence -= 30; // High penalty for warning-level missing fields
+    }
+  }
+
+  // Ensure confidence doesn't go below 0
+  return Math.max(0, confidence);
+};
+
 // Transform API response to MappingRow format
 const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): MappingRow[] => {
   return apiMappings.map(mapping => {
@@ -434,7 +499,7 @@ const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): Mapp
       targetField: mapping.target,
       targetType: convertedTargetType,
       isEditing: false,
-      confidenceScore: 100, // Default high confidence for API mappings
+      confidenceScore: 100, // Initial confidence, will be updated after validation
       isPrimaryKey: isPrimaryKeyField(mapping.source),
       includeInSync: shouldIncludeInSync(mapping.source),
       isPII: isPII,
@@ -470,6 +535,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [currentMismatch, setCurrentMismatch] = useState<PicklistMismatch | null>(null);
   const [picklistMappings, setPicklistMappings] = useState<Record<string, Record<string, string>>>({});
+  const [metadataFetchAttempted, setMetadataFetchAttempted] = useState<Set<string>>(new Set());
+  const [metadataFetchError, setMetadataFetchError] = useState<boolean>(false);
 
   // Character limit validation state
   const [characterLimitMismatches, setCharacterLimitMismatches] = useState<CharacterLimitMismatch[]>([]);
@@ -561,45 +628,63 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     const validatePicklists = async () => {
       if (mappingRows.length === 0 || !jobData?.sourceObject || !jobData?.targetObject) return;
 
-      // Fetch metadata for both source and target objects
-      const [sourceMetadataResponse, targetMetadataResponse] = await Promise.all([
-        fetchObjectMetadata(jobData.sourceObject, 'source'),
-        fetchObjectMetadata(jobData.targetObject, 'target')
-      ]);
+      // Create a unique key for this fetch attempt
+      const fetchKey = `${jobData.sourceObject}-${jobData.targetObject}`;
 
-      if (!sourceMetadataResponse || !targetMetadataResponse) return;
+      // Skip if we've already attempted to fetch this combination or if there was an error
+      if (metadataFetchAttempted.has(fetchKey) || metadataFetchError) return;
 
-      setSourceMetadata(sourceMetadataResponse);
-      setTargetMetadata(targetMetadataResponse);
+      // Mark this combination as attempted
+      setMetadataFetchAttempted(prev => new Set([...prev, fetchKey]));
 
-      // Validate picklist fields
-      const mismatches: PicklistMismatch[] = [];
+      try {
+        // Fetch metadata for both source and target objects
+        const [sourceMetadataResponse, targetMetadataResponse] = await Promise.all([
+          fetchObjectMetadata(jobData.sourceObject, 'source'),
+          fetchObjectMetadata(jobData.targetObject, 'target')
+        ]);
 
-      mappingRows.forEach(row => {
-        if (row.sourceType === 'Picklist' && row.targetType === 'Picklist') {
-          const sourceField = sourceMetadataResponse.fields.find(f => f.name === row.sourceField);
-          const targetField = targetMetadataResponse.fields.find(f => f.name === row.targetField);
+        if (!sourceMetadataResponse || !targetMetadataResponse) {
+          console.warn('Failed to fetch metadata for objects');
+          setMetadataFetchError(true);
+          return;
+        }
 
-          if (sourceField?.picklistValues && targetField?.picklistValues) {
-            const mismatch = validatePicklistValues(
-              sourceField.picklistValues,
-              targetField.picklistValues,
-              row.sourceField,
-              row.targetField
-            );
+        setSourceMetadata(sourceMetadataResponse);
+        setTargetMetadata(targetMetadataResponse);
 
-            if (mismatch) {
-              mismatches.push(mismatch);
+        // Validate picklist fields
+        const mismatches: PicklistMismatch[] = [];
+
+        mappingRows.forEach(row => {
+          if (row.sourceType === 'Picklist' && row.targetType === 'Picklist') {
+            const sourceField = sourceMetadataResponse.fields.find(f => f.name === row.sourceField);
+            const targetField = targetMetadataResponse.fields.find(f => f.name === row.targetField);
+
+            if (sourceField?.picklistValues && targetField?.picklistValues) {
+              const mismatch = validatePicklistValues(
+                sourceField.picklistValues,
+                targetField.picklistValues,
+                row.sourceField,
+                row.targetField
+              );
+
+              if (mismatch) {
+                mismatches.push(mismatch);
+              }
             }
           }
-        }
-      });
+        });
 
-      setPicklistMismatches(mismatches);
+        setPicklistMismatches(mismatches);
+      } catch (error) {
+        console.error('Error validating picklists:', error);
+        setMetadataFetchError(true);
+      }
     };
 
     validatePicklists();
-  }, [mappingRows, jobData?.sourceObject, jobData?.targetObject]);
+  }, [mappingRows, jobData?.sourceObject, jobData?.targetObject, metadataFetchAttempted, metadataFetchError]);
 
   // Character limit validation effect - runs after mappings are loaded
   useEffect(() => {
@@ -657,6 +742,26 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
     validateMissingFieldsMismatches();
   }, [mappingRows]);
+
+  // Update confidence scores when validation issues change
+  useEffect(() => {
+    if (mappingRows.length === 0) return;
+
+    setMappingRows(prev =>
+      prev.map(row => ({
+        ...row,
+        confidenceScore: calculateConfidenceScore(
+          row.sourceField,
+          row.targetField,
+          row.sourceType,
+          row.targetType,
+          picklistMismatches,
+          characterLimitMismatches,
+          missingFieldMismatches
+        )
+      }))
+    );
+  }, [picklistMismatches, characterLimitMismatches, missingFieldMismatches]);
 
   // Comprehensive validations
   const validationResults = useMemo(() => {
@@ -907,7 +1012,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
     );
 
-    if (isDuplicate || isInvalidSource || isEmptySource || hasPicklistError || hasCharacterLimitError) {
+    // Check for missing field errors (like Last_Viewed_Date)
+    const hasMissingFieldError = missingFieldMismatches.some(m =>
+      m.sourceField === sourceField && m.severity === 'error'
+    );
+
+    if (isDuplicate || isInvalidSource || isEmptySource || hasPicklistError || hasCharacterLimitError || hasMissingFieldError) {
       return 'has-error';
     }
 
@@ -1223,6 +1333,26 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                       {isDuplicate && <span className="duplicate-indicator"> (Duplicate)</span>}
                     </div>
                     <div className="inline-actions">
+                      {row.sourceType === 'Picklist' && row.targetType === 'Picklist' && (
+                        <span
+                          className="action-icon map-values-icon"
+                          onClick={() => {
+                            const mismatch = picklistMismatches.find(m =>
+                              m.sourceField === row.sourceField && m.targetField === row.targetField
+                            );
+                            if (mismatch) {
+                              handleOpenPicklistMapping(mismatch);
+                            }
+                          }}
+                          aria-label="Map picklist values"
+                          role="button"
+                          tabIndex={0}
+                          title="Map picklist values"
+                        >
+                          <ListIcon fontSize="small" />
+                        </span>
+                      )}
+
                       <span
                         className="action-icon edit-icon"
                         onClick={() => handleEditStart(row.sourceField, row.targetField)}
