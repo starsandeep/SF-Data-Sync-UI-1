@@ -111,38 +111,6 @@ const fetchFieldMappings = async (objectName: string): Promise<APIFieldMapping[]
 
     // Add the Description__c mapping as specified in the requirements
     const mappings = data.fieldMaping || [];
-    const descriptionMapping: APIFieldMapping = {
-      source: "Description__c",
-      sourceType: "String",
-      target: "Deal_Description__c",
-      targetType: "String"
-    };
-
-    // Add the Last_Viewed_Date mapping with empty target as specified in the requirements
-    const lastViewedDateMapping: APIFieldMapping = {
-      source: "Last_Viewed_Date",
-      sourceType: "String",
-      target: "",
-      targetType: ""
-    };
-
-    // Add the Description__c mapping if it doesn't already exist
-    const descriptionExists = mappings.some(mapping =>
-      mapping.source === "Description__c" && mapping.target === "Deal_Description__c"
-    );
-
-    if (!descriptionExists) {
-      mappings.push(descriptionMapping);
-    }
-
-    // Add the Last_Viewed_Date mapping if it doesn't already exist
-    const lastViewedExists = mappings.some(mapping =>
-      mapping.source === "Last_Viewed_Date"
-    );
-
-    if (!lastViewedExists) {
-      mappings.push(lastViewedDateMapping);
-    }
 
     return mappings;
   } catch (error) {
