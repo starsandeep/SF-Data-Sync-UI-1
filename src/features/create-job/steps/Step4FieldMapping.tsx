@@ -9,7 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import ListIcon from '@mui/icons-material/List';
 import WarningIcon from '@mui/icons-material/Warning';
-import ErrorIcon from '@mui/icons-material/Error';
+import HandymanIcon from '@mui/icons-material/Handyman';
 
 // API Response interfaces
 interface APIFieldMapping {
@@ -1426,7 +1426,7 @@ style={{ width: `${progress}%` }}
                       title={`Error: ${row.errorMessage || 'Field mapping error'}`}
                       style={{ color: '#dc2626' }}
                     >
-                      <ErrorIcon fontSize="small" />
+                      <HandymanIcon fontSize="small" />
                     </span>
                   )}
 
