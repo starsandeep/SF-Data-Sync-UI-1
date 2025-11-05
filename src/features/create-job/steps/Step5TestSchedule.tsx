@@ -72,6 +72,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const [isOneTimeRunning, setIsOneTimeRunning] = useState<boolean>(false);
   const [simulationCompleted, setSimulationCompleted] = useState<boolean>(false);
   const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [sendSampleSize, setSendSampleSize] = useState<boolean>(false);
 
   // Check if there's a valid previous test result on component mount
   useEffect(() => {
@@ -233,7 +234,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
           targetType: getFieldType(targetField)
         }));
 
-      const testRequestBody = {
+      const testRequestBody: any = {
         name: `${jobData.name || 'TestSync'}`,
         schedule: {
           frequency: "30",
@@ -250,6 +251,11 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         extId: "extid__c",
         fieldMaping: fieldMappingArray
       };
+
+      // Conditionally add sample size if checkbox is checked
+      if (sendSampleSize && sampleSize > 0) {
+        testRequestBody.sampleSize = sampleSize;
+      }
 
       console.log('Sending test request:', testRequestBody);
 
@@ -583,78 +589,9 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               <div className="ds-schedule-section-info">
                 <h3 className="ds-schedule-section-title">Simulate</h3>
                 <p className="ds-schedule-section-subtitle">
-                  Run a test sync with sample records to validate your configuration before the full sync.
+                  Run a test sync with sample records to validate your configuration before the full sync. 2 records will be simulated.
                 </p>
               </div>
-            </div>
-
-            {/* Test Duration - Inline Layout */}
-            <div className="ds-schedule-test-duration">
-              <div className="ds-schedule-duration-grid">
-                <div className="ds-schedule-grid-item">
-                  <label className="ds-schedule-grid-label">
-                    <span className="ds-schedule-group-icon">🚀</span>
-                    Start
-                  </label>
-                  <div className="ds-schedule-grid-controls">
-                    <input
-                      type="date"
-                      className="ds-schedule-date-input"
-                      value={testStartDate}
-                      min={minDate}
-                      onChange={(e) => setTestStartDate(e.target.value)}
-                      required
-                    />
-                    <select
-                      className="ds-schedule-time-select"
-                      value={testStartTime}
-                      onChange={(e) => setTestStartTime(e.target.value)}
-                      required
-                    >
-                      {timeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="ds-schedule-grid-item">
-                  <label className="ds-schedule-grid-label">
-                    <span className="ds-schedule-group-icon">🏁</span>
-                    End
-                  </label>
-                  <div className="ds-schedule-grid-controls">
-                    <input
-                      type="date"
-                      className="ds-schedule-date-input"
-                      value={testEndDate}
-                      min={testStartDate || minDate}
-                      onChange={(e) => setTestEndDate(e.target.value)}
-                      required
-                    />
-                    <select
-                      className="ds-schedule-time-select"
-                      value={testEndTime}
-                      onChange={(e) => setTestEndTime(e.target.value)}
-                      required
-                    >
-                      {timeOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Validation Errors */}
-              {!isTestEndDateTimeValid && testEndDate && testEndTime && testStartDate && testStartTime && (
-                <div className="ds-schedule-error-message">
-                  Test end time must be after start time
-                </div>
-              )}
             </div>
 
             {/* Test Controls - Compact */}
@@ -786,19 +723,37 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
             {/* Test Controls - Compact */}
             <div className="ds-schedule-test-controls">
               <div className="ds-schedule-sample-control">
-                 <label className="ds-schedule-control-label">Sample Size</label>
-                <select
-                  className="ds-schedule-sample-select"
-                  value={sampleSize}
-                  onChange={(e) => setSampleSize(parseInt(e.target.value) || 0)}
-                  disabled={isTestRunning}
-                >
-                  <option value={50}>50 records</option>
-                  <option value={100}>100 records</option>
-                  <option value={200}>200 records</option>
-                  <option value={500}>500 records</option>
-                  <option value={1000}>1000 records</option>
-                </select>
+                <div className="ds-schedule-sample-checkbox">
+                  <label className="ds-schedule-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={sendSampleSize}
+                      onChange={(e) => setSendSampleSize(e.target.checked)}
+                      className="ds-schedule-checkbox"
+                      disabled={isOneTimeRunning}
+                    />
+                    Set Sample Size
+                  </label>
+                  <div className="ds-schedule-sample-select-info">
+                    {sendSampleSize && (
+                      <>
+                        <label className="ds-schedule-control-label">Sample Size</label>
+                        <select
+                          className="ds-schedule-sample-select"
+                          value={sampleSize}
+                          onChange={(e) => setSampleSize(parseInt(e.target.value) || 0)}
+                          disabled={isOneTimeRunning}
+                        >
+                          <option value={50}>50 records</option>
+                          <option value={100}>100 records</option>
+                          <option value={200}>200 records</option>
+                          <option value={500}>500 records</option>
+                          <option value={1000}>1000 records</option>
+                        </select>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               <Button
                 variant="primary"

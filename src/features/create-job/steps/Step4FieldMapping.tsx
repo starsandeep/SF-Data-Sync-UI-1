@@ -1212,7 +1212,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     }
   }, [handleSaveMappings, onNext, validationResults.isValid]);
 
-  const canProceed = validationResults.isValid;
+  // Check if any rows with API errors are included in sync
+  const hasAPIErrorsInSync = mappingRowsWithConfidence.some(row =>
+    row.includeInSync && row.isError
+  );
+
+  const canProceed = validationResults.isValid && !hasAPIErrorsInSync;
 
   if (showLoader) {
     return (
@@ -1512,6 +1517,12 @@ style={{ width: `${progress}%` }}
       {validationResults.hasSyncIncludedErrors && (
         <div className="error-message" role="alert">
           <strong>Critical field errors detected:</strong> Fields with errors that are included in sync must be resolved before simulation. Please fix the highlighted field issues or exclude them from sync.
+        </div>
+      )}
+
+      {hasAPIErrorsInSync && (
+        <div className="error-message" role="alert">
+          <strong>API field errors detected:</strong> Fields with API errors that are included in sync must be resolved before simulation. Please fix the field issues or exclude them from sync.
         </div>
       )}
 
