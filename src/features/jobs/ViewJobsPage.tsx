@@ -61,6 +61,10 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
   const [jobs, setJobs] = useState<JobData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    job: JobData | null;
+  }>({ isOpen: false, job: null });
 
   // Fetch jobs from API
   const fetchJobs = async () => {
@@ -125,45 +129,23 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
     alert(`Edit job: ${job.name}`);
   };
 
-  const handleDeleteJob = async (job: JobData) => {
+  const handleDeleteJob = (job: JobData) => {
     console.log('Delete job:', job.name);
+    setDeleteConfirmation({ isOpen: true, job });
+  };
 
-    if (!confirm(`Are you sure you want to delete job "${job.name}"?`)) {
-      return;
-    }
+  const confirmDeleteJob = async () => {
+    const job = deleteConfirmation.job;
+    if (!job) return;
 
     try {
       setIsLoading(true);
+      setDeleteConfirmation({ isOpen: false, job: null });
 
-      // Get field mappings from either fieldMapping or fieldMaping
-      const fieldMappings = job.jobDetails.fieldMapping || job.jobDetails.fieldMaping || [];
+      console.log('Deleting job with key:', job.name);
 
-      // Prepare the request body using the job data
-      const requestBody = {
-        name: job.name,
-        schedule: job.jobDetails.schedule || {
-          frequency: "30",
-          timeUnit: "MINUTES"
-        },
-        isActive: job.jobDetails.isActive || false,
-        sourceOrg: job.sourceOrg,
-        targetOrg: job.targetOrg,
-        fromDate: job.fromDate,
-        toDate: job.toDate,
-        sourceObject: job.sourceObject,
-        targetObject: job.targetObject,
-        extId: job.jobDetails.extId || 'extid__c',
-        fieldMaping: fieldMappings
-      };
-
-      console.log('Deleting job with request body:', requestBody);
-
-      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/deleteJob?key=${encodeURIComponent(job.name)}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
+      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/deleteJobSfdc?key=${encodeURIComponent(job.name)}`, {
+        method: 'GET'
       });
 
       if (response.ok) {
@@ -183,24 +165,12 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
     }
   };
 
+  const cancelDeleteJob = () => {
+    setDeleteConfirmation({ isOpen: false, job: null });
+  };
+
   return (
     <div className="ds-jobs-page">
-      <style>{`
-        .ds-jobs-table .ds-jobs-th:nth-child(7) {
-          width: 100px;
-          min-width: 100px;
-          max-width: 100px;
-        }
-           .ds-jobs-table .ds-jobs-th:nth-child(2) {
-          width: 250px;
-          min-width: 250px;
-          max-width: 250px;
-        }
-        .ds-jobs-arrow {
-          flex-shrink: 0;
-          font-size: 0.75rem;
-        }
-      `}</style>
       {/* Header Section */}
       <div className="ds-jobs-header">
         <div className="ds-jobs-header-content">
@@ -257,133 +227,129 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
         ) : (
           <div className="ds-jobs-table-container">
             <div className="ds-jobs-table-wrapper">
-              <table className="ds-jobs-table">
-                <thead className="ds-jobs-thead">
-                  <tr className="ds-jobs-header-row">
-                    <th className="ds-jobs-th">Job Name & Status</th>
-                    <th className="ds-jobs-th">Objects</th>
-                    <th className="ds-jobs-th">Organizations</th>
-                    <th className="ds-jobs-th">Schedule</th>
-                    <th className="ds-jobs-th">Duration</th>
-                    <th className="ds-jobs-th">Field Mappings</th>
-                    <th className="ds-jobs-th">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="ds-jobs-tbody">
-                  {jobs.map((job) => (
-                    <tr key={job.Id} className="ds-jobs-row">
-                      <td className="ds-jobs-td ds-jobs-name-cell">
-                        <div className="ds-jobs-name">{job.name}</div>
-                        <div className="ds-jobs-ext-id">ID: {job.Id}</div>
-                        <div className="ds-jobs-status">
-                          <span className={`ds-jobs-status-badge ${job.isActive === 'true' ? 'active' : 'inactive'}`}>
-                            {job.isActive === 'true' ? '🟢 Active' : '🔴 Inactive'}
-                          </span>
-                        </div>
-                      </td>
+              <div className="ds-jobs-grid" role="table" aria-label="Jobs table">
+                <div className="ds-jobs-grid-header" role="rowgroup">
+                  <div className="ds-jobs-grid-header-cell" role="columnheader">Job Name & Status</div>
+                  <div className="ds-jobs-grid-header-cell" role="columnheader">Objects</div>
+                  <div className="ds-jobs-grid-header-cell" role="columnheader">Organizations</div>
+                  <div className="ds-jobs-grid-header-cell" role="columnheader">Schedule</div>
+                  <div className="ds-jobs-grid-header-cell" role="columnheader">Duration</div>
+                  <div className="ds-jobs-grid-header-cell" role="columnheader">Field Mappings</div>
+                  <div className="ds-jobs-grid-header-cell" role="columnheader">Actions</div>
+                </div>
+                {jobs.map((job) => (
+                  <div key={job.Id} className="ds-jobs-grid-row" role="row">
+                    <div className="ds-jobs-grid-cell ds-jobs-name-cell" role="cell">
+                      <div className="ds-jobs-name">{job.name}</div>
+                      <div className="ds-jobs-ext-id">ID: {job.Id}</div>
+                      <div className="ds-jobs-status">
+                        <span className={`ds-jobs-status-badge ${job.isActive === 'true' ? 'active' : 'inactive'}`}>
+                          {job.isActive === 'true' ? '🟢 Active' : '🔴 Inactive'}
+                        </span>
+                      </div>
+                    </div>
 
-                      <td className="ds-jobs-td ds-jobs-objects-cell">
-                        <div className="ds-jobs-object-flow">
-                          <span className="ds-jobs-source">{job.sourceObject}</span>
-                          <span className="ds-jobs-arrow">→</span>
-                          <span className="ds-jobs-target">{job.targetObject}</span>
-                        </div>
-                      </td>
+                    <div className="ds-jobs-grid-cell ds-jobs-objects-cell" role="cell">
+                      <div className="ds-jobs-object-flow">
+                        <span className="ds-jobs-source">{job.sourceObject}</span>
+                        <span className="ds-jobs-arrow">→</span>
+                        <span className="ds-jobs-target">{job.targetObject}</span>
+                      </div>
+                    </div>
 
-                      <td className="ds-jobs-td ds-jobs-orgs-cell">
-                        <div className="ds-jobs-org-flow">
-                          <span className="ds-jobs-source-org">{job.sourceOrg}</span>
-                          <span className="ds-jobs-arrow">→</span>
-                          <span className="ds-jobs-target-org">{job.targetOrg}</span>
-                        </div>
-                      </td>
+                    <div className="ds-jobs-grid-cell ds-jobs-orgs-cell" role="cell">
+                      <div className="ds-jobs-org-flow">
+                        <span className="ds-jobs-source-org">{job.sourceOrg}</span>
+                        <span className="ds-jobs-arrow">→</span>
+                        <span className="ds-jobs-target-org">{job.targetOrg}</span>
+                      </div>
+                    </div>
 
-                      <td className="ds-jobs-td ds-jobs-schedule-cell">
-                        <div className="ds-jobs-schedule">
-                          {formatSchedule(job)}
+                    <div className="ds-jobs-grid-cell ds-jobs-schedule-cell" role="cell">
+                      <div className="ds-jobs-schedule">
+                        {formatSchedule(job)}
+                      </div>
+                      {job.jobSchedule && (
+                        <div className="ds-jobs-cron">
+                          Cron: {job.jobSchedule}
                         </div>
-                        {job.jobSchedule && (
-                          <div className="ds-jobs-cron">
-                            Cron: {job.jobSchedule}
-                          </div>
-                        )}
-                      </td>
+                      )}
+                    </div>
 
-                      <td className="ds-jobs-td ds-jobs-duration-cell">
-                        <div className="ds-jobs-date-range">
-                          <div className="ds-jobs-from">From: {formatDate(job.fromDate)}</div>
-                          <div className="ds-jobs-to">To: {formatDate(job.toDate)}</div>
-                        </div>
-                      </td>
+                    <div className="ds-jobs-grid-cell ds-jobs-duration-cell" role="cell">
+                      <div className="ds-jobs-date-range">
+                        <div className="ds-jobs-from">From: {formatDate(job.fromDate)}</div>
+                        <div className="ds-jobs-to">To: {formatDate(job.toDate)}</div>
+                      </div>
+                    </div>
 
-                      <td className="ds-jobs-td ds-jobs-mappings-cell">
-                        {(() => {
-                          const fieldMappings = job.jobDetails.fieldMapping || job.jobDetails.fieldMaping || [];
-                          return (
-                            <>
-                              <div className="ds-jobs-mappings-count">
-                                {fieldMappings.length} field{fieldMappings.length !== 1 ? 's' : ''}
+                    <div className="ds-jobs-grid-cell ds-jobs-mappings-cell" role="cell">
+                      {(() => {
+                        const fieldMappings = job.jobDetails.fieldMapping || job.jobDetails.fieldMaping || [];
+                        return (
+                          <>
+                            <div className="ds-jobs-mappings-count">
+                              {fieldMappings.length} field{fieldMappings.length !== 1 ? 's' : ''}
+                            </div>
+                            <details className="ds-jobs-mappings-details">
+                              <summary className="ds-jobs-mappings-summary">View mappings</summary>
+                              <div className="ds-jobs-mappings-list">
+                                {fieldMappings.map((mapping, index) => (
+                                  <div key={index} className="ds-jobs-mapping-item">
+                                    <span className="ds-jobs-mapping-source">{mapping.source}</span>
+                                    <span className="ds-jobs-mapping-arrow">→</span>
+                                    <span className="ds-jobs-mapping-target">{mapping.target}</span>
+                                    {mapping.sourceType && mapping.targetType && (
+                                      <div className="ds-jobs-mapping-types">
+                                        <span className="ds-jobs-mapping-type">({mapping.sourceType} → {mapping.targetType})</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
                               </div>
-                              <details className="ds-jobs-mappings-details">
-                                <summary className="ds-jobs-mappings-summary">View mappings</summary>
-                                <div className="ds-jobs-mappings-list">
-                                  {fieldMappings.map((mapping, index) => (
-                                    <div key={index} className="ds-jobs-mapping-item">
-                                      <span className="ds-jobs-mapping-source">{mapping.source}</span>
-                                      <span className="ds-jobs-mapping-arrow">→</span>
-                                      <span className="ds-jobs-mapping-target">{mapping.target}</span>
-                                      {mapping.sourceType && mapping.targetType && (
-                                        <div className="ds-jobs-mapping-types">
-                                          <span className="ds-jobs-mapping-type">({mapping.sourceType} → {mapping.targetType})</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </details>
-                            </>
-                          );
-                        })()}
-                      </td>
+                            </details>
+                          </>
+                        );
+                      })()}
+                    </div>
 
-                      <td className="ds-jobs-td ds-jobs-actions-cell">
-                        <div className="ds-jobs-actions">
-                          <span
-                            className="action-icon edit-icon"
-                            onClick={() => handleEditJob(job)}
-                            aria-label="Edit job"
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                handleEditJob(job);
-                              }
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </span>
-                          <span
-                            className={`action-icon delete-icon ${isLoading ? 'disabled' : ''}`}
-                            onClick={isLoading ? undefined : () => handleDeleteJob(job)}
-                            aria-label="Delete job"
-                            role="button"
-                            tabIndex={isLoading ? -1 : 0}
-                            onKeyDown={isLoading ? undefined : (e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                handleDeleteJob(job);
-                              }
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    <div className="ds-jobs-grid-cell ds-jobs-actions-cell" role="cell">
+                      <div className="ds-jobs-actions">
+                        <span
+                          className="action-icon edit-icon"
+                          onClick={() => handleEditJob(job)}
+                          aria-label="Edit job"
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleEditJob(job);
+                            }
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </span>
+                        <span
+                          className={`action-icon delete-icon ${isLoading ? 'disabled' : ''}`}
+                          onClick={isLoading ? undefined : () => handleDeleteJob(job)}
+                          aria-label="Delete job"
+                          role="button"
+                          tabIndex={isLoading ? -1 : 0}
+                          onKeyDown={isLoading ? undefined : (e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleDeleteJob(job);
+                            }
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="ds-jobs-footer">
@@ -394,6 +360,40 @@ export const ViewJobsPage: React.FC<ViewJobsPageProps> = ({
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmation.isOpen && deleteConfirmation.job && (
+        <div className="ds-delete-modal-overlay">
+          <div className="ds-delete-modal">
+            <div className="ds-delete-modal-header">
+              <h3>Confirm Delete</h3>
+            </div>
+            <div className="ds-delete-modal-body">
+              <p>Delete this job?</p>
+              <div className="ds-delete-job-info">
+                <strong>"{deleteConfirmation.job.name}"</strong>
+              </div>
+              <p className="ds-delete-warning">This cannot be undone.</p>
+            </div>
+            <div className="ds-delete-modal-actions">
+              <Button
+                variant="outline"
+                onClick={cancelDeleteJob}
+                disabled={isLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={confirmDeleteJob}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Deleting...' : 'Delete Job'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

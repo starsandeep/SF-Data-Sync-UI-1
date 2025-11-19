@@ -69,6 +69,10 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
 
   const [testCompleted, setTestCompleted] = useState<boolean>(false);
   const [isTestRunning, setIsTestRunning] = useState<boolean>(false);
+  const [isOneTimeRunning, setIsOneTimeRunning] = useState<boolean>(false);
+  const [simulationCompleted, setSimulationCompleted] = useState<boolean>(false);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [sendSampleSize, setSendSampleSize] = useState<boolean>(false);
 
   // Check if there's a valid previous test result on component mount
   useEffect(() => {
@@ -156,14 +160,54 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
     );
   }, [selectedSchedule, startDate, startTime, customCron, endDate, endTime, includeEndDate, onUpdateSchedule]);
 
-  const handleTestJob = async () => {
+  const handleRunSimulation = async () => {
     if (!isTestDateTimeValid) {
       return;
     }
 
-    // Reset test state when starting a new simulation
-    setTestCompleted(false);
+    // Reset simulation state when starting a new simulation
+    setSimulationCompleted(false);
     setIsTestRunning(true);
+
+    try {
+      // Mock simulation - simulate delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Mock JSON data for synced record IDs
+      const mockSyncedRecords = {
+        success: true,
+        syncedRecords: [
+          { id: "REC001", status: "synced", timestamp: new Date().toISOString() },
+          { id: "REC002", status: "synced", timestamp: new Date().toISOString() }
+        ],
+        totalRecords: 2,
+        message: "Simulation completed successfully"
+      };
+
+      // Store simulation result separately
+      setSimulationResult(mockSyncedRecords);
+      setSimulationCompleted(true);
+    } catch (error) {
+      console.error('Simulation error:', error);
+      setSimulationResult({
+        success: false,
+        message: "Simulation failed",
+        syncedRecords: []
+      });
+      setSimulationCompleted(true);
+    } finally {
+      setIsTestRunning(false);
+    }
+  };
+
+  const handleOneTimeRun = async () => {
+    if (!isTestDateTimeValid) {
+      return;
+    }
+
+    // Reset test state when starting a new one-time run
+    setTestCompleted(false);
+    setIsOneTimeRunning(true);
     try {
       // Create test date strings in UTC format with milliseconds
       const testFromDate = new Date(`${testStartDate}T${testStartTime}:00.000Z`).toISOString();
@@ -190,7 +234,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
           targetType: getFieldType(targetField)
         }));
 
-      const testRequestBody = {
+      const testRequestBody: any = {
         name: `${jobData.name || 'TestSync'}`,
         schedule: {
           frequency: "30",
@@ -207,6 +251,11 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         extId: "extid__c",
         fieldMaping: fieldMappingArray
       };
+
+      // Conditionally add sample size if checkbox is checked
+      if (sendSampleSize && sampleSize > 0) {
+        testRequestBody.sampleSize = sampleSize;
+      }
 
       console.log('Sending test request:', testRequestBody);
 
@@ -342,7 +391,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
       onUpdateTestResult(testResult, true, sampleSize, testStartDate, testStartTime, testEndDate, testEndTime);
       setTestCompleted(true);
     } finally {
-      setIsTestRunning(false);
+      setIsOneTimeRunning(false);
     }
   };
 
@@ -540,7 +589,64 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               <div className="ds-schedule-section-info">
                 <h3 className="ds-schedule-section-title">Simulate</h3>
                 <p className="ds-schedule-section-subtitle">
-                  Simulate sample records to verify data sync
+                  Run a test sync with sample records to validate your configuration before the full sync. 2 records will be simulated.
+                </p>
+              </div>
+            </div>
+
+            {/* Test Controls - Compact */}
+            <div className="ds-schedule-test-controls ds-test-schedule-controls-margin">
+              <div className="ds-schedule-sample-control">
+              </div>
+              <Button
+                variant="primary"
+                onClick={handleRunSimulation}
+                disabled={isTestRunning || isLoading || !isTestDateTimeValid}
+                loading={isTestRunning}
+                className="ds-schedule-test-button"
+              >
+                {isTestRunning ? 'Testing...' : 'Run Simulation'}
+              </Button>
+            </div>
+
+            {/* Simulation Results - Compact */}
+            {simulationCompleted && simulationResult && (
+              <div className="ds-schedule-test-results">
+                <div className="ds-schedule-result-header">
+                  <span className="ds-schedule-result-icon">
+                    {simulationResult.success ? '✅' : '⚠️'}
+                  </span>
+                  <span className="ds-schedule-result-status">
+                    {simulationResult.success ? 'Simulation Successful' : 'Issues Found'}
+                  </span>
+                </div>
+                {/* Display synced record IDs */}
+                {simulationResult.syncedRecords && simulationResult.syncedRecords.length > 0 && (
+                  <div className="ds-schedule-synced-records ds-test-schedule-synced-records">
+                    <h4 className="ds-test-schedule-synced-title">Synced Record IDs:</h4>
+                    <ul className="ds-test-schedule-record-list">
+                      {simulationResult.syncedRecords.map((record) => (
+                        <li key={record.id} className="ds-test-schedule-record-item">
+                          <span className="ds-test-schedule-record-id">{record.id}</span>
+                          <span className="ds-test-schedule-record-status">✅ {record.status}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="ds-schedule-test-section">
+          <div className="ds-schedule-section-card">
+            <div className="ds-schedule-section-header">
+              <div className="ds-schedule-section-icon">🏃</div>
+              <div className="ds-schedule-section-info">
+                <h3 className="ds-schedule-section-title">One Time Run</h3>
+                <p className="ds-schedule-section-subtitle">
+                  This will run the data sync job once at the specified time.
                 </p>
               </div>
             </div>
@@ -617,34 +723,52 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
             {/* Test Controls - Compact */}
             <div className="ds-schedule-test-controls">
               <div className="ds-schedule-sample-control">
-                <label className="ds-schedule-control-label">Sample Size</label>
-                <select
-                  className="ds-schedule-sample-select"
-                  value={sampleSize}
-                  onChange={(e) => setSampleSize(parseInt(e.target.value) || 0)}
-                  disabled={isTestRunning}
-                >
-                  <option value={50}>50 records</option>
-                  <option value={100}>100 records</option>
-                  <option value={200}>200 records</option>
-                  <option value={500}>500 records</option>
-                  <option value={1000}>1000 records</option>
-                </select>
+                <div className="ds-schedule-sample-checkbox">
+                  <label className="ds-schedule-checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={sendSampleSize}
+                      onChange={(e) => setSendSampleSize(e.target.checked)}
+                      className="ds-schedule-checkbox"
+                      disabled={isOneTimeRunning}
+                    />
+                    Set Sample Size
+                  </label>
+                  <div className="ds-schedule-sample-select-info">
+                    {sendSampleSize && (
+                      <>
+                        <label className="ds-schedule-control-label">Sample Size</label>
+                        <select
+                          className="ds-schedule-sample-select"
+                          value={sampleSize}
+                          onChange={(e) => setSampleSize(parseInt(e.target.value) || 0)}
+                          disabled={isOneTimeRunning}
+                        >
+                          <option value={50}>50 records</option>
+                          <option value={100}>100 records</option>
+                          <option value={200}>200 records</option>
+                          <option value={500}>500 records</option>
+                          <option value={1000}>1000 records</option>
+                        </select>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               <Button
                 variant="primary"
-                onClick={handleTestJob}
-                disabled={isTestRunning || isLoading || !isTestDateTimeValid}
-                loading={isTestRunning}
+                onClick={handleOneTimeRun}
+                disabled={isOneTimeRunning || isLoading || !isTestDateTimeValid}
+                loading={isOneTimeRunning}
                 className="ds-schedule-test-button"
               >
-                {isTestRunning ? 'Testing...' : 'Run Simulation'}
+                {isOneTimeRunning ? 'Running...' : '1 Time Run'}
               </Button>
             </div>
 
             {/* Test Results - Compact */}
             {testCompleted && jobData.testResult && (
-              <div className="ds-schedule-test-results">
+              <div className="ds-schedule-test-results ds-test-schedule-result-margin">
                 <div className="ds-schedule-result-header">
                   <span className="ds-schedule-result-icon">
                     {jobData.testResult.success ? '✅' : '⚠️'}
@@ -681,9 +805,6 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
               <div className="ds-schedule-section-icon">⏰</div>
               <div className="ds-schedule-section-info">
                 <h3 className="ds-schedule-section-title">Schedule</h3>
-                <p className="ds-schedule-section-subtitle">
-                  Choose how often to run this job
-                </p>
               </div>
             </div>
 
@@ -932,56 +1053,37 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
         }}>
 
           {/* Countdown with Circular Progress */}
-          <div style={{
-            backgroundColor: 'var(--bg-secondary)',
-            padding: '1.5rem 1rem',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
-            textAlign: 'center'
-          }}>
-            <p
-              style={{
-                fontSize: '1rem',
-                color: 'var(--text-secondary)',
-                margin: '0 0 1.5rem 0',
-                fontWeight: '500'
-              }}
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              🟢 Job created successfully. Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}
-            </p>
+          <div className="ds-test-schedule-summary-container">
+            <div className="ds-test-schedule-summary-content">
+              <p
+                className="ds-test-schedule-summary-title"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                🟢 Job created successfully. Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}
+              </p>
 
-            {/* Circular Progress Timer */}
-            <div style={{
-              width: '100px',
-              height: '100px',
-              margin: '0 auto',
-              position: 'relative'
-            }}>
-              <CircularProgressbar
-                value={((5 - countdown) / 5) * 100}
-                text={`⏳${countdown}`}
-                styles={buildStyles({
-                  textSize: '24px',
-                  pathColor: '#10B981',
-                  textColor: '#10B981',
-                  trailColor: 'var(--border-primary)',
-                  backgroundColor: 'transparent',
-                  pathTransitionDuration: 1,
-                  strokeLinecap: 'round'
-                })}
-              />
+              {/* Circular Progress Timer */}
+              <div className="ds-test-schedule-circular-progress">
+                <CircularProgressbar
+                  value={((5 - countdown) / 5) * 100}
+                  text={`⏳${countdown}`}
+                  styles={buildStyles({
+                    textSize: '24px',
+                    pathColor: '#10B981',
+                    textColor: '#10B981',
+                    trailColor: 'var(--border-primary)',
+                    backgroundColor: 'transparent',
+                    pathTransitionDuration: 1,
+                    strokeLinecap: 'round'
+                  })}
+                />
+              </div>
+
+              <p className="ds-test-schedule-summary-subtitle">
+                You can also click the button below to go immediately
+              </p>
             </div>
-
-            <p style={{
-              fontSize: '0.8rem',
-              color: 'var(--text-secondary)',
-              margin: '1rem 0 0 0',
-              opacity: 0.7
-            }}>
-              You can also click the button below to go immediately
-            </p>
           </div>
 
           <Button

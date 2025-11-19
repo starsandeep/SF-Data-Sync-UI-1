@@ -1,0 +1,14 @@
+/* Base utility classes for common patterns */
+.transition-colors {
+  transition: color 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.transition-standard {
+  transition: all 0.2s ease;
+}
+
+.focus-primary:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
+}
