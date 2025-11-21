@@ -49,7 +49,7 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
         });
 
         // Fetch target objects
-        const targetResponse = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects?org=source', {
+        const targetResponse = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects?org=target', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export const Step3ObjectSelection: React.FC<Step3ObjectSelectionProps> = ({
     setLoadingFields(prev => new Set(prev).add(objectName));
 
     try {
-      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects?objectName=${objectName}`, {
+      const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects?objectName=${objectName}&org=source`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
