@@ -120,9 +120,9 @@ const shouldIncludeInSync = (fieldName: string): boolean => {
 };
 
 // API function to fetch field mappings
-const fetchFieldMappings = async (objectName: string): Promise<APIFieldMapping[]> => {
+const fetchFieldMappings = async (sourceObjectName: string, targetObjectName: string): Promise<APIFieldMapping[]> => {
   try {
-    const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getFieldMapping?object=${objectName}`);
+    const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getAiFieldMapping?sourceObjectName=${sourceObjectName}&targetObjectName=${targetObjectName}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -133,8 +133,8 @@ const fetchFieldMappings = async (objectName: string): Promise<APIFieldMapping[]
 
     // Handle case where fieldMaping is empty
     if (!Array.isArray(mappings) || mappings.length === 0) {
-      console.warn(`No field mappings found for object: ${objectName}`);
-      throw new Error(`No field mappings available for object: ${objectName}`);
+      console.warn(`No field mappings found for objects: ${sourceObjectName} -> ${targetObjectName}`);
+      throw new Error(`No field mappings available for objects: ${sourceObjectName} -> ${targetObjectName}`);
     }
 
     return mappings;
@@ -169,7 +169,7 @@ interface ObjectMetadata {
 // API function to fetch object metadata with picklist values
 const fetchObjectMetadata = async (objectName: string, org: 'source' | 'target'): Promise<ObjectMetadata | null> => {
   try {
-    const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getAiFieldMapping?objectName=${objectName}&org=${org}`);
+    const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects?objectName=${objectName}&org=${org}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -483,17 +483,29 @@ interface APIFieldIssueDialogProps {
   isOpen: boolean;
   onClose: () => void;
   row: MappingRow | null;
+  onConfirm?: (sourceField: string) => void;
 }
 
 const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
   isOpen,
   onClose,
-  row
+  row,
+  onConfirm
 }) => {
   if (!row) return null;
 
   const hasIssue = row.isError || row.isWarning;
   if (!hasIssue) return null;
+
+  // Check if target field is present to show confirm button
+  const canConfirm = row.targetField && row.targetField.trim() !== '';
+
+  const handleConfirm = () => {
+    if (onConfirm && canConfirm) {
+      onConfirm(row.sourceField);
+      onClose();
+    }
+  };
 
   return (
     <Modal
@@ -568,6 +580,11 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
+          {canConfirm && (
+            <Button variant="primary" onClick={handleConfirm}>
+              Confirm
+            </Button>
+          )}
         </div>
       </div>
     </Modal>
@@ -648,6 +665,9 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   // Missing field validation state
   const [missingFieldMismatches, setMissingFieldMismatches] = useState<MissingFieldMismatch[]>([]);
 
+  // Resolved API issues state
+  const [resolvedAPIIssues, setResolvedAPIIssues] = useState<Set<string>>(new Set());
+
   // API call and loader effect with progress animation - 3 seconds total
   useEffect(() => {
     if (!showLoader) return;
@@ -663,11 +683,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     let currentStep = 0;
     let currentProgress = 0;
 
-    // Start API call immediately using dynamic source object
+    // Start API call immediately using source and target objects from step 3
     const sourceObject = jobData?.sourceObject || 'Contact';
+    const targetObject = jobData?.targetObject || 'Contact__c';
     setApiError(null); // Clear any previous errors
 
-    fetchFieldMappings(sourceObject).then(apiMappings => {
+    fetchFieldMappings(sourceObject, targetObject).then(apiMappings => {
       if (apiMappings.length > 0) {
         setApiError(null); // Clear error on success
         const transformedMappings = transformAPIResponseToMappingRows(apiMappings);
@@ -687,12 +708,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         });
       } else {
         // Handle empty response
-        setApiError(`No field mappings found for object "${sourceObject}". Please check if the object exists and has accessible fields.`);
+        setApiError(`No field mappings found for objects "${sourceObject}" -> "${targetObject}". Please check if the objects exist and have accessible fields.`);
         setProcessingStep('No field mappings available');
       }
     }).catch(error => {
       console.error('Failed to fetch field mappings:', error);
-      setApiError(`Failed to load field mappings for object "${sourceObject}": ${error.message}`);
+      setApiError(`Failed to load field mappings for objects "${sourceObject}" -> "${targetObject}": ${error.message}`);
       setProcessingStep('Failed to load field mappings');
     });
 
@@ -1111,9 +1132,29 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     setSelectedRowForAPIIssue(null);
   }, []);
 
+  // API field issue confirm handler
+  const handleConfirmAPIFieldIssue = useCallback((sourceField: string) => {
+    // Add to resolved issues set
+    setResolvedAPIIssues(prev => new Set([...prev, sourceField]));
+
+    // Clear error/warning flags from the mapping row
+    setMappingRows(prev =>
+      prev.map(row =>
+        row.sourceField === sourceField
+          ? { ...row, isError: false, isWarning: false, errorMessage: undefined, suggestedFix: undefined }
+          : row
+      )
+    );
+  }, []);
+
 
   // Helper function to determine issue severity for a row based on API response
   const getRowIssueClass = useCallback((row: MappingRow): string => {
+    // Check if issue is resolved
+    if (resolvedAPIIssues.has(row.sourceField)) {
+      return '';
+    }
+
     // Check API response flags first
     if (row.isError) {
       return 'has-error';
@@ -1124,7 +1165,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     }
 
     return '';
-  }, []);
+  }, [resolvedAPIIssues]);
 
   // Convert mismatches to Issues format for CompactFieldMappingIssues
   const convertToIssues = useCallback((): Issue[] => {
@@ -1227,9 +1268,9 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     }
   }, [handleSaveMappings, onNext, validationResults.isValid]);
 
-  // Check if any rows with API errors are included in sync
+  // Check if any rows with API errors are included in sync (excluding resolved issues)
   const hasAPIErrorsInSync = mappingRowsWithConfidence.some(row =>
-    row.includeInSync && row.isError
+    row.includeInSync && row.isError && !resolvedAPIIssues.has(row.sourceField)
   );
 
   const canProceed = validationResults.isValid && !hasAPIErrorsInSync;
@@ -1462,7 +1503,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
               <div className="actions-column">
                 <div className="inline-actions">
                   {/* API Error icon */}
-                  {row.isError && (
+                  {row.isError && !resolvedAPIIssues.has(row.sourceField) && (
                     <span
                       className="action-icon error-icon"
                       onClick={() => handleOpenAPIFieldIssue(row)}
@@ -1477,7 +1518,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                   )}
 
                   {/* API Warning icon */}
-                  {row.isWarning && !row.isError && (
+                  {row.isWarning && !row.isError && !resolvedAPIIssues.has(row.sourceField) && (
                     <span
                       className="action-icon warning-icon"
                       onClick={() => handleOpenAPIFieldIssue(row)}
@@ -1609,6 +1650,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           isOpen={showAPIFieldIssueDialog}
           onClose={handleCloseAPIFieldIssue}
           row={selectedRowForAPIIssue}
+          onConfirm={handleConfirmAPIFieldIssue}
         />
       )}
     </div>
