@@ -17,6 +17,8 @@ interface APIFieldMapping {
   sourceType: string;
   target: string;
   targetType: string;
+  confidence: number;
+  isPIField: boolean;
   defaultValue?: string;
   isError?: boolean;
   isWarning?: boolean;
@@ -30,6 +32,8 @@ interface APIFieldMapping {
 
 interface APIResponse {
   fieldMaping: APIFieldMapping[]; // Note: API has typo in property name
+  unmapped_source_fields: string[];
+  available_target_fields: string[];
 }
 
 interface Step4FieldMappingProps {
@@ -594,11 +598,15 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
 // Transform API response to MappingRow format
 const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): MappingRow[] => {
   return apiMappings.map(mapping => {
-    const isPII = isPIIField(mapping.source);
+    // Use isPIField from API response, fallback to field name detection
+    const isPII = mapping.isPIField !== undefined ? mapping.isPIField : isPIIField(mapping.source);
 
     // Convert String types to Picklist for fields that match picklist patterns
     const convertedSourceType = convertFieldType(mapping.source, mapping.sourceType);
     const convertedTargetType = convertFieldType(mapping.target, mapping.targetType);
+
+    // Convert API confidence (0-1) to percentage (0-100)
+    const confidencePercentage = Math.round(mapping.confidence * 100);
 
     return {
       sourceField: mapping.source,
@@ -607,7 +615,7 @@ const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): Mapp
       targetField: mapping.target,
       targetType: convertedTargetType,
       isEditing: false,
-      confidenceScore: 100, // Initial confidence, will be updated after validation
+      confidenceScore: confidencePercentage, // Use API confidence score
       isPrimaryKey: isPrimaryKeyField(mapping.source),
       includeInSync: shouldIncludeInSync(mapping.source),
       isPII: isPII,
@@ -668,6 +676,10 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   // Resolved API issues state
   const [resolvedAPIIssues, setResolvedAPIIssues] = useState<Set<string>>(new Set());
 
+  // Unmapped and available fields state
+  const [unmappedSourceFields, setUnmappedSourceFields] = useState<string[]>([]);
+  const [availableTargetFields, setAvailableTargetFields] = useState<string[]>([]);
+
   // API call and loader effect with progress animation - 3 seconds total
   useEffect(() => {
     if (!showLoader) return;
@@ -688,34 +700,75 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     const targetObject = jobData?.targetObject || 'Contact__c';
     setApiError(null); // Clear any previous errors
 
-    fetchFieldMappings(sourceObject, targetObject).then(apiMappings => {
-      if (apiMappings.length > 0) {
-        setApiError(null); // Clear error on success
-        const transformedMappings = transformAPIResponseToMappingRows(apiMappings);
-        setMappingRows(prev => {
-          // Update with API data while preserving any existing customizations
-          return transformedMappings.map(apiRow => {
-            const existingRow = prev.find(row => row.sourceField === apiRow.sourceField);
-            // Ensure all properties from apiRow are preserved, then override with existing customizations
-            return existingRow ? {
-              ...apiRow,
-              ...existingRow,
-              // Ensure type fields are preserved from API
-              sourceType: apiRow.sourceType,
-              targetType: apiRow.targetType
-            } : apiRow;
+    fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getAiFieldMapping?sourceObjectName=${sourceObject}&targetObjectName=${targetObject}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data: APIResponse) => {
+        const apiMappings = data.fieldMaping || [];
+
+        if (apiMappings.length > 0) {
+          setApiError(null); // Clear error on success
+
+          // Set unmapped and available fields
+          setUnmappedSourceFields(data.unmapped_source_fields || []);
+          setAvailableTargetFields(data.available_target_fields || []);
+
+          const transformedMappings = transformAPIResponseToMappingRows(apiMappings);
+
+          // Create mapping rows for unmapped source fields
+          const unmappedMappings = (data.unmapped_source_fields || []).map(sourceField => ({
+            sourceField,
+            sourceLabel: sourceField,
+            sourceType: 'string', // Default type for unmapped fields
+            targetField: '', // No target mapping
+            targetType: '',
+            isEditing: false,
+            confidenceScore: 0, // Low confidence for unmapped fields
+            isPrimaryKey: isPrimaryKeyField(sourceField),
+            includeInSync: shouldIncludeInSync(sourceField),
+            isPII: isPIIField(sourceField),
+            maskPII: isPIIField(sourceField),
+            defaultValue: undefined,
+            isError: false,
+            isWarning: true, // Mark as warning since they're unmapped
+            errorMessage: 'Field is not mapped to target',
+            suggestedFix: undefined,
+            valueMap: undefined
+          }));
+
+          // Combine mapped and unmapped fields
+          const allMappings = [...transformedMappings, ...unmappedMappings];
+
+          setMappingRows(prev => {
+            // Update with API data while preserving any existing customizations
+            return allMappings.map(apiRow => {
+              const existingRow = prev.find(row => row.sourceField === apiRow.sourceField);
+              // Ensure all properties from apiRow are preserved, then override with existing customizations
+              return existingRow ? {
+                ...apiRow,
+                ...existingRow,
+                // Ensure type fields are preserved from API
+                sourceType: apiRow.sourceType,
+                targetType: apiRow.targetType,
+                confidenceScore: apiRow.confidenceScore // Ensure API confidence is preserved
+              } : apiRow;
+            });
           });
-        });
-      } else {
-        // Handle empty response
-        setApiError(`No field mappings found for objects "${sourceObject}" -> "${targetObject}". Please check if the objects exist and have accessible fields.`);
-        setProcessingStep('No field mappings available');
-      }
-    }).catch(error => {
-      console.error('Failed to fetch field mappings:', error);
-      setApiError(`Failed to load field mappings for objects "${sourceObject}" -> "${targetObject}": ${error.message}`);
-      setProcessingStep('Failed to load field mappings');
-    });
+        } else {
+          // Handle empty response
+          setApiError(`No field mappings found for objects "${sourceObject}" -> "${targetObject}". Please check if the objects exist and have accessible fields.`);
+          setProcessingStep('No field mappings available');
+        }
+      })
+      .catch(error => {
+        console.error('Failed to fetch field mappings:', error);
+        setApiError(`Failed to load field mappings for objects "${sourceObject}" -> "${targetObject}": ${error.message}`);
+        setProcessingStep('Failed to load field mappings');
+      });
 
     const interval = setInterval(() => {
       currentProgress += 100 / 30; // 100% / 30 intervals = 3.333...% per interval
@@ -1442,8 +1495,20 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                             </option>
                           ))
                         }
-                        {/* Allow custom target field entry */}
-                        <option value="__custom__">+ Enter custom field...</option>
+                        {/* Available target fields from API */}
+                        {availableTargetFields.length > 0 && (
+                          <optgroup label="Available Target Fields">
+                            {availableTargetFields
+                              .filter(field => !mappingRows.some(r => r.targetField === field))
+                              .sort()
+                              .map((targetField) => (
+                                <option key={`available-${targetField}`} value={targetField}>
+                                  {targetField}
+                                </option>
+                              ))
+                            }
+                          </optgroup>
+                        )}
                       </select>
                       <div className="inline-actions">
                         <span
