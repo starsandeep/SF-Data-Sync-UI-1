@@ -225,7 +225,7 @@ const handleRunSimulation = async () => {
       sourceOrg: jobData.sourceOrg || "SalesMgmt",
       targetOrg: jobData.targetOrg || "CaseMgmt",
       fromDate: testFromDate,
-      recordlimit: 2,
+      recordlimit: 5,
       toDate: testToDate,
       sourceObject: jobData.sourceObject || "Contact",
       targetObject: jobData.targetObject || "Contact",
@@ -410,9 +410,10 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
 
       console.log('Sample Size:', sampleSize);
 
-      // Conditionally add sample size if checkbox is checked
+      // Conditionally add sample size if checkbox is che
+      // cked
       if (sendSampleSize && sampleSize > 0) {
-        testRequestBody.recordLimit = sampleSize;
+        testRequestBody.recordlimit = sampleSize;
       }
 
       console.log('Sending test request:', testRequestBody);
