@@ -128,8 +128,14 @@ const fetchFieldMappings = async (objectName: string): Promise<APIFieldMapping[]
     }
     const data: APIResponse = await response.json();
 
-    // Add the Description__c mapping as specified in the requirements
+    // Check if fieldMaping exists and is an array
     const mappings = data.fieldMaping || [];
+
+    // Handle case where fieldMaping is empty
+    if (!Array.isArray(mappings) || mappings.length === 0) {
+      console.warn(`No field mappings found for object: ${objectName}`);
+      throw new Error(`No field mappings available for object: ${objectName}`);
+    }
 
     return mappings;
   } catch (error) {
@@ -163,7 +169,7 @@ interface ObjectMetadata {
 // API function to fetch object metadata with picklist values
 const fetchObjectMetadata = async (objectName: string, org: 'source' | 'target'): Promise<ObjectMetadata | null> => {
   try {
-    const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getSfdcObjects?objectName=${objectName}&org=${org}`);
+    const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getAiFieldMapping?objectName=${objectName}&org=${org}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -612,6 +618,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   const [showLoader, setShowLoader] = useState(true);
   const [progress, setProgress] = useState(0);
   const [processingStep, setProcessingStep] = useState('Initializing field analysis...');
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const [mappingRows, setMappingRows] = useState<MappingRow[]>([]);
 
@@ -658,8 +665,11 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
     // Start API call immediately using dynamic source object
     const sourceObject = jobData?.sourceObject || 'Contact';
+    setApiError(null); // Clear any previous errors
+
     fetchFieldMappings(sourceObject).then(apiMappings => {
       if (apiMappings.length > 0) {
+        setApiError(null); // Clear error on success
         const transformedMappings = transformAPIResponseToMappingRows(apiMappings);
         setMappingRows(prev => {
           // Update with API data while preserving any existing customizations
@@ -675,10 +685,15 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
             } : apiRow;
           });
         });
+      } else {
+        // Handle empty response
+        setApiError(`No field mappings found for object "${sourceObject}". Please check if the object exists and has accessible fields.`);
+        setProcessingStep('No field mappings available');
       }
     }).catch(error => {
       console.error('Failed to fetch field mappings:', error);
-      // Continue with default mappings on error
+      setApiError(`Failed to load field mappings for object "${sourceObject}": ${error.message}`);
+      setProcessingStep('Failed to load field mappings');
     });
 
     const interval = setInterval(() => {
@@ -754,8 +769,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
         mappingRows.forEach(row => {
           if (row.sourceType === 'Picklist' && row.targetType === 'Picklist') {
-            const sourceField = sourceMetadataResponse.fields.find(f => f.name === row.sourceField);
-            const targetField = targetMetadataResponse.fields.find(f => f.name === row.targetField);
+            const sourceField = sourceMetadataResponse?.fields?.find(f => f.name === row.sourceField);
+            const targetField = targetMetadataResponse?.fields?.find(f => f.name === row.targetField);
 
             if (sourceField?.picklistValues && targetField?.picklistValues) {
               const mismatch = validatePicklistValues(
@@ -1224,28 +1239,54 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       <div className="processing-screen">
         <div className="processing-container">
           <div className="ai-logo">
-            <div className="ai-circle">
-              🧠
+            <div className={`ai-circle ${apiError ? 'error' : ''}`}>
+              {apiError ? '❌' : '🧠'}
             </div>
           </div>
 
-          <h2>AI-Powered Analysis in Progress</h2>
-          <p>Our advanced algorithms are analyzing your data quality...</p>
+          <h2>{apiError ? 'Field Mapping Error' : 'AI-Powered Analysis in Progress'}</h2>
+          <p>{apiError || 'Our advanced algorithms are analyzing your data quality...'}</p>
 
-          <div className="progress-container">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-style={{ width: `${progress}%` }}
-              />
+          {!apiError && (
+            <>
+              <div className="progress-container">
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <div className="progress-text">{Math.round(progress)}% Complete</div>
+              </div>
+
+              <div className="processing-step">
+                <span className="step-icon">⚙️</span>
+                <span>{processingStep}</span>
+              </div>
+            </>
+          )}
+
+          {apiError && (
+            <div className="step-actions" style={{ marginTop: '24px' }}>
+              <Button
+                variant="outline"
+                onClick={onPrevious}
+                disabled={isLoading}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setApiError(null);
+                  setShowLoader(false);
+                }}
+                disabled={isLoading}
+              >
+                Continue with Manual Mapping
+              </Button>
             </div>
-            <div className="progress-text">{Math.round(progress)}% Complete</div>
-          </div>
-
-          <div className="processing-step">
-            <span className="step-icon">⚙️</span>
-            <span>{processingStep}</span>
-          </div>
+          )}
         </div>
       </div>
     );
