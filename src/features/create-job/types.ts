@@ -50,6 +50,7 @@ export interface FieldMappingMetadata {
     maskPII: boolean;
     isPII: boolean;
     defaultValue?: string;
+    valueMap?: Array<{source: string; target: string}>;
   };
 }
 

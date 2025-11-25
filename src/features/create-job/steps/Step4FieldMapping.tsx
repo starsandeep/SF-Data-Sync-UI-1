@@ -550,7 +550,7 @@ interface APIFieldIssueDialogProps {
   isOpen: boolean;
   onClose: () => void;
   row: MappingRow | null;
-  onConfirm?: (sourceField: string, updatedDefaultValue?: string) => void;
+  onConfirm?: (sourceField: string, updatedDefaultValue?: string, updatedValueMap?: Array<{source: string; target: string}>) => void;
 }
 
 const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
@@ -560,6 +560,7 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
   onConfirm
 }) => {
   const [editableDefaultValue, setEditableDefaultValue] = useState<string>('');
+  const [editableValueMap, setEditableValueMap] = useState<Array<{source: string; target: string}>>([]);
 
   // Initialize editable default value when dialog opens
   useEffect(() => {
@@ -567,6 +568,13 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
       setEditableDefaultValue(row.defaultValue);
     }
   }, [isOpen, row?.defaultValue]);
+
+  // Initialize editable value map when dialog opens
+  useEffect(() => {
+    if (isOpen && row?.valueMap) {
+      setEditableValueMap([...row.valueMap]);
+    }
+  }, [isOpen, row?.valueMap]);
 
   if (!row) return null;
 
@@ -580,9 +588,28 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
   const isDefaultValueError = row.actionRequired?.includes('Please provide the default value') ||
                               row.errorMessage?.includes('default value');
 
+  // Check if this needs value mapping (data type mismatch with String target)
+  const isValueMapError = (row.isError || row.isWarning) &&
+                          row.targetType === 'String' &&
+                          row.valueMap &&
+                          row.valueMap.length > 0;
+
+  // Handle value map target change
+  const handleValueMapTargetChange = (index: number, newTargetValue: string) => {
+    setEditableValueMap(prev =>
+      prev.map((mapping, i) =>
+        i === index ? { ...mapping, target: newTargetValue } : mapping
+      )
+    );
+  };
+
   const handleConfirm = () => {
     if (onConfirm && canConfirm) {
-      onConfirm(row.sourceField, isDefaultValueError ? editableDefaultValue : undefined);
+      onConfirm(
+        row.sourceField,
+        isDefaultValueError ? editableDefaultValue : undefined,
+        isValueMapError ? editableValueMap : undefined
+      );
       onClose();
     }
   };
@@ -665,10 +692,22 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {row.valueMap.map((mapping, index) => (
+                    {(isValueMapError ? editableValueMap : row.valueMap).map((mapping, index) => (
                       <tr key={index}>
                         <td className="ds-field-mapping-value-map-cell">{mapping.source}</td>
-                        <td className="ds-field-mapping-value-map-cell">{mapping.target}</td>
+                        <td className="ds-field-mapping-value-map-cell">
+                          {isValueMapError ? (
+                            <input
+                              type="text"
+                              value={mapping.target}
+                              onChange={(e) => handleValueMapTargetChange(index, e.target.value)}
+                              className="ds-field-mapping-value-map-input"
+                              placeholder="Enter target value..."
+                            />
+                          ) : (
+                            mapping.target
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1319,11 +1358,11 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   }, []);
 
   // API field issue confirm handler
-  const handleConfirmAPIFieldIssue = useCallback((sourceField: string, updatedDefaultValue?: string) => {
+  const handleConfirmAPIFieldIssue = useCallback((sourceField: string, updatedDefaultValue?: string, updatedValueMap?: Array<{source: string; target: string}>) => {
     // Add to resolved issues set
     setResolvedAPIIssues(prev => new Set([...prev, sourceField]));
 
-    // Clear error/warning flags from the mapping row and update defaultValue if provided
+    // Clear error/warning flags from the mapping row and update defaultValue/valueMap if provided
     setMappingRows(prev =>
       prev.map(row =>
         row.sourceField === sourceField
@@ -1333,7 +1372,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
               isWarning: false,
               errorMessage: undefined,
               suggestedFix: undefined,
-              defaultValue: updatedDefaultValue !== undefined ? updatedDefaultValue : row.defaultValue
+              defaultValue: updatedDefaultValue !== undefined ? updatedDefaultValue : row.defaultValue,
+              valueMap: updatedValueMap !== undefined ? updatedValueMap : row.valueMap
             }
           : row
       )
@@ -1444,7 +1484,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           isPrimaryKey: row.isPrimaryKey,
           maskPII: row.maskPII,
           isPII: row.isPII,
-          defaultValue: row.defaultValue
+          defaultValue: row.defaultValue,
+          valueMap: row.valueMap
         };
       }
     });

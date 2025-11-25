@@ -220,6 +220,11 @@ const handleRunSimulation = async () => {
           mapping.defaultValue = defaultValue;
         }
 
+        const valueMap = jobData.fieldMappingMetadata?.[sourceField]?.valueMap;
+        if (valueMap && valueMap.length > 0) {
+          mapping.valueMap = valueMap;
+        }
+
         return mapping;
       });
 
@@ -403,6 +408,11 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
           if (defaultValue && defaultValue.trim() !== '') {
             mapping.defaultValue = defaultValue;
+          }
+
+          const valueMap = jobData.fieldMappingMetadata?.[sourceField]?.valueMap;
+          if (valueMap && valueMap.length > 0) {
+            mapping.valueMap = valueMap;
           }
 
           return mapping;
@@ -626,6 +636,11 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
           if (defaultValue && defaultValue.trim() !== '') {
             mapping.defaultValue = defaultValue;
+          }
+
+          const valueMap = jobData.fieldMappingMetadata?.[sourceField]?.valueMap;
+          if (valueMap && valueMap.length > 0) {
+            mapping.valueMap = valueMap;
           }
 
           return mapping;
