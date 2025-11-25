@@ -642,14 +642,6 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
                     onChange={(e) => setEditableDefaultValue(e.target.value)}
                     placeholder="Enter default value..."
                     className="ds-field-mapping-default-value-input"
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      outline: 'none'
-                    }}
                     autoFocus
                   />
                 ) : (
@@ -665,18 +657,18 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
                 Value Mapping:
               </div>
               <div className="ds-field-mapping-error-details-content">
-                <table style={{ width: '100%', marginTop: '8px' }}>
+                <table className="ds-field-mapping-value-map-table">
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #ddd' }}>Source</th>
-                      <th style={{ textAlign: 'left', padding: '4px 8px', borderBottom: '1px solid #ddd' }}>Target</th>
+                      <th className="ds-field-mapping-value-map-header">Source</th>
+                      <th className="ds-field-mapping-value-map-header">Target</th>
                     </tr>
                   </thead>
                   <tbody>
                     {row.valueMap.map((mapping, index) => (
                       <tr key={index}>
-                        <td style={{ padding: '4px 8px', borderBottom: '1px solid #eee' }}>{mapping.source}</td>
-                        <td style={{ padding: '4px 8px', borderBottom: '1px solid #eee' }}>{mapping.target}</td>
+                        <td className="ds-field-mapping-value-map-cell">{mapping.source}</td>
+                        <td className="ds-field-mapping-value-map-cell">{mapping.target}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1510,7 +1502,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           )}
 
           {apiError && (
-            <div className="step-actions" style={{ marginTop: '24px' }}>
+            <div className="step-actions ds-field-mapping-step-actions-spaced">
               <Button
                 variant="outline"
                 onClick={onPrevious}
@@ -1552,7 +1544,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       <div className="field-mapping-table">
         <div className="table-header-fixed">
           <div className="column-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="ds-field-mapping-header-flex">
               <input
                 type="checkbox"
                 checked={selectAllChecked}
@@ -1719,13 +1711,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                   {/* API Error icon */}
                   {row.isError && !resolvedAPIIssues.has(row.sourceField) && (
                     <span
-                      className="action-icon error-icon"
+                      className="action-icon error-icon ds-field-mapping-action-icon-error"
                       onClick={() => handleOpenAPIFieldIssue(row)}
                       aria-label="View error details"
                       role="button"
                       tabIndex={0}
                       title={`Error: ${row.errorMessage || 'Field mapping error'}`}
-                      style={{ color: '#dc2626' }}
                     >
                       <HandymanIcon fontSize="small" />
                     </span>
@@ -1734,13 +1725,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                   {/* API Warning icon */}
                   {row.isWarning && !row.isError && !resolvedAPIIssues.has(row.sourceField) && (
                     <span
-                      className="action-icon warning-icon"
+                      className="action-icon warning-icon ds-field-mapping-action-icon-warning"
                       onClick={() => handleOpenAPIFieldIssue(row)}
                       aria-label="View warning details"
                       role="button"
                       tabIndex={0}
                       title={`Warning: ${row.errorMessage || 'Field mapping warning'}`}
-                      style={{ color: '#d97706' }}
                     >
                       <WarningIcon fontSize="small" />
                     </span>

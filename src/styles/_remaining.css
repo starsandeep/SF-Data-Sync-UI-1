@@ -5167,6 +5167,55 @@
   display: flex;
   justify-content: flex-end;
   margin-top: 1.5rem;
+  gap: 12px;
+}
+
+.ds-field-mapping-default-value-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+}
+
+.ds-field-mapping-default-value-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ds-field-mapping-value-map-table {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.ds-field-mapping-value-map-header {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid #ddd;
+}
+
+.ds-field-mapping-value-map-cell {
+  padding: 4px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.ds-field-mapping-header-flex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ds-field-mapping-step-actions-spaced {
+  margin-top: 24px;
+}
+
+.ds-field-mapping-action-icon-error {
+  color: #dc2626;
+}
+
+.ds-field-mapping-action-icon-warning {
+  color: #d97706;
 }
 
 /* DS Field Mapping Column Header Styles */
