@@ -5252,6 +5252,10 @@
   color: #d97706;
 }
 
+.ds-field-mapping-action-icon-confirmed {
+  color: #10b981;
+}
+
 /* DS Field Mapping Column Header Styles */
 .ds-field-mapping-object-label {
   color: #3B82F6;

@@ -1395,16 +1395,13 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     // Add to resolved issues set
     setResolvedAPIIssues(prev => new Set([...prev, sourceField]));
 
-    // Clear error/warning flags from the mapping row and update defaultValue/valueMap if provided
+    // Keep error/warning flags but update defaultValue/valueMap if provided
+    // Don't clear the flags - we'll show them as confirmed (green) instead
     setMappingRows(prev =>
       prev.map(row =>
         row.sourceField === sourceField
           ? {
               ...row,
-              isError: false,
-              isWarning: false,
-              errorMessage: undefined,
-              suggestedFix: undefined,
               defaultValue: updatedDefaultValue !== undefined ? updatedDefaultValue : row.defaultValue,
               valueMap: updatedValueMap !== undefined ? updatedValueMap : row.valueMap
             }
@@ -1781,29 +1778,29 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
               <div className="actions-column">
                 <div className="inline-actions">
-                  {/* API Error icon */}
-                  {row.isError && !resolvedAPIIssues.has(row.sourceField) && (
+                  {/* API Error icon - show in red if not resolved, green if confirmed */}
+                  {row.isError && (
                     <span
-                      className="action-icon error-icon ds-field-mapping-action-icon-error"
+                      className={`action-icon error-icon ${resolvedAPIIssues.has(row.sourceField) ? 'ds-field-mapping-action-icon-confirmed' : 'ds-field-mapping-action-icon-error'}`}
                       onClick={() => handleOpenAPIFieldIssue(row)}
-                      aria-label="View error details"
+                      aria-label={resolvedAPIIssues.has(row.sourceField) ? "View confirmed error details" : "View error details"}
                       role="button"
                       tabIndex={0}
-                      title={`Error: ${row.errorMessage || 'Field mapping error'}`}
+                      title={resolvedAPIIssues.has(row.sourceField) ? `Confirmed: ${row.errorMessage || 'Field mapping error'}` : `Error: ${row.errorMessage || 'Field mapping error'}`}
                     >
                       <HandymanIcon fontSize="small" />
                     </span>
                   )}
 
-                  {/* API Warning icon */}
-                  {row.isWarning && !row.isError && !resolvedAPIIssues.has(row.sourceField) && (
+                  {/* API Warning icon - show in orange if not resolved, green if confirmed */}
+                  {row.isWarning && !row.isError && (
                     <span
-                      className="action-icon warning-icon ds-field-mapping-action-icon-warning"
+                      className={`action-icon warning-icon ${resolvedAPIIssues.has(row.sourceField) ? 'ds-field-mapping-action-icon-confirmed' : 'ds-field-mapping-action-icon-warning'}`}
                       onClick={() => handleOpenAPIFieldIssue(row)}
-                      aria-label="View warning details"
+                      aria-label={resolvedAPIIssues.has(row.sourceField) ? "View confirmed warning details" : "View warning details"}
                       role="button"
                       tabIndex={0}
-                      title={`Warning: ${row.errorMessage || 'Field mapping warning'}`}
+                      title={resolvedAPIIssues.has(row.sourceField) ? `Confirmed: ${row.errorMessage || 'Field mapping warning'}` : `Warning: ${row.errorMessage || 'Field mapping warning'}`}
                     >
                       <WarningIcon fontSize="small" />
                     </span>
