@@ -1533,12 +1533,13 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     }
   }, [handleSaveMappings, onNext, validationResults.isValid]);
 
-  // Check if any rows with API errors are included in sync (excluding resolved issues)
-  const hasAPIErrorsInSync = mappingRowsWithConfidence.some(row =>
-    row.includeInSync && row.isError && !resolvedAPIIssues.has(row.sourceField)
+  // Check if there are any unresolved API errors/warnings in fields that are included in sync
+  // Button should only be enabled if ALL errors/warnings are either resolved OR excluded from sync
+  const hasUnresolvedAPIIssuesInSync = mappingRowsWithConfidence.some(row =>
+    row.includeInSync && (row.isError || row.isWarning) && !resolvedAPIIssues.has(row.sourceField)
   );
 
-  const canProceed = validationResults.isValid && !hasAPIErrorsInSync;
+  const canProceed = !hasUnresolvedAPIIssuesInSync;
 
   if (showLoader) {
     return (
@@ -1876,9 +1877,9 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         </div>
       )}
 
-      {hasAPIErrorsInSync && (
+      {hasUnresolvedAPIIssuesInSync && (
         <div className="error-message" role="alert">
-          <strong>API field errors detected:</strong> Fields with API errors that are included in sync must be resolved before simulation. Please fix the field issues or exclude them from sync.
+          <strong>API field issues detected:</strong> Fields with API errors or warnings that are included in sync must be resolved before simulation. Please confirm the field issues or exclude them from sync.
         </div>
       )}
 
