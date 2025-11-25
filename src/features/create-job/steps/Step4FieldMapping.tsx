@@ -78,7 +78,7 @@ interface MappingRow {
   isPrimaryKey: boolean; // Indicates if this field is part of primary key combination
   includeInSync: boolean; // Indicates if this field should be included in sync
   isPII: boolean; // Indicates if this field contains Personally Identifiable Information
-  maskPII: boolean; // Indicates if PII data should be masked during sync
+  isPIField: boolean; // Indicates if PII data should be masked during sync
   defaultValue?: string;
   isError?: boolean;
   isWarning?: boolean;
@@ -828,7 +828,7 @@ const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): Mapp
       isPrimaryKey: isPrimaryKeyField(mapping.source),
       includeInSync: shouldIncludeInSync(mapping.source),
       isPII: isPII,
-      maskPII: isPII, // Default to mask if PII
+      isPIField: isPII, // Default to mask if PII
       defaultValue: defaultValue,
       isError: isError,
       isWarning: isWarning,
@@ -935,7 +935,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
             isPrimaryKey: isPrimaryKeyField(sourceField),
             includeInSync: shouldIncludeInSync(sourceField),
             isPII: isPIIField(sourceField),
-            maskPII: isPIIField(sourceField),
+            isPIField: isPIIField(sourceField),
             defaultValue: undefined,
             isError: false,
             isWarning: true, // Mark as warning since they're unmapped
@@ -1331,7 +1331,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     setMappingRows(prev =>
       prev.map(row =>
         row.sourceField === sourceField
-          ? { ...row, maskPII: !row.maskPII }
+          ? { ...row, isPIField: !row.isPIField }
           : row
       )
     );
@@ -1515,7 +1515,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         metadata[row.sourceField] = {
           includeInSync: row.includeInSync,
           isPrimaryKey: row.isPrimaryKey,
-          maskPII: row.maskPII,
+          isPIField: row.isPIField,
           isPII: row.isPII,
           defaultValue: row.defaultValue,
           valueMap: row.valueMap
@@ -1671,10 +1671,9 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
               <div className="pii-masking-cell">
                 <input
                   type="checkbox"
-                  checked={row.maskPII}
+                  checked={row.isPIField}
                   onChange={() => handlePIIMaskingToggle(row.sourceField)}
                   className="pii-masking-checkbox"
-                  disabled={!row.isPII}
                   aria-label={`Mask PII data for ${row.sourceLabel}`}
                 />
               </div>

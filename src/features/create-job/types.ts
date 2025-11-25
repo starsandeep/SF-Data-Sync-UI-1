@@ -47,7 +47,7 @@ export interface FieldMappingMetadata {
   [sourceField: string]: {
     includeInSync: boolean;
     isPrimaryKey: boolean;
-    maskPII: boolean;
+    isPIField: boolean;
     isPII: boolean;
     defaultValue?: string;
     valueMap?: Array<{source: string; target: string}>;

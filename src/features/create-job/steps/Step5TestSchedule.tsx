@@ -225,6 +225,11 @@ const handleRunSimulation = async () => {
           mapping.valueMap = valueMap;
         }
 
+        const isPIField = jobData.fieldMappingMetadata?.[sourceField]?.isPIField;
+        if (isPIField === true) {
+          mapping.isPIField = isPIField;
+        }
+
         return mapping;
       });
 
@@ -413,6 +418,11 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           const valueMap = jobData.fieldMappingMetadata?.[sourceField]?.valueMap;
           if (valueMap && valueMap.length > 0) {
             mapping.valueMap = valueMap;
+          }
+
+          const isPIField = jobData.fieldMappingMetadata?.[sourceField]?.isPIField;
+          if (isPIField === true) {
+            mapping.isPIField = isPIField;
           }
 
           return mapping;
@@ -641,6 +651,11 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           const valueMap = jobData.fieldMappingMetadata?.[sourceField]?.valueMap;
           if (valueMap && valueMap.length > 0) {
             mapping.valueMap = valueMap;
+          }
+
+          const isPIField = jobData.fieldMappingMetadata?.[sourceField]?.isPIField;
+          if (isPIField === true) {
+            mapping.isPIField = isPIField;
           }
 
           return mapping;
