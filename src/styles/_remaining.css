@@ -5214,6 +5214,26 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
+.ds-field-mapping-value-map-select {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  font-size: 13px;
+  outline: none;
+  background-color: white;
+  cursor: pointer;
+}
+
+.ds-field-mapping-value-map-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.ds-field-mapping-value-map-select:hover {
+  border-color: #9ca3af;
+}
+
 .ds-field-mapping-header-flex {
   display: flex;
   align-items: center;

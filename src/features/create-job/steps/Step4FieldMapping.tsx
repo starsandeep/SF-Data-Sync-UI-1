@@ -588,9 +588,9 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
   const isDefaultValueError = row.actionRequired?.includes('Please provide the default value') ||
                               row.errorMessage?.includes('default value');
 
-  // Check if this needs value mapping (data type mismatch with String target)
+  // Check if this needs value mapping (data type mismatch with String or Boolean target)
   const isValueMapError = (row.isError || row.isWarning) &&
-                          row.targetType === 'String' &&
+                          (row.targetType === 'String' || row.targetType === 'Boolean') &&
                           row.valueMap &&
                           row.valueMap.length > 0;
 
@@ -697,13 +697,24 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
                         <td className="ds-field-mapping-value-map-cell">{mapping.source}</td>
                         <td className="ds-field-mapping-value-map-cell">
                           {isValueMapError ? (
-                            <input
-                              type="text"
-                              value={mapping.target}
-                              onChange={(e) => handleValueMapTargetChange(index, e.target.value)}
-                              className="ds-field-mapping-value-map-input"
-                              placeholder="Enter target value..."
-                            />
+                            row.targetType === 'Boolean' ? (
+                              <select
+                                value={mapping.target}
+                                onChange={(e) => handleValueMapTargetChange(index, e.target.value)}
+                                className="ds-field-mapping-value-map-select"
+                              >
+                                <option value="true">true</option>
+                                <option value="false">false</option>
+                              </select>
+                            ) : (
+                              <input
+                                type="text"
+                                value={mapping.target}
+                                onChange={(e) => handleValueMapTargetChange(index, e.target.value)}
+                                className="ds-field-mapping-value-map-input"
+                                placeholder="Enter target value..."
+                              />
+                            )
                           ) : (
                             mapping.target
                           )}
