@@ -588,11 +588,20 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
   const isDefaultValueError = row.actionRequired?.includes('Please provide the default value') ||
                               row.errorMessage?.includes('default value');
 
-  // Check if this needs value mapping (data type mismatch with String or Boolean target)
+  // Check if this needs value mapping (data type mismatch with String, Boolean, or Picklist target)
   const isValueMapError = (row.isError || row.isWarning) &&
-                          (row.targetType === 'String' || row.targetType === 'Boolean') &&
+                          (row.targetType === 'String' || row.targetType === 'Boolean' || row.targetType === 'Picklist') &&
                           row.valueMap &&
                           row.valueMap.length > 0;
+
+  // Extract unique target picklist values for dropdown options
+  const targetPicklistValues = useMemo(() => {
+    if (row?.targetType === 'Picklist' && row?.valueMap) {
+      const uniqueValues = [...new Set(row.valueMap.map(mapping => mapping.target))];
+      return uniqueValues.filter(value => value && value.trim() !== '');
+    }
+    return [];
+  }, [row?.targetType, row?.valueMap]);
 
   // Handle value map target change
   const handleValueMapTargetChange = (index: number, newTargetValue: string) => {
@@ -705,6 +714,19 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
                               >
                                 <option value="true">true</option>
                                 <option value="false">false</option>
+                              </select>
+                            ) : row.targetType === 'Picklist' ? (
+                              <select
+                                value={mapping.target}
+                                onChange={(e) => handleValueMapTargetChange(index, e.target.value)}
+                                className="ds-field-mapping-value-map-select"
+                              >
+                                <option value="">Select value...</option>
+                                {targetPicklistValues.map((picklistValue) => (
+                                  <option key={picklistValue} value={picklistValue}>
+                                    {picklistValue}
+                                  </option>
+                                ))}
                               </select>
                             ) : (
                               <input
@@ -1789,7 +1811,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                   )}
 
 
-                  {row.sourceType === 'Picklist' && row.targetType === 'Picklist' && (
+                  {/* {row.sourceType === 'Picklist' && row.targetType === 'Picklist' && (
                     <span
                       className="action-icon map-values-icon"
                       onClick={() => {
@@ -1807,7 +1829,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                     >
                       <ListIcon fontSize="small" />
                     </span>
-                  )}
+                  )} */}
 
                   <span
                     className="action-icon edit-icon"
