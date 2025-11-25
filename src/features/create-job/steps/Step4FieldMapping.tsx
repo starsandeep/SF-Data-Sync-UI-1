@@ -12,29 +12,46 @@ import WarningIcon from '@mui/icons-material/Warning';
 import HandymanIcon from '@mui/icons-material/Handyman';
 
 // API Response interfaces
-interface APIFieldMapping {
+interface BaseAPIFieldMapping {
   source: string;
   sourceType: string;
   target: string;
   targetType: string;
+}
+
+interface AIFieldMapping extends BaseAPIFieldMapping {
   confidence: number;
   isPIField: boolean;
+}
+
+interface RegularFieldMapping extends BaseAPIFieldMapping {
   defaultValue?: string;
   isError?: boolean;
   isWarning?: boolean;
   errorMessage?: string;
   suggestedFix?: string;
+  actionRequired?: string;
   valueMap?: Array<{
     source: string;
     target: string;
   }>;
 }
 
-interface APIResponse {
-  fieldMaping: APIFieldMapping[]; // Note: API has typo in property name
+// Union type for API field mapping
+type APIFieldMapping = AIFieldMapping | RegularFieldMapping;
+
+interface AIFieldMappingResponse {
+  fieldMaping: AIFieldMapping[]; // Note: API has typo in property name
   unmapped_source_fields: string[];
   available_target_fields: string[];
 }
+
+interface RegularFieldMappingResponse {
+  fieldMaping: RegularFieldMapping[]; // Note: API has typo in property name
+}
+
+// Union type for API responses
+type APIResponse = AIFieldMappingResponse | RegularFieldMappingResponse;
 
 interface Step4FieldMappingProps {
   fieldMappings: FieldMapping;
@@ -67,6 +84,7 @@ interface MappingRow {
   isWarning?: boolean;
   errorMessage?: string;
   suggestedFix?: string;
+  actionRequired?: string; // Action required message for fixing field issues
   valueMap?: Array<{
     source: string;
     target: string;
@@ -123,14 +141,42 @@ const shouldIncludeInSync = (fieldName: string): boolean => {
   return true;
 };
 
-// API function to fetch field mappings
-const fetchFieldMappings = async (sourceObjectName: string, targetObjectName: string): Promise<APIFieldMapping[]> => {
+// Type guard functions
+const isAIFieldMapping = (mapping: APIFieldMapping): mapping is AIFieldMapping => {
+  return 'confidence' in mapping && 'isPIField' in mapping;
+};
+
+
+const isAIFieldMappingResponse = (response: APIResponse): response is AIFieldMappingResponse => {
+  return 'unmapped_source_fields' in response && 'available_target_fields' in response;
+};
+
+// API function to fetch field mappings with conditional logic
+const fetchFieldMappings = async (sourceObjectName: string, targetObjectName: string): Promise<{
+  mappings: APIFieldMapping[];
+  unmappedSourceFields: string[];
+  availableTargetFields: string[];
+}> => {
   try {
-    const response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getAiFieldMapping?sourceObjectName=${sourceObjectName}&targetObjectName=${targetObjectName}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    let response: Response;
+    let data: APIResponse;
+
+    // Conditional API call based on sourceObjectName
+    if (sourceObjectName === 'Deal__c') {
+      // Use regular field mapping API for Deal__c
+      response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getFieldMapping?object=Deal__c`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      data = await response.json() as RegularFieldMappingResponse;
+    } else {
+      // Use AI field mapping API for other objects
+      response = await fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getAiFieldMapping?sourceObjectName=${sourceObjectName}&targetObjectName=${targetObjectName}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      data = await response.json() as AIFieldMappingResponse;
     }
-    const data: APIResponse = await response.json();
 
     // Check if fieldMaping exists and is an array
     const mappings = data.fieldMaping || [];
@@ -141,11 +187,28 @@ const fetchFieldMappings = async (sourceObjectName: string, targetObjectName: st
       throw new Error(`No field mappings available for objects: ${sourceObjectName} -> ${targetObjectName}`);
     }
 
-    return mappings;
+    // Extract unmapped and available fields (only available for AI field mapping)
+    let unmappedSourceFields: string[] = [];
+    let availableTargetFields: string[] = [];
+
+    if (isAIFieldMappingResponse(data)) {
+      unmappedSourceFields = data.unmapped_source_fields || [];
+      availableTargetFields = data.available_target_fields || [];
+    }
+
+    return {
+      mappings,
+      unmappedSourceFields,
+      availableTargetFields
+    };
   } catch (error) {
     console.error('Error fetching field mappings:', error);
-    // Return empty array on error, will fall back to default mappings
-    return [];
+    // Return empty structure on error
+    return {
+      mappings: [],
+      unmappedSourceFields: [],
+      availableTargetFields: []
+    };
   }
 };
 
@@ -542,6 +605,17 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
             </div>
           )}
 
+          {row.actionRequired && (
+            <div className="ds-field-mapping-error-details-section">
+              <div className="ds-field-mapping-error-details-title">
+                Action Required:
+              </div>
+              <div className="ds-field-mapping-error-suggestion">
+                {row.actionRequired}
+              </div>
+            </div>
+          )}
+
           {row.defaultValue && (
             <div className="ds-field-mapping-error-details-section">
               <div className="ds-field-mapping-error-details-title">
@@ -598,15 +672,54 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
 // Transform API response to MappingRow format
 const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): MappingRow[] => {
   return apiMappings.map(mapping => {
-    // Use isPIField from API response, fallback to field name detection
-    const isPII = mapping.isPIField !== undefined ? mapping.isPIField : isPIIField(mapping.source);
+    let isPII: boolean;
+    let confidencePercentage: number;
+    let defaultValue: string | undefined;
+    let isError: boolean | undefined;
+    let isWarning: boolean | undefined;
+    let errorMessage: string | undefined;
+    let suggestedFix: string | undefined;
+    let actionRequired: string | undefined;
+    let valueMap: Array<{ source: string; target: string; }> | undefined;
+
+    // Handle AI Field Mapping properties
+    if (isAIFieldMapping(mapping)) {
+      isPII = mapping.isPIField;
+      confidencePercentage = Math.round(mapping.confidence * 100);
+      defaultValue = undefined;
+      isError = false;
+      isWarning = false;
+      errorMessage = undefined;
+      suggestedFix = undefined;
+      actionRequired = undefined;
+      valueMap = undefined;
+    }
+    // Handle Regular Field Mapping properties
+    else {
+      // This covers both RegularFieldMapping and base case
+      isPII = isPIIField((mapping as BaseAPIFieldMapping).source); // Fallback to field name detection
+      confidencePercentage = 100; // Default confidence for regular mappings without errors
+
+      // Safely access optional properties
+      defaultValue = (mapping as RegularFieldMapping).defaultValue;
+      isError = (mapping as RegularFieldMapping).isError;
+      isWarning = (mapping as RegularFieldMapping).isWarning;
+      errorMessage = (mapping as RegularFieldMapping).errorMessage;
+      suggestedFix = (mapping as RegularFieldMapping).suggestedFix;
+      actionRequired = (mapping as RegularFieldMapping).actionRequired;
+      valueMap = (mapping as RegularFieldMapping).valueMap;
+
+      // Adjust confidence based on errors/warnings
+      if (isError) {
+        confidencePercentage = 30; // Low confidence for errors
+      } else if (isWarning) {
+        confidencePercentage = 70; // Medium confidence for warnings
+      }
+    }
 
     // Convert String types to Picklist for fields that match picklist patterns
     const convertedSourceType = convertFieldType(mapping.source, mapping.sourceType);
     const convertedTargetType = convertFieldType(mapping.target, mapping.targetType);
-
-    // Convert API confidence (0-1) to percentage (0-100)
-    const confidencePercentage = Math.round(mapping.confidence * 100);
 
     return {
       sourceField: mapping.source,
@@ -615,17 +728,18 @@ const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): Mapp
       targetField: mapping.target,
       targetType: convertedTargetType,
       isEditing: false,
-      confidenceScore: confidencePercentage, // Use API confidence score
+      confidenceScore: confidencePercentage,
       isPrimaryKey: isPrimaryKeyField(mapping.source),
       includeInSync: shouldIncludeInSync(mapping.source),
       isPII: isPII,
       maskPII: isPII, // Default to mask if PII
-      defaultValue: mapping.defaultValue,
-      isError: mapping.isError,
-      isWarning: mapping.isWarning,
-      errorMessage: mapping.errorMessage,
-      suggestedFix: mapping.suggestedFix,
-      valueMap: mapping.valueMap
+      defaultValue: defaultValue,
+      isError: isError,
+      isWarning: isWarning,
+      errorMessage: errorMessage,
+      suggestedFix: suggestedFix,
+      actionRequired: actionRequired,
+      valueMap: valueMap
     };
   });
 };
@@ -700,27 +814,21 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     const targetObject = jobData?.targetObject || 'Contact__c';
     setApiError(null); // Clear any previous errors
 
-    fetch(`https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/getAiFieldMapping?sourceObjectName=${sourceObject}&targetObjectName=${targetObject}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data: APIResponse) => {
-        const apiMappings = data.fieldMaping || [];
+    fetchFieldMappings(sourceObject, targetObject)
+      .then((result) => {
+        const { mappings: apiMappings, unmappedSourceFields, availableTargetFields } = result;
 
         if (apiMappings.length > 0) {
           setApiError(null); // Clear error on success
 
           // Set unmapped and available fields
-          setUnmappedSourceFields(data.unmapped_source_fields || []);
-          setAvailableTargetFields(data.available_target_fields || []);
+          setUnmappedSourceFields(unmappedSourceFields);
+          setAvailableTargetFields(availableTargetFields);
 
           const transformedMappings = transformAPIResponseToMappingRows(apiMappings);
 
           // Create mapping rows for unmapped source fields
-          const unmappedMappings = (data.unmapped_source_fields || []).map(sourceField => ({
+          const unmappedMappings = unmappedSourceFields.map(sourceField => ({
             sourceField,
             sourceLabel: sourceField,
             sourceType: 'string', // Default type for unmapped fields
@@ -737,6 +845,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
             isWarning: true, // Mark as warning since they're unmapped
             errorMessage: 'Field is not mapped to target',
             suggestedFix: undefined,
+            actionRequired: undefined,
             valueMap: undefined
           }));
 
@@ -766,7 +875,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       })
       .catch(error => {
         console.error('Failed to fetch field mappings:', error);
-        setApiError(`Failed to load field mappings for objects "${sourceObject}" -> "${targetObject}": ${error.message}`);
+        setApiError(`Failed to load field mappings for objects "${sourceObject}" -> "${targetObject}": ${error.message || error}`);
         setProcessingStep('Failed to load field mappings');
       });
 
