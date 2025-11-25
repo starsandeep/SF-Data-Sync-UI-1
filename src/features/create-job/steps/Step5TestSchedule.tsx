@@ -207,12 +207,21 @@ const handleRunSimulation = async () => {
 
     const fieldMappingArray = Object.entries(jobData.fieldMappings || {})
       .filter(([sourceField]) => jobData.fieldMappingMetadata?.[sourceField]?.includeInSync === true)
-      .map(([sourceField, targetField]) => ({
-        source: sourceField,
-        sourceType: getFieldType(sourceField),
-        target: targetField,
-        targetType: getFieldType(targetField),
-      }));
+      .map(([sourceField, targetField]) => {
+        const mapping: any = {
+          source: sourceField,
+          sourceType: getFieldType(sourceField),
+          target: targetField,
+          targetType: getFieldType(targetField)
+        };
+
+        const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
+        if (defaultValue && defaultValue.trim() !== '') {
+          mapping.defaultValue = defaultValue;
+        }
+
+        return mapping;
+      });
 
     const requestBody: any = {
       name: `${jobData.name || "SimulationRun"}`,
@@ -383,12 +392,21 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           const metadata = jobData.fieldMappingMetadata?.[sourceField];
           return metadata?.includeInSync === true;
         })
-        .map(([sourceField, targetField]) => ({
-          source: sourceField,
-          sourceType: getFieldType(sourceField),
-          target: targetField,
-          targetType: getFieldType(targetField)
-        }));
+        .map(([sourceField, targetField]) => {
+          const mapping: any = {
+            source: sourceField,
+            sourceType: getFieldType(sourceField),
+            target: targetField,
+            targetType: getFieldType(targetField)
+          };
+
+          const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
+          if (defaultValue && defaultValue.trim() !== '') {
+            mapping.defaultValue = defaultValue;
+          }
+
+          return mapping;
+        });
 
       const testRequestBody: any = {
         name: `${jobData.name || 'TestSync'}`,
@@ -597,12 +615,21 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           const metadata = jobData.fieldMappingMetadata?.[sourceField];
           return metadata?.includeInSync === true;
         })
-        .map(([sourceField, targetField]) => ({
-          source: sourceField,
-          sourceType: getFieldType(sourceField),
-          target: targetField,
-          targetType: getFieldType(targetField)
-        }));
+        .map(([sourceField, targetField]) => {
+          const mapping: any = {
+            source: sourceField,
+            sourceType: getFieldType(sourceField),
+            target: targetField,
+            targetType: getFieldType(targetField)
+          };
+
+          const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
+          if (defaultValue && defaultValue.trim() !== '') {
+            mapping.defaultValue = defaultValue;
+          }
+
+          return mapping;
+        });
 
       // Get schedule config with cron expression
       const scheduleConfig = scheduleMapping[selectedSchedule];
@@ -784,7 +811,7 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
                   <div className="ds-schedule-synced-records ds-test-schedule-synced-records">
                     <h4 className="ds-test-schedule-synced-title">Synced Record IDs:</h4>
                     <ul className="ds-test-schedule-record-list">
-                      {simulationResult.syncedRecords.map((record) => (
+                      {simulationResult.syncedRecords.map((record: any) => (
                         <li key={record.id} className="ds-test-schedule-record-item">
                           <span className="ds-test-schedule-record-id">{record.id}</span>
                           <span className="ds-test-schedule-record-status">✅ {record.status}</span>

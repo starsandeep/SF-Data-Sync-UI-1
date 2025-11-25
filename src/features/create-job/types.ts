@@ -49,6 +49,7 @@ export interface FieldMappingMetadata {
     isPrimaryKey: boolean;
     maskPII: boolean;
     isPII: boolean;
+    defaultValue?: string;
   };
 }
 

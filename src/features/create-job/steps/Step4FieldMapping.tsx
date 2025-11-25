@@ -550,7 +550,7 @@ interface APIFieldIssueDialogProps {
   isOpen: boolean;
   onClose: () => void;
   row: MappingRow | null;
-  onConfirm?: (sourceField: string) => void;
+  onConfirm?: (sourceField: string, updatedDefaultValue?: string) => void;
 }
 
 const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
@@ -559,6 +559,15 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
   row,
   onConfirm
 }) => {
+  const [editableDefaultValue, setEditableDefaultValue] = useState<string>('');
+
+  // Initialize editable default value when dialog opens
+  useEffect(() => {
+    if (isOpen && row?.defaultValue) {
+      setEditableDefaultValue(row.defaultValue);
+    }
+  }, [isOpen, row?.defaultValue]);
+
   if (!row) return null;
 
   const hasIssue = row.isError || row.isWarning;
@@ -567,9 +576,13 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
   // Check if target field is present to show confirm button
   const canConfirm = row.targetField && row.targetField.trim() !== '';
 
+  // Check if this is a defaultValue-related error
+  const isDefaultValueError = row.actionRequired?.includes('Please provide the default value') ||
+                              row.errorMessage?.includes('default value');
+
   const handleConfirm = () => {
     if (onConfirm && canConfirm) {
-      onConfirm(row.sourceField);
+      onConfirm(row.sourceField, isDefaultValueError ? editableDefaultValue : undefined);
       onClose();
     }
   };
@@ -616,13 +629,32 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
             </div>
           )}
 
-          {row.defaultValue && (
+          {(row.defaultValue || isDefaultValueError) && (
             <div className="ds-field-mapping-error-details-section">
               <div className="ds-field-mapping-error-details-title">
                 Default Value:
               </div>
               <div className="ds-field-mapping-error-details-content">
-                {row.defaultValue}
+                {isDefaultValueError ? (
+                  <input
+                    type="text"
+                    value={editableDefaultValue}
+                    onChange={(e) => setEditableDefaultValue(e.target.value)}
+                    placeholder="Enter default value..."
+                    className="ds-field-mapping-default-value-input"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      outline: 'none'
+                    }}
+                    autoFocus
+                  />
+                ) : (
+                  row.defaultValue
+                )}
               </div>
             </div>
           )}
@@ -1295,15 +1327,22 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   }, []);
 
   // API field issue confirm handler
-  const handleConfirmAPIFieldIssue = useCallback((sourceField: string) => {
+  const handleConfirmAPIFieldIssue = useCallback((sourceField: string, updatedDefaultValue?: string) => {
     // Add to resolved issues set
     setResolvedAPIIssues(prev => new Set([...prev, sourceField]));
 
-    // Clear error/warning flags from the mapping row
+    // Clear error/warning flags from the mapping row and update defaultValue if provided
     setMappingRows(prev =>
       prev.map(row =>
         row.sourceField === sourceField
-          ? { ...row, isError: false, isWarning: false, errorMessage: undefined, suggestedFix: undefined }
+          ? {
+              ...row,
+              isError: false,
+              isWarning: false,
+              errorMessage: undefined,
+              suggestedFix: undefined,
+              defaultValue: updatedDefaultValue !== undefined ? updatedDefaultValue : row.defaultValue
+            }
           : row
       )
     );
@@ -1412,7 +1451,8 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           includeInSync: row.includeInSync,
           isPrimaryKey: row.isPrimaryKey,
           maskPII: row.maskPII,
-          isPII: row.isPII
+          isPII: row.isPII,
+          defaultValue: row.defaultValue
         };
       }
     });
