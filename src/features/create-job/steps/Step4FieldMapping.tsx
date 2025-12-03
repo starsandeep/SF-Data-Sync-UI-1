@@ -1054,12 +1054,6 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     // Check for empty source fields
     const emptySourceFields = mappingRows.filter(row => !row.sourceField || row.sourceField.trim() === '');
 
-    // Check for invalid field name patterns
-    const invalidSourceFields = mappingRows.filter(row => {
-      if (!row.sourceField) return false;
-      // Source fields should not contain special characters except underscores
-      return !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(row.sourceField);
-    });
 
     // Check for mapping completeness (source has target)
     const unmappedFields = mappingRows.filter(row =>
@@ -1068,7 +1062,6 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
     // Check for total mapping count
     const totalMappings = targetFields.length;
-    const maxRecommendedMappings = 50; // Salesforce API limits
 
     // Helper function to check if a row has errors (defined within useMemo to avoid circular dependency)
     const hasRowErrors = (row: MappingRow): boolean => {
@@ -1077,10 +1070,9 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
       // Check for critical validation errors
       const isDuplicate = duplicateTargetFields.has(targetField) && targetField !== '';
-      const isInvalidSource = invalidSourceFields.some((f: any) => f.sourceField === sourceField);
       const isEmptySource = !sourceField || sourceField.trim() === '';
 
-      if (isDuplicate || isInvalidSource || isEmptySource) {
+      if (isDuplicate || isEmptySource) {
         return true;
       }
 
@@ -1123,17 +1115,13 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
       duplicateTargetFields,
       hasAnyMapping,
       emptySourceFields,
-      invalidSourceFields,
       unmappedFields,
       totalMappings,
-      maxRecommendedMappings,
       syncIncludedErrorRows,
       hasSyncIncludedErrors,
       isValid: duplicateTargetFields.size === 0 &&
                hasAnyMapping &&
                emptySourceFields.length === 0 &&
-               invalidSourceFields.length === 0 &&
-               totalMappings <= maxRecommendedMappings &&
                !hasSyncIncludedErrors
     };
   }, [mappingRows, picklistMismatches, characterLimitMismatches]);
@@ -1430,14 +1418,13 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
         {mappingRowsWithConfidence.map((row) => {
           const isDuplicate = validationResults.duplicateTargetFields.has(row.targetField) && row.targetField !== '';
-          const isInvalidSource = validationResults.invalidSourceFields.some(f => f.sourceField === row.sourceField);
           const isEmptySource = !row.sourceField || row.sourceField.trim() === '';
           const issueClass = getRowIssueClass(row);
 
           return (
             <div
               key={row.sourceField}
-              className={`mapping-row ${row.isEditing ? 'editing' : ''} ${isDuplicate ? 'duplicate' : ''} ${isInvalidSource ? 'invalid-source' : ''} ${isEmptySource ? 'empty-source' : ''} ${issueClass}`}
+              className={`mapping-row ${row.isEditing ? 'editing' : ''} ${isDuplicate ? 'duplicate' : ''} ${isEmptySource ? 'empty-source' : ''} ${issueClass}`}
             >
               <div className="sync-inclusion-cell">
                 <input
@@ -1467,13 +1454,12 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
                 />
               </div>
               <div className="source-field">
-                <div className={`field-label ${isInvalidSource || isEmptySource ? 'error' : ''}`}>
+                <div className={`field-label ${isEmptySource ? 'error' : ''}`}>
                   <span className="field-name">
                     {row.sourceLabel}
                     {row.isPII && <span className="pii-indicator" title="Contains Personally Identifiable Information">🔒</span>}
                   </span>
                   <span className="field-type">({row.sourceType})</span>
-                  {isInvalidSource && <span className="error-indicator"> (Invalid)</span>}
                   {isEmptySource && <span className="error-indicator"> (Empty)</span>}
                 </div>
               </div>
@@ -1650,89 +1636,42 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         </div>
       )}
 
-      {validationResults.invalidSourceFields.length > 0 && (
-        <div className="error-message" role="alert">
-          <strong>Invalid source field names:</strong> Source field names must start with a letter or underscore and contain only letters, numbers, and underscores.
-        </div>
-      )}
-
-      {validationResults.totalMappings > validationResults.maxRecommendedMappings && (
-        <div className="warning-message" role="alert">
-          <strong>Too many mappings:</strong> Consider reducing the number of field mappings for better performance.
-        </div>
-      )}
-
-      {validationResults.hasSyncIncludedErrors && (
-        <div className="error-message" role="alert">
-          <strong>Critical field errors detected:</strong> Fields with errors that are included in sync must be resolved before simulation.
-          <div style={{ marginTop: '8px', fontSize: '14px' }}>
-            <strong>Fields with errors:</strong>
-            <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+        {/* {validationResults.hasSyncIncludedErrors && (
+          <div className="error-message" role="alert">
+            <strong>Critical field errors detected:</strong> Please fix these issues or exclude the affected fields from sync.
+            <div style={{ marginTop: '8px', fontSize: '14px' }}>
               {validationResults.syncIncludedErrorRows.map((row, index) => {
-                const errors = [];
                 const sourceField = row.sourceField;
                 const targetField = row.targetField;
 
-                // Check duplicate target fields
-                if (validationResults.duplicateTargetFields.has(targetField) && targetField !== '') {
-                  errors.push(`Duplicate target field (${targetField} used multiple times)`);
-                }
+                // Determine primary error (ordered by priority)
+                let errorMessage = '';
 
-                // Check invalid source fields
-                if (validationResults.invalidSourceFields.some((f: any) => f.sourceField === sourceField)) {
-                  errors.push('Invalid source field (field does not exist in source schema)');
-                }
-
-                // Check empty source fields
                 if (!sourceField || sourceField.trim() === '') {
-                  errors.push('Empty source field');
-                }
-
-                // Check for picklist errors
-                const picklistError = picklistMismatches.find(m =>
-                  m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
-                );
-                if (picklistError) {
-                  errors.push('Picklist mismatch error: Values incompatible');
-                }
-
-                // Check for character limit errors
-                const charLimitError = characterLimitMismatches.find(m =>
-                  m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
-                );
-                if (charLimitError) {
-                  errors.push('Character limit exceeded: Source field too long');
-                }
-
-                // Check API validation errors/warnings
-                if (row.isError && row.errorMessage) {
-                  errors.push(`API Error: ${row.errorMessage}`);
+                  errorMessage = 'Missing source field';
+                } else if (validationResults.duplicateTargetFields.has(targetField) && targetField !== '') {
+                  errorMessage = 'Duplicate target field';
                 } else if (row.isError) {
-                  errors.push('API Error (unknown)');
-                }
-
-                if (row.isWarning && row.errorMessage) {
-                  errors.push(`API Warning: ${row.errorMessage}`);
-                } else if (row.isWarning) {
-                  errors.push('API Warning (unknown)');
-                }
-
-                // If no specific errors found but row is flagged as error
-                if (errors.length === 0) {
-                  errors.push('Unknown validation error - check field mapping');
+                  errorMessage = 'Validation error';
+                } else if (characterLimitMismatches.find(m =>
+                  m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error')) {
+                  errorMessage = 'Field too long';
+                } else if (picklistMismatches.find(m =>
+                  m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error')) {
+                  errorMessage = 'Incompatible values';
+                } else {
+                  errorMessage = 'Validation issue';
                 }
 
                 return (
-                  <li key={index} style={{ marginBottom: '2px' }}>
-                    <strong>{sourceField || 'Unknown'}</strong> → <strong>{targetField || 'None'}</strong>: {errors.join(', ')}
-                  </li>
+                  <div key={index} style={{ marginBottom: '4px', padding: '4px 0', borderLeft: '3px solid #ff6b6b', paddingLeft: '8px' }}>
+                    <strong>{sourceField || 'Empty'}</strong> → <strong>{targetField || 'None'}</strong>: {errorMessage}
+                  </div>
                 );
               })}
-            </ul>
-            <em>Please fix these issues or exclude the affected fields from sync.</em>
+            </div>
           </div>
-        </div>
-      )}
+        )} */}
 
       {hasUnresolvedAPIIssuesInSync && (
         <div className="error-message" role="alert">
