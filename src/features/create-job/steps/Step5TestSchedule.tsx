@@ -107,6 +107,7 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const [oneTimeFailedRecords, setOneTimeFailedRecords] = useState<any[]>([]);
   const [oneTimeTotalSuccess, setOneTimeTotalSuccess] = useState<number | null>(null);
   const [oneTimeTotalFailed, setOneTimeTotalFailed] = useState<number | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Check if there's a valid previous test result on component mount
   useEffect(() => {
@@ -472,6 +473,14 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
       console.log('One-time run - Field mapping array:', fieldMappingArray);
       console.log('Sending test request:', testRequestBody);
 
+      // Reset previous one-time run results
+      setOneTimeSuccessRecords([]);
+      setOneTimeFailedRecords([]);
+      setOneTimeTotalSuccess(null);
+      setOneTimeTotalFailed(null);
+      setTestCompleted(false);
+      setErrorMessage(null);
+
       const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/syncsfdc', {
         method: 'POST',
         headers: {
@@ -490,6 +499,24 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           throw new Error('No jobId received in response');
         }
 
+                     // CASE: No records returned by API
+        if (
+          (result.recordsProcessed === 0 && result.recordsFailed === 0) &&
+          (result.errorMessage || result.message)
+        ) {
+          const msg = result.errorMessage || result.message || "No records found";
+
+          // Set error to UI
+          setErrorMessage(msg);
+
+          // Ensure tables DO NOT show
+          setOneTimeSuccessRecords([]);
+          setOneTimeFailedRecords([]);
+          setOneTimeTotalSuccess(0);
+          setOneTimeTotalFailed(0);
+          setTestCompleted(true);
+          return;
+        }
         console.log('Job started with ID:', jobId);
 
         // Poll job status API up to 5 times with 1-second intervals
@@ -1132,8 +1159,25 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
                   )}
                 </div>
 
-                {/* One-Time Run Synced Records */}
-                {oneTimeSuccessRecords && oneTimeSuccessRecords.length > 0 && (
+                {/* One-Time Run Error Message */}
+                {errorMessage && (
+                  <div
+                    style={{
+                      background: "#ffeaea",
+                      padding: "12px 16px",
+                      borderRadius: 6,
+                      color: "#b30000",
+                      marginTop: 10,
+                      border: "1px solid #ffcccc",
+                    }}
+                  >
+                    {errorMessage}
+                  </div>
+                )}
+
+
+                {/* One-Time Run Synced Records */} 
+                {!errorMessage && oneTimeSuccessRecords && oneTimeSuccessRecords.length > 0 && (
                   <div className="ds-schedule-synced-records ds-test-schedule-synced-records">
                     <h4 className="ds-test-schedule-synced-title">Synced Record IDs:</h4>
 
@@ -1177,7 +1221,7 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
                     </div>
 
                     {/* Show count message if > 10 */}
-                    {oneTimeTotalSuccess !== null && oneTimeTotalSuccess > oneTimeSuccessRecords.length && (
+                    {!errorMessage && oneTimeTotalSuccess !== null && oneTimeTotalSuccess > oneTimeSuccessRecords.length && (
                       <div style={{ fontSize: 12, marginTop: 6, color: "#666" }}>
                         Showing {oneTimeSuccessRecords.length} of {oneTimeTotalSuccess} synced records.
                       </div>
