@@ -2,7 +2,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '../../../components/common/Button';
 import { Modal } from '../../../components/common/Modal';
-import { FieldMapping, FieldMappingMetadata } from '../types';
+import { FieldMapping, FieldMappingMetadata, JobData } from '../types';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -55,11 +55,9 @@ interface Step4FieldMappingProps {
   fieldMappings: FieldMapping;
   selectedFields: string[];
   syncAllFields: boolean;
-  jobData?: {
-    sourceObject?: string;
-    targetObject?: string;
-  };
+  jobData: JobData;
   onUpdateMappings: (mappings: FieldMapping, transformations: Record<string, any>, selectedFields: string[], syncAllFields: boolean, metadata?: FieldMappingMetadata) => void;
+  onUpdateJobData?: (updates: Partial<JobData>) => void;
   onNext: () => void;
   onPrevious: () => void;
   isLoading: boolean;
@@ -656,7 +654,10 @@ const APIFieldIssueDialog: React.FC<APIFieldIssueDialogProps> = ({
 };
 
 // Transform API response to MappingRow format
-const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): MappingRow[] => {
+const transformAPIResponseToMappingRows = (
+  apiMappings: APIFieldMapping[],
+  existingMetadata?: FieldMappingMetadata
+): MappingRow[] => {
   return apiMappings.map(mapping => {
     let isPII: boolean;
     let confidencePercentage: number;
@@ -707,6 +708,9 @@ const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): Mapp
     const convertedSourceType = convertFieldType(mapping.source, mapping.sourceType);
     const convertedTargetType = convertFieldType(mapping.target, mapping.targetType);
 
+    // Check for existing metadata from localStorage to preserve user selections
+    const existingFieldMetadata = existingMetadata?.[mapping.source];
+
     return {
       sourceField: mapping.source,
       sourceLabel: mapping.source, // Use original field name as label
@@ -715,11 +719,11 @@ const transformAPIResponseToMappingRows = (apiMappings: APIFieldMapping[]): Mapp
       targetType: convertedTargetType,
       isEditing: false,
       confidenceScore: confidencePercentage,
-      isPrimaryKey: isPrimaryKeyField(mapping.source),
-      includeInSync: shouldIncludeInSync(mapping.source),
+      isPrimaryKey: existingFieldMetadata?.isPrimaryKey ?? isPrimaryKeyField(mapping.source),
+      includeInSync: existingFieldMetadata?.includeInSync ?? shouldIncludeInSync(mapping.source),
       isPII: isPII,
-      isPIField: isPII, // Default to mask if PII
-      defaultValue: defaultValue,
+      isPIField: existingFieldMetadata?.isPIField ?? isPII, // Use stored value or default to mask if PII
+      defaultValue: existingFieldMetadata?.defaultValue ?? defaultValue,
       isError: isError,
       isWarning: isWarning,
       errorMessage: errorMessage,
@@ -736,6 +740,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   syncAllFields,
   jobData,
   onUpdateMappings,
+  onUpdateJobData,
   onNext,
   onPrevious,
   isLoading
@@ -770,8 +775,18 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   // Missing field validation state
   const [missingFieldMismatches, setMissingFieldMismatches] = useState<MissingFieldMismatch[]>([]);
 
-  // Resolved API issues state
-  const [resolvedAPIIssues, setResolvedAPIIssues] = useState<Set<string>>(new Set());
+  // Resolved API issues state - initialize from jobData
+  const [resolvedAPIIssues, setResolvedAPIIssues] = useState<Set<string>>(
+    new Set(jobData.resolvedAPIIssues || [])
+  );
+
+  // Update jobData when resolvedAPIIssues changes
+  useEffect(() => {
+    if (onUpdateJobData) {
+      const resolvedArray = Array.from(resolvedAPIIssues);
+      onUpdateJobData({ resolvedAPIIssues: resolvedArray });
+    }
+  }, [resolvedAPIIssues, onUpdateJobData]);
 
   // Unmapped and available fields state
   const [unmappedSourceFields, setUnmappedSourceFields] = useState<string[]>([]);
@@ -808,29 +823,34 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           setUnmappedSourceFields(unmappedSourceFields);
           setAvailableTargetFields(availableTargetFields);
 
-          const transformedMappings = transformAPIResponseToMappingRows(apiMappings);
+          const transformedMappings = transformAPIResponseToMappingRows(apiMappings, jobData.fieldMappingMetadata);
 
           // Create mapping rows for unmapped source fields
-          const unmappedMappings = unmappedSourceFields.map(sourceField => ({
-            sourceField,
-            sourceLabel: sourceField,
-            sourceType: 'string', // Default type for unmapped fields
-            targetField: '', // No target mapping
-            targetType: '',
-            isEditing: false,
-            confidenceScore: 0, // Low confidence for unmapped fields
-            isPrimaryKey: isPrimaryKeyField(sourceField),
-            includeInSync: shouldIncludeInSync(sourceField),
-            isPII: isPIIField(sourceField),
-            isPIField: isPIIField(sourceField),
-            defaultValue: undefined,
-            isError: false,
-            isWarning: true, // Mark as warning since they're unmapped
-            errorMessage: 'Field is not mapped to target',
-            suggestedFix: undefined,
-            actionRequired: undefined,
-            valueMap: undefined
-          }));
+          const unmappedMappings = unmappedSourceFields.map(sourceField => {
+            // Check for existing metadata from localStorage
+            const existingFieldMetadata = jobData.fieldMappingMetadata?.[sourceField];
+
+            return {
+              sourceField,
+              sourceLabel: sourceField,
+              sourceType: 'string', // Default type for unmapped fields
+              targetField: '', // No target mapping
+              targetType: '',
+              isEditing: false,
+              confidenceScore: 0, // Low confidence for unmapped fields
+              isPrimaryKey: existingFieldMetadata?.isPrimaryKey ?? isPrimaryKeyField(sourceField),
+              includeInSync: existingFieldMetadata?.includeInSync ?? shouldIncludeInSync(sourceField),
+              isPII: isPIIField(sourceField),
+              isPIField: existingFieldMetadata?.isPIField ?? isPIIField(sourceField),
+              defaultValue: existingFieldMetadata?.defaultValue ?? undefined,
+              isError: false,
+              isWarning: true, // Mark as warning since they're unmapped
+              errorMessage: 'Field is not mapped to target',
+              suggestedFix: undefined,
+              actionRequired: undefined,
+              valueMap: undefined
+            };
+          });
 
           // Combine mapped and unmapped fields
           const allMappings = [...transformedMappings, ...unmappedMappings];

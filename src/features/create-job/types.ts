@@ -131,6 +131,9 @@ export interface JobData {
   endTime?: string;
 
   validationResults?: FieldValidationResult[];
+
+  // Field mapping UI state
+  resolvedAPIIssues?: string[]; // Store as array for JSON serialization (Set is converted to array)
 }
 
 export interface WizardStep {

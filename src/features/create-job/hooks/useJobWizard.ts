@@ -54,10 +54,63 @@ const INITIAL_JOB_DATA: JobData = {
   fieldMappingMetadata: {},
   transformations: {},
   schedule: '6hours' as ScheduleOption,
-  tested: false
+  tested: false,
+  resolvedAPIIssues: []
 };
 
 const STORAGE_KEY = 'job-wizard-draft';
+
+// Sanitize job data for localStorage (remove sensitive fields)
+const sanitizeJobDataForStorage = (jobData: JobData) => {
+  const sanitized = { ...jobData };
+
+  // Remove sensitive connection data
+  if (sanitized.sourceConnection) {
+    sanitized.sourceConnection = {
+      ...sanitized.sourceConnection,
+      password: '', // Never store passwords
+      securityToken: '' // Never store security tokens
+    };
+  }
+
+  if (sanitized.targetConnection) {
+    sanitized.targetConnection = {
+      ...sanitized.targetConnection,
+      password: '', // Never store passwords
+      securityToken: '' // Never store security tokens
+    };
+  }
+
+  // Remove sensitive test results if any
+  if (sanitized.testResult) {
+    // Keep only non-sensitive test result data
+    sanitized.testResult = {
+      ...sanitized.testResult,
+      sampleData: undefined, // Remove actual data samples
+      errors: sanitized.testResult.errors?.map(error => ({
+        ...error,
+        record: undefined // Remove actual record data
+      }))
+    };
+  }
+
+  return sanitized;
+};
+
+// Save state to localStorage with sanitization
+const saveToLocalStorage = (state: WizardState) => {
+  try {
+    const sanitizedData = {
+      currentStep: state.currentStep,
+      jobData: sanitizeJobDataForStorage(state.jobData),
+      timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizedData));
+    console.debug(`Job wizard draft auto-saved (Step ${state.currentStep})`);
+  } catch (error) {
+    console.warn('Failed to save wizard state to localStorage:', error);
+  }
+};
 
 export const useJobWizard = () => {
   const [state, setState] = useState<WizardState>(() => {
@@ -66,9 +119,50 @@ export const useJobWizard = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+
+        // Validate data age (expire after 24 hours)
+        if (parsed.timestamp) {
+          const savedTime = new Date(parsed.timestamp);
+          const now = new Date();
+          const hoursDiff = (now.getTime() - savedTime.getTime()) / (1000 * 60 * 60);
+
+          if (hoursDiff > 24) {
+            console.info('Job wizard draft expired, starting fresh');
+            localStorage.removeItem(STORAGE_KEY);
+            return {
+              currentStep: 1,
+              jobData: INITIAL_JOB_DATA,
+              steps: WIZARD_STEPS,
+              isLoading: false,
+              error: null,
+              isDirty: false
+            };
+          }
+        }
+
+        // Restore valid data with security merge (ensures no sensitive data is restored)
+        const restoredJobData = {
+          ...INITIAL_JOB_DATA,
+          ...parsed.jobData,
+          // Ensure sensitive fields stay empty
+          sourceConnection: {
+            ...INITIAL_JOB_DATA.sourceConnection,
+            ...parsed.jobData?.sourceConnection,
+            password: '',
+            securityToken: ''
+          },
+          targetConnection: {
+            ...INITIAL_JOB_DATA.targetConnection,
+            ...parsed.jobData?.targetConnection,
+            password: '',
+            securityToken: ''
+          }
+        };
+
+        console.info(`Job wizard draft restored from step ${parsed.currentStep || 1}`);
         return {
           currentStep: parsed.currentStep || 1,
-          jobData: { ...INITIAL_JOB_DATA, ...parsed.jobData },
+          jobData: restoredJobData,
           steps: WIZARD_STEPS.map((step, index) => ({
             ...step,
             isActive: index + 1 === (parsed.currentStep || 1),
@@ -76,10 +170,11 @@ export const useJobWizard = () => {
           })),
           isLoading: false,
           error: null,
-          isDirty: true
+          isDirty: false // Set to false initially, will be true on first change
         };
       } catch (e) {
         console.warn('Failed to restore job wizard state:', e);
+        localStorage.removeItem(STORAGE_KEY); // Clear corrupted data
       }
     }
 
@@ -93,6 +188,17 @@ export const useJobWizard = () => {
     };
   });
 
+  // Auto-save state to localStorage whenever it changes (excluding loading and error states)
+  useEffect(() => {
+    // Only save if user has made changes and we're not in initial loading state
+    if (state.isDirty && !state.isLoading) {
+      const timeoutId = setTimeout(() => {
+        saveToLocalStorage(state);
+      }, 500); // Debounce saves by 500ms
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [state.currentStep, state.jobData, state.isDirty]);
 
   const updateJobData = useCallback((updates: Partial<JobData>) => {
     setState(prev => ({
@@ -122,6 +228,7 @@ export const useJobWizard = () => {
         isActive: index + 1 === stepNumber,
         isCompleted: index + 1 < stepNumber
       })),
+      isDirty: true,
       error: null
     }));
   }, []);
@@ -144,7 +251,8 @@ export const useJobWizard = () => {
         step.id === stepNumber
           ? { ...step, isCompleted: !hasErrors, hasErrors }
           : step
-      )
+      ),
+      isDirty: true
     }));
   }, []);
 
@@ -400,6 +508,7 @@ export const useJobWizard = () => {
   // Clear draft
   const clearDraft = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    console.info('Job wizard draft cleared');
     setState({
       currentStep: 1,
       jobData: INITIAL_JOB_DATA,
