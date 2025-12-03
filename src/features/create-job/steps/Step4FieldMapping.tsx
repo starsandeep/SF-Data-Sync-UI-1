@@ -2,12 +2,10 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '../../../components/common/Button';
 import { Modal } from '../../../components/common/Modal';
-import { CompactFieldMappingIssues, Issue } from '../../../components/common/CompactFieldMappingIssues';
 import { FieldMapping, FieldMappingMetadata } from '../types';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
-import ListIcon from '@mui/icons-material/List';
 import WarningIcon from '@mui/icons-material/Warning';
 import HandymanIcon from '@mui/icons-material/Handyman';
 
@@ -373,114 +371,6 @@ const validateMissingFields = (
   return null;
 };
 
-// PicklistMappingDialog Component
-interface PicklistMappingDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  mismatch: PicklistMismatch;
-  sourcePicklistValues: PicklistValue[];
-  targetPicklistValues: PicklistValue[];
-  onSaveMapping: (mapping: Record<string, string>) => void;
-}
-
-const PicklistMappingDialog: React.FC<PicklistMappingDialogProps> = ({
-  isOpen,
-  onClose,
-  mismatch,
-  sourcePicklistValues,
-  targetPicklistValues,
-  onSaveMapping
-}) => {
-  const [mappings, setMappings] = useState<Record<string, string>>({});
-
-  // Initialize mappings when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      const initialMappings: Record<string, string> = {};
-      mismatch.missingValues.forEach(value => {
-        initialMappings[value] = ''; // Start with empty mapping
-      });
-      setMappings(initialMappings);
-    }
-  }, [isOpen, mismatch.missingValues]);
-
-  const handleMappingChange = (sourceValue: string, targetValue: string) => {
-    setMappings(prev => ({
-      ...prev,
-      [sourceValue]: targetValue
-    }));
-  };
-
-  const handleSave = () => {
-    onSaveMapping(mappings);
-    onClose();
-  };
-
-  const canSave = mismatch.missingValues.every(value => mappings[value] !== '');
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Picklist Value Mapping"
-      size="large"
-    >
-      <div className="ds-field-mapping-dialog-container">
-        <div className="ds-field-mapping-dialog-warning-header">
-          <p className="ds-field-mapping-dialog-warning-text">
-            <strong>"{mismatch.sourceField}"</strong> → <strong>"{mismatch.targetField}"</strong>
-          </p>
-        </div>
-
-        <div className="ds-field-mapping-dialog-section">
-          <div className="ds-field-mapping-dialog-grid-header">
-            <span>Source Value</span>
-            <span>→</span>
-            <span>Target Value</span>
-          </div>
-
-          {mismatch.missingValues.map(sourceValue => (
-            <div key={sourceValue} className="ds-field-mapping-dialog-grid-row">
-              <div className="ds-field-mapping-dialog-source-value">
-                <span className="ds-field-mapping-dialog-source-value-badge">
-                  {sourceValue}
-                </span>
-              </div>
-              <div className="ds-field-mapping-dialog-arrow">→</div>
-              <div>
-                <select
-                  value={mappings[sourceValue] || ''}
-                  onChange={(e) => handleMappingChange(sourceValue, e.target.value)}
-                  className="ds-field-mapping-dialog-select"
-                >
-                  <option value="">Select target value...</option>
-                  {targetPicklistValues.map(targetValue => (
-                    <option key={targetValue.value} value={targetValue.value}>
-                      {targetValue.label || targetValue.value}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="ds-field-mapping-dialog-actions">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            disabled={!canSave}
-          >
-            Save Mapping
-          </Button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
 
 // Function to calculate AI confidence based on validation issues
 const calculateConfidenceScore = (
@@ -865,9 +755,6 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   const [picklistMismatches, setPicklistMismatches] = useState<PicklistMismatch[]>([]);
   const [sourceMetadata, setSourceMetadata] = useState<ObjectMetadata | null>(null);
   const [targetMetadata, setTargetMetadata] = useState<ObjectMetadata | null>(null);
-  const [showMappingDialog, setShowMappingDialog] = useState(false);
-  const [currentMismatch, setCurrentMismatch] = useState<PicklistMismatch | null>(null);
-  const [picklistMappings, setPicklistMappings] = useState<Record<string, Record<string, string>>>({});
   const [metadataFetchAttempted, setMetadataFetchAttempted] = useState<Set<string>>(new Set());
   const [metadataFetchError, setMetadataFetchError] = useState<boolean>(false);
 
@@ -1197,21 +1084,28 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         return true;
       }
 
-      // Check for picklist errors
+      // Check for picklist errors (but only if NOT resolved via API dialog)
       const hasPicklistError = picklistMismatches.some(m =>
         m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
-      );
+      ) && !resolvedAPIIssues.has(sourceField);
 
       if (hasPicklistError) {
         return true;
       }
 
-      // Check for character limit errors
+      // Check for character limit errors (but only if NOT resolved via API dialog)
       const hasCharacterLimitError = characterLimitMismatches.some(m =>
         m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
-      );
+      ) && !resolvedAPIIssues.has(sourceField);
 
       if (hasCharacterLimitError) {
+        return true;
+      }
+
+      // Check for API errors/warnings that are NOT resolved
+      const hasUnresolvedAPIError = (row.isError || row.isWarning) && !resolvedAPIIssues.has(sourceField);
+
+      if (hasUnresolvedAPIError) {
         return true;
       }
 
@@ -1337,46 +1231,7 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
     );
   }, []);
 
-  // Picklist dialog handlers
-  const handleOpenPicklistMapping = useCallback((mismatch: PicklistMismatch) => {
-    setCurrentMismatch(mismatch);
-    setShowMappingDialog(true);
-  }, []);
 
-  const handleClosePicklistMapping = useCallback(() => {
-    setShowMappingDialog(false);
-    setCurrentMismatch(null);
-  }, []);
-
-  const handleSavePicklistMapping = useCallback((mapping: Record<string, string>) => {
-    if (!currentMismatch) return;
-
-    const fieldKey = `${currentMismatch.sourceField}->${currentMismatch.targetField}`;
-    setPicklistMappings(prev => ({
-      ...prev,
-      [fieldKey]: mapping
-    }));
-
-    // Remove this mismatch from the list as it's been resolved
-    setPicklistMismatches(prev =>
-      prev.filter(m =>
-        !(m.sourceField === currentMismatch.sourceField && m.targetField === currentMismatch.targetField)
-      )
-    );
-  }, [currentMismatch]);
-
-  // Character limit handlers
-  const handleResolveCharacterLimitIssue = useCallback((mismatch: CharacterLimitMismatch) => {
-    const fieldKey = `${mismatch.sourceField}->${mismatch.targetField}`;
-    setResolvedCharacterLimitIssues(prev => new Set([...prev, fieldKey]));
-
-    // Remove this mismatch from the list as it's been resolved
-    setCharacterLimitMismatches(prev =>
-      prev.filter(m =>
-        !(m.sourceField === mismatch.sourceField && m.targetField === mismatch.targetField)
-      )
-    );
-  }, []);
 
 
   // API field issue dialog handlers
@@ -1431,70 +1286,6 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
   }, [resolvedAPIIssues]);
 
   // Convert mismatches to Issues format for CompactFieldMappingIssues
-  const convertToIssues = useCallback((): Issue[] => {
-    const issues: Issue[] = [];
-
-    // Convert picklist mismatches
-    picklistMismatches.forEach((mismatch, index) => {
-      const missingValuesText = mismatch.missingValues.length > 0
-        ? `(${mismatch.missingValues.join(', ')})`
-        : '';
-
-      const description = `⚠️ Picklist Mismatch Detected: The source field "${mismatch.sourceField}" contains values ${missingValuesText} that are not available in the target org. Please review the mapping below or update the target picklist to include these values before simulation.`;
-
-      const suggestion = mismatch.missingValues.length > 0
-        ? `Map the missing source values ${missingValuesText} to existing target values, or add these values to the target picklist in your Salesforce org.`
-        : 'Review and map the picklist values between source and target fields.';
-
-      issues.push({
-        id: `picklist-${index}`,
-        type: 'picklist',
-        severity: mismatch.severity,
-        fieldName: mismatch.sourceField,
-        sourcePath: mismatch.sourceField,
-        targetPath: mismatch.targetField,
-        description: description,
-        details: {
-          missingValues: mismatch.missingValues,
-          suggestion: suggestion
-        },
-        onMapValues: () => handleOpenPicklistMapping(mismatch)
-      });
-    });
-
-    // Convert character limit mismatches
-    characterLimitMismatches.forEach((mismatch, index) => {
-      issues.push({
-        id: `character-${index}`,
-        type: 'character',
-        severity: mismatch.severity,
-        fieldName: mismatch.sourceField,
-        description: `⚠️ Field Length Mismatch: The field "${mismatch.sourceField}" in the Source org exceeds the Target field's character limit (Source: ${mismatch.sourceLength}, Target: ${mismatch.targetLength}).`,
-        details: {
-          sourceLimit: mismatch.sourceLength,
-          targetLimit: mismatch.targetLength,
-          suggestion: 'Increase Target field length to match Source or enable Truncate option in mapping settings.'
-        },
-        onResolve: () => handleResolveCharacterLimitIssue(mismatch)
-      });
-    });
-
-    // Convert missing field mismatches
-    missingFieldMismatches.forEach((mismatch, index) => {
-      issues.push({
-        id: `missing-${index}`,
-        type: 'missing',
-        severity: mismatch.severity,
-        fieldName: mismatch.sourceField,
-        description: `⚠️ Field Missing in Target Org: The field "${mismatch.sourceField}" exists in Source but not in Target. Please create it before running simulation.`,
-        details: {
-          suggestion: 'Create the missing field in Target and re-validate metadata before simulation.'
-        }
-      });
-    });
-
-    return issues;
-  }, [picklistMismatches, characterLimitMismatches, missingFieldMismatches, handleOpenPicklistMapping, handleResolveCharacterLimitIssue]);
 
   const handleSaveMappings = useCallback(() => {
     const newMappings: FieldMapping = {};
@@ -1873,7 +1664,73 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
 
       {validationResults.hasSyncIncludedErrors && (
         <div className="error-message" role="alert">
-          <strong>Critical field errors detected:</strong> Fields with errors that are included in sync must be resolved before simulation. Please fix the highlighted field issues or exclude them from sync.
+          <strong>Critical field errors detected:</strong> Fields with errors that are included in sync must be resolved before simulation.
+          <div style={{ marginTop: '8px', fontSize: '14px' }}>
+            <strong>Fields with errors:</strong>
+            <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+              {validationResults.syncIncludedErrorRows.map((row, index) => {
+                const errors = [];
+                const sourceField = row.sourceField;
+                const targetField = row.targetField;
+
+                // Check duplicate target fields
+                if (validationResults.duplicateTargetFields.has(targetField) && targetField !== '') {
+                  errors.push(`Duplicate target field (${targetField} used multiple times)`);
+                }
+
+                // Check invalid source fields
+                if (validationResults.invalidSourceFields.some((f: any) => f.sourceField === sourceField)) {
+                  errors.push('Invalid source field (field does not exist in source schema)');
+                }
+
+                // Check empty source fields
+                if (!sourceField || sourceField.trim() === '') {
+                  errors.push('Empty source field');
+                }
+
+                // Check for picklist errors
+                const picklistError = picklistMismatches.find(m =>
+                  m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
+                );
+                if (picklistError) {
+                  errors.push('Picklist mismatch error: Values incompatible');
+                }
+
+                // Check for character limit errors
+                const charLimitError = characterLimitMismatches.find(m =>
+                  m.sourceField === sourceField && m.targetField === targetField && m.severity === 'error'
+                );
+                if (charLimitError) {
+                  errors.push('Character limit exceeded: Source field too long');
+                }
+
+                // Check API validation errors/warnings
+                if (row.isError && row.errorMessage) {
+                  errors.push(`API Error: ${row.errorMessage}`);
+                } else if (row.isError) {
+                  errors.push('API Error (unknown)');
+                }
+
+                if (row.isWarning && row.errorMessage) {
+                  errors.push(`API Warning: ${row.errorMessage}`);
+                } else if (row.isWarning) {
+                  errors.push('API Warning (unknown)');
+                }
+
+                // If no specific errors found but row is flagged as error
+                if (errors.length === 0) {
+                  errors.push('Unknown validation error - check field mapping');
+                }
+
+                return (
+                  <li key={index} style={{ marginBottom: '2px' }}>
+                    <strong>{sourceField || 'Unknown'}</strong> → <strong>{targetField || 'None'}</strong>: {errors.join(', ')}
+                  </li>
+                );
+              })}
+            </ul>
+            <em>Please fix these issues or exclude the affected fields from sync.</em>
+          </div>
         </div>
       )}
 
@@ -1902,21 +1759,6 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
         </Button>
       </div>
 
-      {/* Picklist Mapping Dialog */}
-      {showMappingDialog && currentMismatch && sourceMetadata && targetMetadata && (
-        <PicklistMappingDialog
-          isOpen={showMappingDialog}
-          onClose={handleClosePicklistMapping}
-          mismatch={currentMismatch}
-          sourcePicklistValues={
-            sourceMetadata.fields.find(f => f.name === currentMismatch.sourceField)?.picklistValues || []
-          }
-          targetPicklistValues={
-            targetMetadata.fields.find(f => f.name === currentMismatch.targetField)?.picklistValues || []
-          }
-          onSaveMapping={handleSavePicklistMapping}
-        />
-      )}
 
 
       {/* API Field Issue Dialog */}
