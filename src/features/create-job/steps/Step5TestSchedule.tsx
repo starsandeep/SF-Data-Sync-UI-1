@@ -195,25 +195,27 @@ const handleRunSimulation = async () => {
   setIsTestRunning(true);
 
   try {
+    // Debug: Log field mapping metadata
+    console.log('Simulation - Field mapping metadata:', jobData.fieldMappingMetadata);
     // Build test date range
     const testFromDate = new Date(`${testStartDate}T${testStartTime}:00.000Z`).toISOString();
     const testToDate = new Date(`${testEndDate}T${testEndTime}:00.000Z`).toISOString();
 
-    const getFieldType = (fieldName: string): string => {
-      if (/email/i.test(fieldName)) return "Email";
-      if (/phone|fax/i.test(fieldName)) return "Phone";
-      return "String";
-    };
-
     const fieldMappingArray = Object.entries(jobData.fieldMappings || {})
       .filter(([sourceField]) => jobData.fieldMappingMetadata?.[sourceField]?.includeInSync === true)
       .map(([sourceField, targetField]) => {
+        const metadata = jobData.fieldMappingMetadata?.[sourceField];
         const mapping: any = {
           source: sourceField,
-          sourceType: getFieldType(sourceField),
+          sourceType: metadata?.sourceType || 'String',
           target: targetField,
-          targetType: getFieldType(targetField)
+          targetType: metadata?.targetType || 'String'
         };
+
+        // Add warning if types are defaulted
+        if (!metadata?.sourceType || !metadata?.targetType) {
+          console.warn(`Field types missing for ${sourceField} -> ${targetField}, defaulting to String`);
+        }
 
         const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
         if (defaultValue && defaultValue.trim() !== '') {
@@ -252,6 +254,7 @@ const handleRunSimulation = async () => {
       fieldMaping: fieldMappingArray
     };
 
+    console.log("Simulation - Field mapping array:", fieldMappingArray);
     console.log("Sending simulation request:", requestBody);
 
     // Call same API as one-time test
@@ -384,16 +387,11 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
     setTestCompleted(false);
     setIsOneTimeRunning(true);
     try {
+      // Debug: Log field mapping metadata
+      console.log('One-time run - Field mapping metadata:', jobData.fieldMappingMetadata);
       // Create test date strings in UTC format with milliseconds
       const testFromDate = new Date(`${testStartDate}T${testStartTime}:00.000Z`).toISOString();
       const testToDate = new Date(`${testEndDate}T${testEndTime}:00.000Z`).toISOString();
-
-      // Helper function to determine field type based on field name
-      const getFieldType = (fieldName: string): string => {
-        if (/email/i.test(fieldName)) return 'Email';
-        if (/phone|fax/i.test(fieldName)) return 'Phone';
-        return 'String';
-      };
 
       // Convert fieldMappings object to API format array with proper field types
       // Only include fields where includeInSync is true
@@ -403,12 +401,18 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           return metadata?.includeInSync === true;
         })
         .map(([sourceField, targetField]) => {
+          const metadata = jobData.fieldMappingMetadata?.[sourceField];
           const mapping: any = {
             source: sourceField,
-            sourceType: getFieldType(sourceField),
+            sourceType: metadata?.sourceType || 'String',
             target: targetField,
-            targetType: getFieldType(targetField)
+            targetType: metadata?.targetType || 'String'
           };
+
+          // Add warning if types are defaulted
+          if (!metadata?.sourceType || !metadata?.targetType) {
+            console.warn(`Field types missing for ${sourceField} -> ${targetField}, defaulting to String`);
+          }
 
           const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
           if (defaultValue && defaultValue.trim() !== '') {
@@ -454,6 +458,7 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
         testRequestBody.recordlimit = sampleSize;
       }
 
+      console.log('One-time run - Field mapping array:', fieldMappingArray);
       console.log('Sending test request:', testRequestBody);
 
       const response = await fetch('https://syncsfdc-j39330.5sc6y6-3.usa-e2.cloudhub.io/syncsfdc', {
@@ -602,6 +607,8 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
     setJobCreationMessage('');
 
     try {
+      // Debug: Log field mapping metadata
+      console.log('Job creation - Field mapping metadata:', jobData.fieldMappingMetadata);
       // Convert schedule to frequency and timeUnit
       const scheduleMapping: { [key in ScheduleOption]: { frequency: string; timeUnit: string } } = {
         'manual': { frequency: '0', timeUnit: 'MANUAL' },
@@ -621,13 +628,6 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
       const fromDate = new Date(`${startDate}T${startTime}:00.000Z`).toISOString();
       const toDate = includeEndDate ? new Date(`${endDate}T${endTime}:00.000Z`).toISOString() : undefined;
 
-      // Helper function to determine field type based on field name
-      const getFieldType = (fieldName: string): string => {
-        if (/email/i.test(fieldName)) return 'Email';
-        if (/phone|fax/i.test(fieldName)) return 'Phone';
-        return 'String';
-      };
-
       // Convert fieldMappings object to API format array with proper field types
       // Only include fields where includeInSync is true
       const fieldMappingArray = Object.entries(jobData.fieldMappings || {})
@@ -636,12 +636,18 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
           return metadata?.includeInSync === true;
         })
         .map(([sourceField, targetField]) => {
+          const metadata = jobData.fieldMappingMetadata?.[sourceField];
           const mapping: any = {
             source: sourceField,
-            sourceType: getFieldType(sourceField),
+            sourceType: metadata?.sourceType || 'String',
             target: targetField,
-            targetType: getFieldType(targetField)
+            targetType: metadata?.targetType || 'String'
           };
+
+          // Add warning if types are defaulted
+          if (!metadata?.sourceType || !metadata?.targetType) {
+            console.warn(`Field types missing for ${sourceField} -> ${targetField}, defaulting to String`);
+          }
 
           const defaultValue = jobData.fieldMappingMetadata?.[sourceField]?.defaultValue;
           if (defaultValue && defaultValue.trim() !== '') {
@@ -686,6 +692,7 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
         requestBody.toDate = toDate;
       }
 
+      console.log('Job creation - Field mapping array:', fieldMappingArray);
       console.log('Creating job with request body:', requestBody);
 
       // Make API call to create the job

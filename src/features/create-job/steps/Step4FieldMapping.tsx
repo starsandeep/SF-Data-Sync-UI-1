@@ -1314,7 +1314,9 @@ export const Step4FieldMapping: React.FC<Step4FieldMappingProps> = ({
           isPIField: row.isPIField,
           isPII: row.isPII,
           defaultValue: row.defaultValue,
-          valueMap: row.valueMap
+          valueMap: row.valueMap,
+          sourceType: row.sourceType,
+          targetType: row.targetType
         };
       }
     });

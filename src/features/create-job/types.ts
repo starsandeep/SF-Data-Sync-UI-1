@@ -51,6 +51,8 @@ export interface FieldMappingMetadata {
     isPII: boolean;
     defaultValue?: string;
     valueMap?: Array<{source: string; target: string}>;
+    sourceType?: string;
+    targetType?: string;
   };
 }
 
