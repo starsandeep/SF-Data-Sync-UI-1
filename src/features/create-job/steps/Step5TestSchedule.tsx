@@ -45,10 +45,14 @@ export interface SimulationResult {
     timestamp: string;
     recordUrl?: string;
   }[];
+  failedRecords?: {
+    id: string;
+    errorMessage: string;
+    originalFields: any;
+  }[];
   totalRecords: number;
   message: string;
 }
-
 
 const SCHEDULE_OPTIONS: ScheduleOptionData[] = [
   { value: '6hours', label: 'Every 6 hours', description: 'Four times daily', icon: '🕕' },
@@ -99,6 +103,10 @@ export const Step5TestSchedule: React.FC<Step5TestScheduleProps> = ({
   const [simulationCompleted, setSimulationCompleted] = useState<boolean>(false);
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [sendSampleSize, setSendSampleSize] = useState<boolean>(false);
+  const [oneTimeSuccessRecords, setOneTimeSuccessRecords] = useState<any[]>([]);
+  const [oneTimeFailedRecords, setOneTimeFailedRecords] = useState<any[]>([]);
+  const [oneTimeTotalSuccess, setOneTimeTotalSuccess] = useState<number | null>(null);
+  const [oneTimeTotalFailed, setOneTimeTotalFailed] = useState<number | null>(null);
 
   // Check if there's a valid previous test result on component mount
   useEffect(() => {
@@ -245,9 +253,7 @@ const handleRunSimulation = async () => {
       isActive: true,
       sourceOrg: jobData.sourceOrg || "SalesMgmt",
       targetOrg: jobData.targetOrg || "CaseMgmt",
-      fromDate: testFromDate,
       recordlimit: 5,
-      toDate: testToDate,
       sourceObject: jobData.sourceObject || "Contact",
       targetObject: jobData.targetObject || "Contact",
       extId: "extid__c",
@@ -302,7 +308,7 @@ const handleRunSimulation = async () => {
       pollCount++;
       if (pollCount < maxPolls) {
         return new Promise(resolve =>
-          setTimeout(() => resolve(pollJobStatus()), 1000)
+          setTimeout(() => resolve(pollJobStatus()), 5000)
         );
       }
 
@@ -358,24 +364,29 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
   const {
     jobState,
     successResults,
+    failedResults,
     recordsProcessed,
     errorMessage
   } = finalStatus;
 
   return {
     success: jobState === "JobComplete" && !errorMessage,
-    syncedRecords: (successResults || [])
-    .slice(0, 5)
-    .map(item => ({
+    syncedRecords: (successResults || []).slice(0, 5).map(item => ({
       id: item.id,
       status: "synced",
       timestamp: new Date().toISOString(),
       recordUrl: item.recordUrl
     })),
+    failedRecords: (failedResults || []).map(item => ({
+      id: item.id,
+      errorMessage: item.errorMessage,
+      originalFields: item.originalFields
+    })),
     totalRecords: recordsProcessed ?? 0,
     message: errorMessage || "Simulation completed successfully"
   };
 };
+
 
 
   const handleOneTimeRun = async () => {
@@ -502,12 +513,35 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
               const recordsFailed = statusResult.recordsFailed || 0;
               const recordsSucceeded = recordsProcessed - recordsFailed;
 
+              // Normalize successResults / failedResults from API
+              const successResultsRaw = statusResult.successResults || [];
+              const failedResultsRaw = statusResult.failedResults || [];
+
+              // Map to a predictable shape and slice to 10 for table display
+              const successForTable = (successResultsRaw || []).map((r: any) => ({
+                id: r.id,
+                recordUrl: r.recordUrl,
+                status: 'synced',
+                timestamp: r.timestamp || new Date().toISOString()
+              })).slice(0, 10);
+
+              const failedForTable = (failedResultsRaw || []).map((r: any) => ({
+                id: r.id,
+                errorMessage: r.errorMessage || (r.error || 'Unknown error'),
+                originalFields: r.originalFields || r.record || null
+              })).slice(0, 10);
+
+              setOneTimeSuccessRecords(successForTable);
+              setOneTimeFailedRecords(failedForTable);
+              setOneTimeTotalSuccess(successResultsRaw.length ?? recordsSucceeded);
+              setOneTimeTotalFailed(failedResultsRaw.length ?? recordsFailed);
+
               const testResult = {
                 success: recordsFailed === 0,
                 recordsProcessed,
                 recordsSucceeded,
                 recordsFailed,
-                errors: [],
+                errors: statusResult.errors || [],
                 estimatedDuration: statusResult.jobDetails?.totalProcessingTime || 0,
                 sampleData: []
               };
@@ -521,8 +555,8 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
             // Job not complete yet, continue polling if we haven't reached max attempts
             pollCount++;
             if (pollCount < maxPolls) {
-              console.log(`Job state: ${statusResult.jobState}, polling again in 1 second...`);
-              setTimeout(pollJobStatus, 1000);
+              console.log(`Job state: ${statusResult.jobState}, polling again in 5 second...`);
+              setTimeout(pollJobStatus, 5000);
             } else {
               // Max polls reached, job didn't complete
               const testResult = {
@@ -845,16 +879,91 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
                 </div>
                 {/* Display synced record IDs */}
                 {simulationResult.syncedRecords && simulationResult.syncedRecords.length > 0 && (
-                  <div className="ds-schedule-synced-records ds-test-schedule-synced-records">
-                    <h4 className="ds-test-schedule-synced-title">Synced Record IDs:</h4>
-                    <ul className="ds-test-schedule-record-list">
-                      {simulationResult.syncedRecords.map((record: any) => (
-                        <li key={record.id} className="ds-test-schedule-record-item">
-                          <span className="ds-test-schedule-record-id">{record.id}</span>
-                          <span className="ds-test-schedule-record-status">✅ {record.status}</span>
-                        </li>
-                      ))}
+                <div className="ds-schedule-synced-records ds-test-schedule-synced-records">
+                  <h4 className="ds-test-schedule-synced-title">Synced Record IDs:</h4>
+
+                  {/* Scrollable container */}
+                  <div className='table-scroll'>
+                    <ul className="ds-test-schedule-record-list" style={{ margin: 0, padding: 0 }}>
+                      {[...simulationResult.syncedRecords]   // <— reverse without mutating original
+                        .reverse()
+                        .map((record: any) => (
+                          <li
+                            key={record.id}
+                            className="ds-test-schedule-record-item"
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              padding: "8px 0",
+                              borderBottom: "1px solid #f0f0f0",
+                            }}
+                          >
+                            <span className="ds-test-schedule-record-id" style={{ wordBreak: "break-all" }}>
+                              {record.recordUrl ? (
+                                <a
+                                  href={record.recordUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ color: "#1a73e8", textDecoration: "underline" }}
+                                >
+                                  {record.id}
+                                </a>
+                              ) : (
+                                record.id
+                              )}
+                            </span>
+
+                            <span className="ds-test-schedule-record-status">
+                              ✅ {record.status}
+                            </span>
+                          </li>
+                        ))}
                     </ul>
+                  </div>
+                </div>
+              )}
+
+                {/* Failed Results Table */}
+                {simulationResult.failedRecords && simulationResult.failedRecords.length > 0 && (
+                  <div className="ds-schedule-failed-records margin-top20">
+                    <h4 className="ds-test-schedule-synced-title">Failed Records:</h4>
+
+                    {/* Scrollable container */}
+                  <div className="table-failed-container">
+                  <table
+                    className="ds-failed-table failed-table">
+                    <thead>
+                      <tr>
+                        <th className='failed-table-column-padding' >
+                          Record ID
+                        </th>
+                        <th
+                          className='failed-table-column-spacing'
+                        >
+                          Error Message
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {simulationResult.failedRecords.map((rec: any) => (
+                        <tr key={rec.id}>
+                          <td
+                            className='failed-table-field-style'
+                          >
+                            {rec.id}
+                          </td>
+
+                          <td
+                            className='failed-table-error-field-style'
+                          >
+                            {rec.errorMessage}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                   </div>
                 )}
               </div>
@@ -1022,6 +1131,104 @@ const parseSimulationResult = (finalStatus: BulkStatusResponse): SimulationResul
                     </div>
                   )}
                 </div>
+
+                {/* One-Time Run Synced Records */}
+                {oneTimeSuccessRecords && oneTimeSuccessRecords.length > 0 && (
+                  <div className="ds-schedule-synced-records ds-test-schedule-synced-records">
+                    <h4 className="ds-test-schedule-synced-title">Synced Record IDs:</h4>
+
+                    {/* Scrollable container */}
+                    <div className="table-scroll">
+                      <ul className="ds-test-schedule-record-list" style={{ margin: 0, padding: 0 }}>
+                        {[...oneTimeSuccessRecords]
+                          .reverse()
+                          .map((record: any) => (
+                            <li
+                              key={record.id}
+                              className="ds-test-schedule-record-item"
+                              style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                padding: "8px 0",
+                                borderBottom: "1px solid #f0f0f0",
+                              }}
+                            >
+                              <span className="ds-test-schedule-record-id" style={{ wordBreak: "break-all" }}>
+                                {record.recordUrl ? (
+                                  <a
+                                    href={record.recordUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ color: "#1a73e8", textDecoration: "underline" }}
+                                  >
+                                    {record.id}
+                                  </a>
+                                ) : (
+                                  record.id
+                                )}
+                              </span>
+
+                              <span className="ds-test-schedule-record-status">
+                                ✅ {record.status}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+
+                    {/* Show count message if > 10 */}
+                    {oneTimeTotalSuccess !== null && oneTimeTotalSuccess > oneTimeSuccessRecords.length && (
+                      <div style={{ fontSize: 12, marginTop: 6, color: "#666" }}>
+                        Showing {oneTimeSuccessRecords.length} of {oneTimeTotalSuccess} synced records.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* One-Time Run Failed Records */}
+                {oneTimeFailedRecords && oneTimeFailedRecords.length > 0 && (
+                  <div className="ds-schedule-failed-records margin-top20">
+                    <h4 className="ds-test-schedule-synced-title">Failed Records:</h4>
+
+                    {/* Scrollable container */}
+                    <div className="table-failed-container">
+                      <table className="ds-failed-table failed-table">
+                        <thead>
+                          <tr>
+                            <th className="failed-table-column-padding">
+                              Record ID
+                            </th>
+                            <th className="failed-table-column-spacing">
+                              Error Message
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody>
+                          {oneTimeFailedRecords.map((rec: any) => (
+                            <tr key={rec.id}>
+                              <td className="failed-table-field-style">
+                                {rec.id}
+                              </td>
+                              <td className="failed-table-error-field-style">
+                                {rec.errorMessage || "Unknown error"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                  {oneTimeTotalFailed !== null &&
+                    oneTimeTotalFailed > oneTimeFailedRecords.length && (
+                    <div style={{ fontSize: 12, marginTop: 6, color: "#666" }}>
+                      Showing {oneTimeFailedRecords.length} of {oneTimeTotalFailed} failed records.
+                    </div>
+                    )}
+
+                  </div>
+                )}
+
               </div>
             )}
           </div>
